@@ -18,11 +18,35 @@ import {
 import { ConnectButton, useActiveAccount } from "thirdweb/react";
 import { createWallet, inAppWallet } from "thirdweb/wallets";
 import { parseEther, formatEther } from "viem";
-import { etherlinkTestnet } from "viem/chains";
 import CONTRACT_ADDRESS_JSON from "./deployed_addresses.json";
 
+// Mantle Testnet chain definition
+const mantleTestnet = defineChain({
+  id: 5003,
+  name: 'Mantle Testnet',
+  nativeCurrency: {
+    name: 'MNT',
+    symbol: 'MNT',
+    decimals: 18,
+  },
+  rpcUrls: {
+    default: {
+      http: ['https://rpc.sepolia.mantle.xyz'],
+    },
+    public: {
+      http: ['https://rpc.sepolia.mantle.xyz'],
+    },
+  },
+  blockExplorers: {
+    default: {
+      name: 'Mantle Testnet Explorer',
+      url: 'https://sepolia-explorer.mantle.xyz',
+    },
+  },
+});
+
 // Backend API configuration
-const BACKEND_URL = "https://usemodred-production-e07d.up.railway.app";
+const BACKEND_URL = "http://localhost:5000";
 
 // File validation and preview utilities
 const MAX_FILE_SIZE_MB = 50; // Maximum file size in megabytes
@@ -113,9 +137,9 @@ const pinFileToIPFS = async (file: File): Promise<{
     // Add metadata
     const metadata = {
       name: file.name,
-      description: `Uploaded via ModredIP frontend`,
+      description: `Uploaded via Sear frontend`,
       attributes: {
-        uploadedBy: 'ModredIP',
+        uploadedBy: 'Sear',
         timestamp: new Date().toISOString(),
         fileType: file.type,
         fileSize: file.size
@@ -248,8 +272,8 @@ const wallets = [
   createWallet("global.safe"),
 ];
 
-// ModredIP Contract ABI (simplified for the functions we need)
-const MODRED_IP_ABI = [
+// Sear Contract ABI (simplified for the functions we need)
+const SEAR_ABI = [
   {
     inputs: [
       { name: "tokenId", type: "uint256" }
@@ -511,16 +535,16 @@ export default function App({ thirdwebClient }: AppProps) {
       setBackendStatus(isConnected);
       
       if (!wasConnected && isConnected) {
-        notifySuccess('Backend Connected', 'Successfully connected to the ModredIP backend service');
+        notifySuccess('Backend Connected', 'Successfully connected to the Sear backend service');
       } else if (wasConnected && !isConnected) {
-        notifyError('Backend Disconnected', 'Lost connection to the ModredIP backend service');
+        notifyError('Backend Disconnected', 'Lost connection to the Sear backend service');
       }
     } catch (error) {
       const wasConnected = backendStatus;
       setBackendStatus(false);
       
       if (wasConnected) {
-        notifyError('Backend Error', 'Failed to connect to the ModredIP backend service');
+        notifyError('Backend Error', 'Failed to connect to the Sear backend service');
       }
     }
   };
@@ -647,10 +671,10 @@ export default function App({ thirdwebClient }: AppProps) {
     try {
       setLoading(true);
       const contract = getContract({
-        abi: MODRED_IP_ABI,
+        abi: SEAR_ABI,
           client: thirdwebClient,
-          chain: defineChain(etherlinkTestnet.id),
-        address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
+          chain: defineChain(mantleTestnet.id),
+        address: CONTRACT_ADDRESS_JSON["SearModule#Sear"],
       });
 
       // Get next token ID
@@ -807,15 +831,15 @@ export default function App({ thirdwebClient }: AppProps) {
         license_type: 'all_rights_reserved',
         commercial_use: false,
         derivatives_allowed: false,
-        creator_email: 'creator@modredip.com', // Could be enhanced with user input
+        creator_email: 'creator@sear.com', // Could be enhanced with user input
         // File-specific metadata
         file_name: ipFile?.name || 'unknown',
         file_extension: ipFile?.name?.split('.').pop() || 'unknown',
         upload_timestamp: new Date().toISOString(),
         // Blockchain metadata
-        network: 'etherlink',
-        chain_id: '128123',
-        contract_address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
+        network: 'mantle',
+        chain_id: '5003',
+        contract_address: CONTRACT_ADDRESS_JSON["SearModule#Sear"],
         // Infringement detection metadata
         monitoring_enabled: true,
         infringement_alerts: true,
@@ -854,7 +878,7 @@ export default function App({ thirdwebClient }: AppProps) {
           ipHash: ipHash,
           metadata: JSON.stringify(ipMetadata),
           isEncrypted: isEncrypted,
-          modredIpContractAddress: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"]
+          searContractAddress: CONTRACT_ADDRESS_JSON["SearModule#Sear"]
         })
       });
 
@@ -868,11 +892,11 @@ export default function App({ thirdwebClient }: AppProps) {
 
       // Show success notification
       notifySuccess('IP Asset Registered', 
-        `Successfully registered IP asset!\nTransaction: ${result.etherlink.txHash}\nIP Asset ID: ${result.etherlink.ipAssetId}`,
+        `Successfully registered IP asset!\nTransaction: ${result.mantle.txHash}\nIP Asset ID: ${result.mantle.ipAssetId}`,
         {
           action: {
             label: 'View Transaction',
-            onClick: () => window.open(`https://testnet.explorer.etherlink.com/tx/${result.etherlink.txHash}`, '_blank')
+            onClick: () => window.open(`https://sepolia-explorer.mantle.xyz/tx/${result.mantle.txHash}`, '_blank')
           }
         }
       );
@@ -941,7 +965,7 @@ export default function App({ thirdwebClient }: AppProps) {
           duration: licenseDuration,
           commercialUse: commercialUse,
           terms: licenseTerms.terms,
-          modredIpContractAddress: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"]
+          searContractAddress: CONTRACT_ADDRESS_JSON["SearModule#Sear"]
         })
       });
 
@@ -959,7 +983,7 @@ export default function App({ thirdwebClient }: AppProps) {
         {
           action: {
             label: 'View Transaction',
-            onClick: () => window.open(`https://testnet.explorer.etherlink.com/tx/${result.data.txHash}`, '_blank')
+            onClick: () => window.open(`https://sepolia-explorer.mantle.xyz/tx/${result.data.txHash}`, '_blank')
           }
         }
       );
@@ -1004,10 +1028,10 @@ export default function App({ thirdwebClient }: AppProps) {
       notifyInfo('Processing Payment', `Paying ${paymentAmount} XTZ in revenue...`);
 
         const contract = getContract({
-        abi: MODRED_IP_ABI,
+        abi: SEAR_ABI,
           client: thirdwebClient,
-          chain: defineChain(etherlinkTestnet.id),
-        address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
+          chain: defineChain(mantleTestnet.id),
+        address: CONTRACT_ADDRESS_JSON["SearModule#Sear"],
         });
 
       const preparedCall = await prepareContractCall({
@@ -1024,7 +1048,7 @@ export default function App({ thirdwebClient }: AppProps) {
 
       await waitForReceipt({
           client: thirdwebClient,
-          chain: defineChain(etherlinkTestnet.id),
+          chain: defineChain(mantleTestnet.id),
           transactionHash: transaction.transactionHash,
         });
 
@@ -1058,10 +1082,10 @@ export default function App({ thirdwebClient }: AppProps) {
       notifyInfo('Claiming Royalties', 'Processing royalty claim...');
 
         const contract = getContract({
-        abi: MODRED_IP_ABI,
+        abi: SEAR_ABI,
           client: thirdwebClient,
-          chain: defineChain(etherlinkTestnet.id),
-        address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
+          chain: defineChain(mantleTestnet.id),
+        address: CONTRACT_ADDRESS_JSON["SearModule#Sear"],
         });
 
       const preparedCall = await prepareContractCall({
@@ -1077,7 +1101,7 @@ export default function App({ thirdwebClient }: AppProps) {
 
       await waitForReceipt({
         client: thirdwebClient,
-        chain: defineChain(etherlinkTestnet.id),
+        chain: defineChain(mantleTestnet.id),
         transactionHash: transaction.transactionHash,
       });
 
@@ -1104,8 +1128,8 @@ export default function App({ thirdwebClient }: AppProps) {
       <header className="header">
         <div className="header-container">
           <div className="header-logo">
-            <img src="/modred.webp" alt="ModredIP" className="logo-image" />
-            <h1>ModredIP</h1>
+            <img src="/modred.webp" alt="Sear" className="logo-image" />
+            <h1>Sear</h1>
           </div>
           <div className="header-actions">
             <div className={`status-indicator ${backendStatus ? 'connected' : 'disconnected'}`}>
@@ -1117,7 +1141,7 @@ export default function App({ thirdwebClient }: AppProps) {
             <ConnectButton
               client={thirdwebClient}
               wallets={wallets}
-              chain={defineChain(etherlinkTestnet.id)}
+              chain={defineChain(mantleTestnet.id)}
             />
           </div>
         </div>

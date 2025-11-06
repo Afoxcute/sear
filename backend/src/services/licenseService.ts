@@ -1,4 +1,4 @@
-import { mintLicenseOnEtherlink } from './storyService';
+import { mintLicenseOnMantle } from './storyService';
 import { Address } from 'viem';
 import { BLOCK_EXPLORER_URL } from '../utils/config';
 import { convertBigIntsToStrings } from '../utils/bigIntSerializer';
@@ -9,7 +9,7 @@ export interface LicenseRequest {
     duration: number;
     commercialUse: boolean;
     terms: string;
-    modredIpContractAddress: Address;
+    searContractAddress: Address;
 }
 
 export const mintLicense = async (licenseRequest: LicenseRequest) => {
@@ -18,13 +18,13 @@ export const mintLicense = async (licenseRequest: LicenseRequest) => {
             txHash,
             blockNumber,
             explorerUrl
-        } = await mintLicenseOnEtherlink(
+        } = await mintLicenseOnMantle(
             licenseRequest.tokenId,
             licenseRequest.royaltyPercentage,
             licenseRequest.duration,
             licenseRequest.commercialUse,
             licenseRequest.terms,
-            licenseRequest.modredIpContractAddress
+            licenseRequest.searContractAddress
         );
 
         const result = {
@@ -32,7 +32,7 @@ export const mintLicense = async (licenseRequest: LicenseRequest) => {
             txHash,
             blockNumber,
             explorerUrl,
-            message: 'License minted successfully on Etherlink'
+            message: 'License minted successfully on Mantle'
         };
 
         // Convert any BigInt values to strings for JSON serialization
@@ -42,7 +42,7 @@ export const mintLicense = async (licenseRequest: LicenseRequest) => {
         return {
             success: false,
             error: error instanceof Error ? error.message : 'Unknown error occurred',
-            message: 'Failed to mint license on Etherlink'
+            message: 'Failed to mint license on Mantle'
         };
     }
 };

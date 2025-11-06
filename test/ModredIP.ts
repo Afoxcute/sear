@@ -3,8 +3,8 @@ import { expect } from "chai";
 import hre from "hardhat";
 import { parseEther } from "viem";
 
-describe("ModredIP", function () {
-  let modredIP: any;
+describe("Sear", function () {
+  let sear: any;
   let registry: any;
   let accountImplementation: any;
   let owner: any;
@@ -36,18 +36,18 @@ describe("ModredIP", function () {
     // Add implementation to registry
     await registry.write.addImplementation([accountImplementation.address]);
 
-    // Deploy ModredIP
-    const modredIP = await hre.viem.deployContract("ModredIP", [
+    // Deploy Sear
+    const sear = await hre.viem.deployContract("ModredIP", [
       registry.address,
       accountImplementation.address,
-      128123n, // Etherlink testnet chain ID
+      5003n, // Mantle testnet chain ID
       feeCollector.account.address
     ]);
 
     const publicClient = await hre.viem.getPublicClient();
 
     return {
-      modredIP,
+      sear,
       registry,
       accountImplementation,
       owner,
@@ -61,33 +61,33 @@ describe("ModredIP", function () {
 
   describe("Deployment", function () {
     it("Should set the right owner", async function () {
-      const { modredIP, owner } = await loadFixture(deployContractFixture);
-      const contractOwner = await modredIP.read.owner();
+      const { sear, owner } = await loadFixture(deployContractFixture);
+      const contractOwner = await sear.read.owner();
       expect(contractOwner.toLowerCase()).to.equal(owner.account.address.toLowerCase());
     });
 
     it("Should set the correct platform fee collector", async function () {
-      const { modredIP, feeCollector } = await loadFixture(deployContractFixture);
-      const collector = await modredIP.read.platformFeeCollector();
+      const { sear, feeCollector } = await loadFixture(deployContractFixture);
+      const collector = await sear.read.platformFeeCollector();
       expect(collector.toLowerCase()).to.equal(feeCollector.account.address.toLowerCase());
     });
 
     it("Should set the correct platform fee percentage", async function () {
-      const { modredIP } = await loadFixture(deployContractFixture);
-      const feePercentage = await modredIP.read.platformFeePercentage();
+      const { sear } = await loadFixture(deployContractFixture);
+      const feePercentage = await sear.read.platformFeePercentage();
       expect(feePercentage).to.equal(250n); // 2.5%
     });
   });
 
   describe("IP Registration", function () {
     it("Should register a new IP asset", async function () {
-      const { modredIP, creator } = await loadFixture(deployContractFixture);
+      const { sear, creator } = await loadFixture(deployContractFixture);
       
-      await modredIP.write.registerIP([IP_HASH, METADATA, false], {
+      await sear.write.registerIP([IP_HASH, METADATA, false], {
         account: creator.account.address,
       });
       
-      const ipAsset = await modredIP.read.getIPAsset([1n]);
+      const ipAsset = await sear.read.getIPAsset([1n]);
       
       expect(ipAsset[0].toLowerCase()).to.equal(creator.account.address.toLowerCase());
       expect(ipAsset[1]).to.equal(IP_HASH);
@@ -98,44 +98,44 @@ describe("ModredIP", function () {
     });
 
     it("Should mint NFT to creator", async function () {
-      const { modredIP, creator } = await loadFixture(deployContractFixture);
+      const { sear, creator } = await loadFixture(deployContractFixture);
       
-      await modredIP.write.registerIP([IP_HASH, METADATA, false], {
+      await sear.write.registerIP([IP_HASH, METADATA, false], {
         account: creator.account.address,
       });
       
-      const nftOwner = await modredIP.read.ownerOf([1n]);
+      const nftOwner = await sear.read.ownerOf([1n]);
       expect(nftOwner.toLowerCase()).to.equal(creator.account.address.toLowerCase());
     });
 
     it("Should increment token ID", async function () {
-      const { modredIP, creator } = await loadFixture(deployContractFixture);
+      const { sear, creator } = await loadFixture(deployContractFixture);
       
-      await modredIP.write.registerIP([IP_HASH, METADATA, false], {
+      await sear.write.registerIP([IP_HASH, METADATA, false], {
         account: creator.account.address,
       });
-      await modredIP.write.registerIP([IP_HASH + "2", METADATA + "2", true], {
+      await sear.write.registerIP([IP_HASH + "2", METADATA + "2", true], {
         account: creator.account.address,
       });
       
-      const nextTokenId = await modredIP.read.nextTokenId();
+      const nextTokenId = await sear.read.nextTokenId();
       expect(nextTokenId).to.equal(3n);
     });
   });
 
   describe("License Minting", function () {
     it("Should mint a license", async function () {
-      const { modredIP, creator } = await loadFixture(deployContractFixture);
+      const { sear, creator } = await loadFixture(deployContractFixture);
       
-      await modredIP.write.registerIP([IP_HASH, METADATA, false], {
+      await sear.write.registerIP([IP_HASH, METADATA, false], {
         account: creator.account.address,
       });
       
-      await modredIP.write.mintLicense([1n, 1000n, 86400n, true, LICENSE_TERMS], {
+      await sear.write.mintLicense([1n, 1000n, 86400n, true, LICENSE_TERMS], {
         account: creator.account.address,
       });
       
-      const license = await modredIP.read.getLicense([1n]);
+      const license = await sear.read.getLicense([1n]);
       
       expect(license[0].toLowerCase()).to.equal(creator.account.address.toLowerCase());
       expect(license[1]).to.equal(1n);
@@ -147,29 +147,29 @@ describe("ModredIP", function () {
     });
 
     it("Should transfer royalty tokens to licensee", async function () {
-      const { modredIP, creator } = await loadFixture(deployContractFixture);
+      const { sear, creator } = await loadFixture(deployContractFixture);
       
-      await modredIP.write.registerIP([IP_HASH, METADATA, false], {
+      await sear.write.registerIP([IP_HASH, METADATA, false], {
         account: creator.account.address,
       });
       
-      await modredIP.write.mintLicense([1n, 1000n, 86400n, true, LICENSE_TERMS], {
+      await sear.write.mintLicense([1n, 1000n, 86400n, true, LICENSE_TERMS], {
         account: creator.account.address,
       });
       
-      const ipAsset = await modredIP.read.getIPAsset([1n]);
+      const ipAsset = await sear.read.getIPAsset([1n]);
       expect(ipAsset[7]).to.equal(9000n); // 90% remaining
     });
 
     it("Should fail if royalty percentage too high", async function () {
-      const { modredIP, creator } = await loadFixture(deployContractFixture);
+      const { sear, creator } = await loadFixture(deployContractFixture);
       
-      await modredIP.write.registerIP([IP_HASH, METADATA, false], {
+      await sear.write.registerIP([IP_HASH, METADATA, false], {
         account: creator.account.address,
       });
       
       await expect(
-        modredIP.write.mintLicense([1n, 15000n, 86400n, true, LICENSE_TERMS], {
+        sear.write.mintLicense([1n, 15000n, 86400n, true, LICENSE_TERMS], {
           account: creator.account.address,
         })
       ).to.be.rejectedWith("Invalid royalty percentage");
@@ -178,44 +178,44 @@ describe("ModredIP", function () {
 
   describe("Revenue Payment", function () {
     it("Should accept revenue payment", async function () {
-      const { modredIP, creator, licensee } = await loadFixture(deployContractFixture);
+      const { sear, creator, licensee } = await loadFixture(deployContractFixture);
       
-      await modredIP.write.registerIP([IP_HASH, METADATA, false], {
+      await sear.write.registerIP([IP_HASH, METADATA, false], {
         account: creator.account.address,
       });
       
-      await modredIP.write.mintLicense([1n, 1000n, 86400n, true, LICENSE_TERMS], {
+      await sear.write.mintLicense([1n, 1000n, 86400n, true, LICENSE_TERMS], {
         account: creator.account.address,
       });
       
       const paymentAmount = parseEther("1.0");
-      await modredIP.write.payRevenue([1n], {
+      await sear.write.payRevenue([1n], {
         account: licensee.account.address,
         value: paymentAmount,
       });
       
-      const royaltyInfo = await modredIP.read.getRoyaltyInfo([1n, creator.account.address]);
+      const royaltyInfo = await sear.read.getRoyaltyInfo([1n, creator.account.address]);
       expect(royaltyInfo[0]).to.equal(paymentAmount);
     });
 
     it("Should distribute royalties correctly", async function () {
-      const { modredIP, creator, licensee } = await loadFixture(deployContractFixture);
+      const { sear, creator, licensee } = await loadFixture(deployContractFixture);
       
-      await modredIP.write.registerIP([IP_HASH, METADATA, false], {
+      await sear.write.registerIP([IP_HASH, METADATA, false], {
         account: creator.account.address,
       });
       
-      await modredIP.write.mintLicense([1n, 1000n, 86400n, true, LICENSE_TERMS], {
+      await sear.write.mintLicense([1n, 1000n, 86400n, true, LICENSE_TERMS], {
         account: creator.account.address,
       });
       
       const paymentAmount = parseEther("1.0");
-      await modredIP.write.payRevenue([1n], {
+      await sear.write.payRevenue([1n], {
         account: licensee.account.address,
         value: paymentAmount,
       });
       
-      const royaltyInfo = await modredIP.read.getRoyaltyInfo([1n, creator.account.address]);
+      const royaltyInfo = await sear.read.getRoyaltyInfo([1n, creator.account.address]);
       expect(royaltyInfo[0]).to.equal(paymentAmount);
       expect(royaltyInfo[3] > 0n).to.be.true;
     });
@@ -223,17 +223,17 @@ describe("ModredIP", function () {
 
   describe("Dispute System", function () {
     it("Should allow raising disputes", async function () {
-      const { modredIP, creator, disputer } = await loadFixture(deployContractFixture);
+      const { sear, creator, disputer } = await loadFixture(deployContractFixture);
       
-      await modredIP.write.registerIP([IP_HASH, METADATA, false], {
+      await sear.write.registerIP([IP_HASH, METADATA, false], {
         account: creator.account.address,
       });
       
-      await modredIP.write.raiseDispute([1n, "Potential plagiarism"], {
+      await sear.write.raiseDispute([1n, "Potential plagiarism"], {
         account: disputer.account.address,
       });
       
-      const dispute = await modredIP.read.disputes([1n]);
+      const dispute = await sear.read.disputes([1n]);
       expect(dispute[0]).to.equal(1n);
       expect(dispute[1]).to.equal(1n);
       expect(dispute[2].toLowerCase()).to.equal(disputer.account.address.toLowerCase());
@@ -242,41 +242,41 @@ describe("ModredIP", function () {
     });
 
     it("Should mark IP as disputed", async function () {
-      const { modredIP, creator, disputer } = await loadFixture(deployContractFixture);
+      const { sear, creator, disputer } = await loadFixture(deployContractFixture);
       
-      await modredIP.write.registerIP([IP_HASH, METADATA, false], {
+      await sear.write.registerIP([IP_HASH, METADATA, false], {
         account: creator.account.address,
       });
       
-      await modredIP.write.raiseDispute([1n, "Potential plagiarism"], {
+      await sear.write.raiseDispute([1n, "Potential plagiarism"], {
         account: disputer.account.address,
       });
       
-      const ipAsset = await modredIP.read.getIPAsset([1n]);
+      const ipAsset = await sear.read.getIPAsset([1n]);
       expect(ipAsset[4]).to.be.true;
     });
   });
 
   describe("Admin Functions", function () {
     it("Should allow setting platform fee collector", async function () {
-      const { modredIP, owner, licensee } = await loadFixture(deployContractFixture);
+      const { sear, owner, licensee } = await loadFixture(deployContractFixture);
       
-      await modredIP.write.setPlatformFeeCollector([licensee.account.address], {
+      await sear.write.setPlatformFeeCollector([licensee.account.address], {
         account: owner.account.address,
       });
       
-      const collector = await modredIP.read.platformFeeCollector();
+      const collector = await sear.read.platformFeeCollector();
       expect(collector.toLowerCase()).to.equal(licensee.account.address.toLowerCase());
     });
 
     it("Should allow setting platform fee percentage", async function () {
-      const { modredIP, owner } = await loadFixture(deployContractFixture);
+      const { sear, owner } = await loadFixture(deployContractFixture);
       
-      await modredIP.write.setPlatformFeePercentage([500n], {
+      await sear.write.setPlatformFeePercentage([500n], {
         account: owner.account.address,
       });
       
-      const feePercentage = await modredIP.read.platformFeePercentage();
+      const feePercentage = await sear.read.platformFeePercentage();
       expect(feePercentage).to.equal(500n);
     });
   });

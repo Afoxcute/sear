@@ -13,35 +13,35 @@ const config: HardhatUserConfig = {
   solidity: "0.8.24",
 
   networks: {
-    etherlinkMainnet: {
-      url: "https://node.mainnet.etherlink.com",
+    mantleMainnet: {
+      url: "https://rpc.mantle.xyz",
       accounts: [deployerPrivateKey],
     },
-    etherlinkTestnet: {
-      url: "https://node.ghostnet.etherlink.com",
+    mantleTestnet: {
+      url: "https://rpc.sepolia.mantle.xyz",
       accounts: [deployerPrivateKey],
     },
   },
   etherscan: {
     apiKey: {
-      etherlinkMainnet: "YOU_CAN_COPY_ME",
-      etherlinkTestnet: "YOU_CAN_COPY_ME",
+      mantleMainnet: "YOU_CAN_COPY_ME",
+      mantleTestnet: "YOU_CAN_COPY_ME",
     },
     customChains: [
       {
-        network: "etherlinkMainnet",
-        chainId: 42793,
+        network: "mantleMainnet",
+        chainId: 5000,
         urls: {
-          apiURL: "https://explorer.etherlink.com/api",
-          browserURL: "https://explorer.etherlink.com",
+          apiURL: "https://explorer.mantle.xyz/api",
+          browserURL: "https://explorer.mantle.xyz",
         },
       },
       {
-        network: "etherlinkTestnet",
-        chainId: 128123,
+        network: "mantleTestnet",
+        chainId: 5003,
         urls: {
-          apiURL: "https://testnet.explorer.etherlink.com/api",
-          browserURL: "https://testnet.explorer.etherlink.com",
+          apiURL: "https://sepolia-explorer.mantle.xyz/api",
+          browserURL: "https://sepolia-explorer.mantle.xyz",
         },
       },
     ],

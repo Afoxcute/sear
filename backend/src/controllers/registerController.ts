@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { registerIpWithEtherlink } from '../services/storyService';
+import { registerIpWithMantle } from '../services/storyService';
 import { registerToYakoa } from '../services/yakoascanner';
 import { Address } from 'viem';
 import { convertBigIntsToStrings } from '../utils/bigIntSerializer';
@@ -7,24 +7,24 @@ import { convertBigIntsToStrings } from '../utils/bigIntSerializer';
 const handleRegistration = async (req: Request, res: Response) => {
   console.log("🔥 Entered handleRegistration");
   try {
-    const { ipHash, metadata, isEncrypted, modredIpContractAddress } = req.body;
+    const { ipHash, metadata, isEncrypted, searContractAddress } = req.body;
     console.log("📦 Received body:", req.body);
 
     // Validate required parameters
-    if (!ipHash || !metadata || isEncrypted === undefined || !modredIpContractAddress) {
+    if (!ipHash || !metadata || isEncrypted === undefined || !searContractAddress) {
       return res.status(400).json({
-        error: 'Missing required parameters: ipHash, metadata, isEncrypted, modredIpContractAddress'
+        error: 'Missing required parameters: ipHash, metadata, isEncrypted, searContractAddress'
       });
     }
 
-    // 1. Register on Etherlink using ModredIP contract
+    // 1. Register on Mantle using Sear contract
     const {
       txHash,
       ipAssetId,
       blockNumber,
       explorerUrl
-    } = await registerIpWithEtherlink(ipHash, metadata, isEncrypted, modredIpContractAddress as Address);
-    console.log("✅ Etherlink registration successful:", {
+    } = await registerIpWithMantle(ipHash, metadata, isEncrypted, searContractAddress as Address);
+    console.log("✅ Mantle registration successful:", {
       txHash,
       ipAssetId,
       blockNumber,
@@ -34,7 +34,7 @@ const handleRegistration = async (req: Request, res: Response) => {
     // 2. Submit to Yakoa (if ipAssetId is available)
     if (ipAssetId) {
       // Ensure contract address is properly formatted
-      const contractAddress = modredIpContractAddress.toLowerCase();
+      const contractAddress = searContractAddress.toLowerCase();
       
       // Format ID as contract address with token ID: 0x[contract_address]:[token_id]
       // Use base ID format for Yakoa API compatibility
@@ -119,7 +119,7 @@ const handleRegistration = async (req: Request, res: Response) => {
           brand_name: null,
           data: {
             type: 'email' as const,
-            email_address: parsedMetadata.creator_email || 'creator@modredip.com'
+            email_address: parsedMetadata.creator_email || 'creator@sear.com'
           }
         }
       ];
@@ -133,19 +133,19 @@ const yakoaResponse = await registerToYakoa({
         media: yakoaMedia,
         brandId: null,
         brandName: null,
-        emailAddress: parsedMetadata.creator_email || 'creator@modredip.com',
+        emailAddress: parsedMetadata.creator_email || 'creator@sear.com',
         licenseParents: [],
         authorizations: authorizations,
 });
 
       // Determine success message based on Yakoa response
       const successMessage = yakoaResponse.alreadyRegistered 
-        ? 'IP Asset registered on Etherlink, already exists in Yakoa'
-        : 'IP Asset successfully registered on Etherlink and Yakoa';
+        ? 'IP Asset registered on Mantle, already exists in Yakoa'
+        : 'IP Asset successfully registered on Mantle and Yakoa';
 
       const responseData = {
         message: successMessage,
-        etherlink: {
+        mantle: {
         txHash,
           ipAssetId,
         explorerUrl,
@@ -159,7 +159,7 @@ const yakoaResponse = await registerToYakoa({
     } else {
       const responseData = {
         message: 'Registration successful (IP Asset ID not extracted)',
-        etherlink: {
+        mantle: {
           txHash,
           ipAssetId: null,
           explorerUrl,

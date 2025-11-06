@@ -1,11 +1,11 @@
-# 🚀 ModredIP - Revolutionary IP Management Platform
+# 🚀 Sear - Revolutionary IP Management Platform
 
 > **The Future of Intellectual Property Management on Blockchain**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-20232A?style=flat&logo=react&logoColor=61DAFB)](https://reactjs.org/)
-[![Etherlink](https://img.shields.io/badge/Etherlink-000000?style=flat&logo=ethereum&logoColor=white)](https://etherlink.com/)
+[![Mantle](https://img.shields.io/badge/Mantle-000000?style=flat&logo=ethereum&logoColor=white)](https://mantle.xyz/)
 
 ---
 
@@ -30,14 +30,14 @@
 To democratize intellectual property management by creating a decentralized, transparent, and automated platform that empowers creators to protect, monetize, and manage their IP assets with unprecedented efficiency.
 
 ### Mission
-ModredIP revolutionizes IP management by combining blockchain technology with AI-powered infringement detection, creating a comprehensive ecosystem where creators can register, license, monetize, and protect their intellectual property with built-in enforcement mechanisms.
+Sear revolutionizes IP management by combining blockchain technology with AI-powered infringement detection, creating a comprehensive ecosystem where creators can register, license, monetize, and protect their intellectual property with built-in enforcement mechanisms.
 
 ---
 
 ## 💼 Business Model
 
 ### Core Value Proposition
-ModredIP addresses critical pain points in the current IP management landscape:
+Sear addresses critical pain points in the current IP management landscape:
 
 1. **Fragmented IP Management**: Centralized platform for all IP lifecycle
 2. **Inefficient Licensing**: Automated, programmable licensing terms
@@ -73,18 +73,18 @@ ModredIP addresses critical pain points in the current IP management landscape:
 ### Backend
 - **Runtime**: Node.js + TypeScript
 - **Framework**: Express.js
-- **Blockchain**: Viem for Etherlink integration
+- **Blockchain**: Viem for Mantle integration
 - **Storage**: IPFS (Pinata) for decentralized storage
 - **AI Integration**: Yakoa for infringement detection
 
 ### Smart Contracts
-- **Platform**: Solidity on Etherlink (Tezos EVM L2)
+- **Platform**: Solidity on Mantle
 - **Core**: ERC-6551 token-bound accounts
 - **Registry**: ERC6551Registry for account management
 - **Account**: ERC6551Account for programmable logic
 
 ### Infrastructure
-- **Blockchain**: Etherlink Testnet (Chain ID: 128123)
+- **Blockchain**: Mantle Testnet (Chain ID: 5003)
 - **Storage**: IPFS for censorship-resistant content
 - **Monitoring**: Yakoa API for infringement detection
 - **Deployment**: Hardhat Ignition for contract deployment
@@ -316,10 +316,10 @@ The founders experienced firsthand the challenges of IP management:
 ### Quick Start
 ```bash
 # Clone the repository
-git clone https://github.com/modredip/modredip-platform.git
+git clone https://github.com/sear/sear-platform.git
 
 # Install dependencies
-cd modredip-platform
+cd sear-platform
 npm install
 
 # Start development server
@@ -337,13 +337,13 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- **Etherlink Team**: For blockchain infrastructure support
+- **Mantle Team**: For blockchain infrastructure support
 - **Yakoa Team**: For AI-powered infringement detection
 - **IPFS Team**: For decentralized storage solutions
 - **Open Source Community**: For invaluable contributions
 
 ---
 
-**Built with ❤️ by the ModredIP Team**
+**Built with ❤️ by the Sear Team**
 
 *Empowering creators to protect and monetize their intellectual property through blockchain technology.*

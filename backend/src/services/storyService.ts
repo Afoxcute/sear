@@ -5,7 +5,7 @@ import { uploadJSONToIPFS } from '../utils/functions/uploadToIpfs';
 import { createHash } from 'crypto';
 import { Address } from 'viem';
 
-// IP Metadata interface for Etherlink
+// IP Metadata interface for Mantle
 export interface IpMetadata {
     name: string;
     description: string;
@@ -20,8 +20,8 @@ export interface IpMetadata {
     created_at?: string;
 }
 
-// ModredIP contract ABI (simplified for IP registration)
-const MODRED_IP_ABI = [
+// Sear contract ABI (simplified for IP registration)
+const SEAR_ABI = [
     {
         "inputs": [
             {
@@ -92,21 +92,21 @@ const MODRED_IP_ABI = [
     }
 ] as const;
 
-export const registerIpWithEtherlink = async (
+export const registerIpWithMantle = async (
     ipHash: string,
     metadata: string,
     isEncrypted: boolean,
-    modredIpContractAddress: Address
+    searContractAddress: Address
 ) => {
     try {
         console.log('ipHash:', ipHash);
         console.log('metadata:', metadata);
         console.log('isEncrypted:', isEncrypted);
 
-        // Register IP on ModredIP contract
+        // Register IP on Sear contract
         const { request } = await publicClient.simulateContract({
-            address: modredIpContractAddress,
-            abi: MODRED_IP_ABI,
+            address: searContractAddress,
+            abi: SEAR_ABI,
             functionName: 'registerIP',
             args: [
                 ipHash,
@@ -145,23 +145,23 @@ export const registerIpWithEtherlink = async (
             explorerUrl: `${BLOCK_EXPLORER_URL}/tx/${hash}`,
         };
     } catch (error) {
-        console.error('Error registering IP with Etherlink:', error);
+        console.error('Error registering IP with Mantle:', error);
         throw error;
     }
 };
 
-export const mintLicenseOnEtherlink = async (
+export const mintLicenseOnMantle = async (
     tokenId: number,
     royaltyPercentage: number,
     duration: number,
     commercialUse: boolean,
     terms: string,
-    modredIpContractAddress: Address
+    searContractAddress: Address
 ) => {
     try {
         const { request } = await publicClient.simulateContract({
-            address: modredIpContractAddress,
-            abi: MODRED_IP_ABI,
+            address: searContractAddress,
+            abi: SEAR_ABI,
             functionName: 'mintLicense',
             args: [
                 BigInt(tokenId),
@@ -186,7 +186,7 @@ export const mintLicenseOnEtherlink = async (
             explorerUrl: `${BLOCK_EXPLORER_URL}/tx/${hash}`,
   };
     } catch (error) {
-        console.error('Error minting license on Etherlink:', error);
+        console.error('Error minting license on Mantle:', error);
         throw error;
     }
 };

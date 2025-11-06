@@ -4,27 +4,27 @@ import dotenv from 'dotenv'
 
 dotenv.config()
 
-// Etherlink testnet configuration
-const etherlinkTestnet: Chain = {
-  id: 128123,
-  name: 'Etherlink Testnet',
+// Mantle testnet configuration
+const mantleTestnet: Chain = {
+  id: 5003,
+  name: 'Mantle Testnet',
   nativeCurrency: {
-    name: 'XTZ',
-    symbol: 'XTZ',
+    name: 'MNT',
+    symbol: 'MNT',
     decimals: 18,
   },
   rpcUrls: {
     default: {
-      http: ['https://node.ghostnet.etherlink.com'],
+      http: ['https://rpc.sepolia.mantle.xyz'],
     },
     public: {
-      http: ['https://node.ghostnet.etherlink.com'],
+      http: ['https://rpc.sepolia.mantle.xyz'],
     },
   },
   blockExplorers: {
     default: {
-      name: 'Etherlink Testnet Explorer',
-      url: 'https://testnet.explorer.etherlink.com',
+      name: 'Mantle Testnet Explorer',
+      url: 'https://sepolia-explorer.mantle.xyz',
     },
   },
 }
@@ -38,10 +38,10 @@ interface NetworkConfig {
 
 // Network configuration
 const networkConfig: NetworkConfig = {
-    rpcProviderUrl: 'https://node.ghostnet.etherlink.com',
-    blockExplorer: 'https://testnet.explorer.etherlink.com',
-    chain: etherlinkTestnet,
-    nativeTokenAddress: '0x0000000000000000000000000000000000000000' as Address, // Native XTZ token
+    rpcProviderUrl: 'https://rpc.sepolia.mantle.xyz',
+    blockExplorer: 'https://sepolia-explorer.mantle.xyz',
+    chain: mantleTestnet,
+    nativeTokenAddress: '0x0000000000000000000000000000000000000000' as Address, // Native MNT token
 }
 
 // Helper functions

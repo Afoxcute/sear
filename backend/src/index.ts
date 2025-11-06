@@ -26,7 +26,7 @@ app.use('/api/infringement', infringementRoutes);
 
 // Default route (optional)
 app.get('/', (_req, res) => {
-  res.send('✅ Yakoa + Etherlink backend is running!');
+  res.send('✅ Yakoa + Mantle backend is running!');
 });
 
 // Start Server

@@ -9,7 +9,7 @@ export interface LicenseRequest {
     duration: number;
     commercialUse: boolean;
     terms: string;
-    searContractAddress: Address;
+    modredIpContractAddress: Address;
 }
 
 export const mintLicense = async (licenseRequest: LicenseRequest) => {
@@ -24,7 +24,7 @@ export const mintLicense = async (licenseRequest: LicenseRequest) => {
             licenseRequest.duration,
             licenseRequest.commercialUse,
             licenseRequest.terms,
-            licenseRequest.searContractAddress
+            licenseRequest.modredIpContractAddress
         );
 
         const result = {

@@ -5,8 +5,9 @@ async function testYakoaFix() {
   
   try {
     // Test with the problematic ID that was causing the error
-    const problematicId = "0x0734d90fa1857c073c4bf1e57f4f4151be2e9f82:57:1754506037466";
-    const baseId = "0x0734d90fa1857c073c4bf1e57f4f4151be2e9f82:57";
+    // Updated to use new contract address
+    const problematicId = "0xc42ae93e94417728ddec16ff01089a05222ce547:57:1754506037466";
+    const baseId = "0xc42ae93e94417728ddec16ff01089a05222ce547:57";
     
     console.log("📋 Original problematic ID:", problematicId);
     console.log("📋 Base ID for API call:", baseId);

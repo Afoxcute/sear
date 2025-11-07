@@ -16,10 +16,12 @@ const config: HardhatUserConfig = {
     mantleMainnet: {
       url: "https://rpc.mantle.xyz",
       accounts: [deployerPrivateKey],
+      timeout: 120000, // 120 seconds
     },
     mantleTestnet: {
-      url: "https://rpc.sepolia.mantle.xyz",
+      url: "https://mantle-sepolia.drpc.org",
       accounts: [deployerPrivateKey],
+      timeout: 120000, // 120 seconds
     },
   },
   etherscan: {
@@ -40,8 +42,8 @@ const config: HardhatUserConfig = {
         network: "mantleTestnet",
         chainId: 5003,
         urls: {
-          apiURL: "https://sepolia-explorer.mantle.xyz/api",
-          browserURL: "https://sepolia-explorer.mantle.xyz",
+          apiURL: "https://explorer.testnet.mantle.xyz/api",
+          browserURL: "https://explorer.testnet.mantle.xyz",
         },
       },
     ],

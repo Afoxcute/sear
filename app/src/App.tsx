@@ -20,30 +20,31 @@ import { createWallet, inAppWallet } from "thirdweb/wallets";
 import { parseEther, formatEther } from "viem";
 import CONTRACT_ADDRESS_JSON from "./deployed_addresses.json";
 
-// Mantle Testnet chain definition
-const mantleTestnet = defineChain({
+// Custom Mantle Sepolia Testnet chain definition with official RPC URL
+const mantleTestnet = {
   id: 5003,
-  name: 'Mantle Testnet',
+  name: "Mantle Sepolia Testnet",
   nativeCurrency: {
-    name: 'MNT',
-    symbol: 'MNT',
+    name: "MNT",
+    symbol: "MNT",
     decimals: 18,
   },
   rpcUrls: {
     default: {
-      http: ['https://rpc.sepolia.mantle.xyz'],
+      http: ["https://rpc.sepolia.mantle.xyz"],
     },
     public: {
-      http: ['https://rpc.sepolia.mantle.xyz'],
+      http: ["https://rpc.sepolia.mantle.xyz"],
     },
   },
   blockExplorers: {
     default: {
-      name: 'Mantle Testnet Explorer',
-      url: 'https://sepolia-explorer.mantle.xyz',
+      name: "Mantle Testnet Explorer",
+      url: "https://explorer.testnet.mantle.xyz",
     },
   },
-});
+  testnet: true,
+};
 
 // Backend API configuration
 const BACKEND_URL = "http://localhost:5000";
@@ -137,9 +138,9 @@ const pinFileToIPFS = async (file: File): Promise<{
     // Add metadata
     const metadata = {
       name: file.name,
-      description: `Uploaded via Sear frontend`,
+      description: `Uploaded via ModredIP frontend`,
       attributes: {
-        uploadedBy: 'Sear',
+        uploadedBy: 'ModredIP',
         timestamp: new Date().toISOString(),
         fileType: file.type,
         fileSize: file.size
@@ -272,8 +273,8 @@ const wallets = [
   createWallet("global.safe"),
 ];
 
-// Sear Contract ABI (simplified for the functions we need)
-const SEAR_ABI = [
+// ModredIP Contract ABI (simplified for the functions we need)
+const MODRED_IP_ABI = [
   {
     inputs: [
       { name: "tokenId", type: "uint256" }
@@ -535,16 +536,16 @@ export default function App({ thirdwebClient }: AppProps) {
       setBackendStatus(isConnected);
       
       if (!wasConnected && isConnected) {
-        notifySuccess('Backend Connected', 'Successfully connected to the Sear backend service');
+        notifySuccess('Backend Connected', 'Successfully connected to the ModredIP backend service');
       } else if (wasConnected && !isConnected) {
-        notifyError('Backend Disconnected', 'Lost connection to the Sear backend service');
+        notifyError('Backend Disconnected', 'Lost connection to the ModredIP backend service');
       }
     } catch (error) {
       const wasConnected = backendStatus;
       setBackendStatus(false);
       
       if (wasConnected) {
-        notifyError('Backend Error', 'Failed to connect to the Sear backend service');
+        notifyError('Backend Error', 'Failed to connect to the ModredIP backend service');
       }
     }
   };
@@ -671,10 +672,10 @@ export default function App({ thirdwebClient }: AppProps) {
     try {
       setLoading(true);
       const contract = getContract({
-        abi: SEAR_ABI,
+        abi: MODRED_IP_ABI,
           client: thirdwebClient,
           chain: defineChain(mantleTestnet.id),
-        address: CONTRACT_ADDRESS_JSON["SearModule#Sear"],
+        address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
       });
 
       // Get next token ID
@@ -831,7 +832,7 @@ export default function App({ thirdwebClient }: AppProps) {
         license_type: 'all_rights_reserved',
         commercial_use: false,
         derivatives_allowed: false,
-        creator_email: 'creator@sear.com', // Could be enhanced with user input
+        creator_email: 'creator@modredip.com', // Could be enhanced with user input
         // File-specific metadata
         file_name: ipFile?.name || 'unknown',
         file_extension: ipFile?.name?.split('.').pop() || 'unknown',
@@ -839,7 +840,7 @@ export default function App({ thirdwebClient }: AppProps) {
         // Blockchain metadata
         network: 'mantle',
         chain_id: '5003',
-        contract_address: CONTRACT_ADDRESS_JSON["SearModule#Sear"],
+        contract_address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
         // Infringement detection metadata
         monitoring_enabled: true,
         infringement_alerts: true,
@@ -878,7 +879,7 @@ export default function App({ thirdwebClient }: AppProps) {
           ipHash: ipHash,
           metadata: JSON.stringify(ipMetadata),
           isEncrypted: isEncrypted,
-          searContractAddress: CONTRACT_ADDRESS_JSON["SearModule#Sear"]
+          modredIpContractAddress: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"]
         })
       });
 
@@ -896,7 +897,7 @@ export default function App({ thirdwebClient }: AppProps) {
         {
           action: {
             label: 'View Transaction',
-            onClick: () => window.open(`https://sepolia-explorer.mantle.xyz/tx/${result.mantle.txHash}`, '_blank')
+            onClick: () => window.open(`https://explorer.testnet.mantle.xyz/tx/${result.mantle.txHash}`, '_blank')
           }
         }
       );
@@ -965,7 +966,7 @@ export default function App({ thirdwebClient }: AppProps) {
           duration: licenseDuration,
           commercialUse: commercialUse,
           terms: licenseTerms.terms,
-          searContractAddress: CONTRACT_ADDRESS_JSON["SearModule#Sear"]
+          modredIpContractAddress: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"]
         })
       });
 
@@ -983,7 +984,7 @@ export default function App({ thirdwebClient }: AppProps) {
         {
           action: {
             label: 'View Transaction',
-            onClick: () => window.open(`https://sepolia-explorer.mantle.xyz/tx/${result.data.txHash}`, '_blank')
+            onClick: () => window.open(`https://explorer.testnet.mantle.xyz/tx/${result.data.txHash}`, '_blank')
           }
         }
       );
@@ -1025,13 +1026,13 @@ export default function App({ thirdwebClient }: AppProps) {
 
     try {
       setLoading(true);
-      notifyInfo('Processing Payment', `Paying ${paymentAmount} XTZ in revenue...`);
+      notifyInfo('Processing Payment', `Paying ${paymentAmount} MNT in revenue...`);
 
         const contract = getContract({
-        abi: SEAR_ABI,
+        abi: MODRED_IP_ABI,
           client: thirdwebClient,
           chain: defineChain(mantleTestnet.id),
-        address: CONTRACT_ADDRESS_JSON["SearModule#Sear"],
+        address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
         });
 
       const preparedCall = await prepareContractCall({
@@ -1053,7 +1054,7 @@ export default function App({ thirdwebClient }: AppProps) {
         });
 
       // Show success notification
-      notifySuccess('Payment Successful', `Successfully paid ${paymentAmount} XTZ in revenue!`);
+      notifySuccess('Payment Successful', `Successfully paid ${paymentAmount} MNT in revenue!`);
 
       // Reset form
       setPaymentAmount("");
@@ -1082,10 +1083,10 @@ export default function App({ thirdwebClient }: AppProps) {
       notifyInfo('Claiming Royalties', 'Processing royalty claim...');
 
         const contract = getContract({
-        abi: SEAR_ABI,
+        abi: MODRED_IP_ABI,
           client: thirdwebClient,
           chain: defineChain(mantleTestnet.id),
-        address: CONTRACT_ADDRESS_JSON["SearModule#Sear"],
+        address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
         });
 
       const preparedCall = await prepareContractCall({
@@ -1128,8 +1129,8 @@ export default function App({ thirdwebClient }: AppProps) {
       <header className="header">
         <div className="header-container">
           <div className="header-logo">
-            <img src="/modred.webp" alt="Sear" className="logo-image" />
-            <h1>Sear</h1>
+            <img src="/modred.webp" alt="ModredIP" className="logo-image" />
+            <h1>ModredIP</h1>
           </div>
           <div className="header-actions">
             <div className={`status-indicator ${backendStatus ? 'connected' : 'disconnected'}`}>
@@ -1574,7 +1575,7 @@ export default function App({ thirdwebClient }: AppProps) {
             </div>
             
             <div className="form-group">
-              <label className="form-label">💰 Amount (XTZ)</label>
+              <label className="form-label">💰 Amount (MNT)</label>
               <input
                 type="number"
                 className="form-input"
@@ -1693,7 +1694,7 @@ export default function App({ thirdwebClient }: AppProps) {
                     
                     <div className="card-field">
                       <span className="card-field-label">Total Revenue</span>
-                      <span className="card-field-value">💰 {formatEther(asset.totalRevenue)} XTZ</span>
+                      <span className="card-field-value">💰 {formatEther(asset.totalRevenue)} MNT</span>
                     </div>
                     
                     <div className="card-field">

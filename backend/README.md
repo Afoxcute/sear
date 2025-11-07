@@ -1,10 +1,10 @@
 # Mantle IP Management Backend
 
-This backend service provides IP (Intellectual Property) management functionality on the Mantle testnet using the Sear smart contract.
+This backend service provides IP (Intellectual Property) management functionality on the Mantle testnet using the ModredIP smart contract.
 
 ## Features
 
-- **IP Registration**: Register IP assets on Mantle testnet using Sear contract
+- **IP Registration**: Register IP assets on Mantle testnet using ModredIP contract
 - **License Minting**: Mint licenses for IP assets with customizable terms
 - **IPFS Integration**: Upload metadata to IPFS for decentralized storage
 - **Yakoa Integration**: Submit registered IPs to Yakoa for monitoring
@@ -38,7 +38,7 @@ NFT_CONTRACT_ADDRESS=optional_nft_contract_address
       "description": "NFT Description",
       "image": "https://ipfs.io/ipfs/..."
     },
-    "searContractAddress": "0x0734d90FA1857C073c4bf1e57f4F4151BE2e9f82"
+    "modredIpContractAddress": "0xeEFa27Ade566b6D4F6339EA2229aCf66a61D94e0"
   }
   ```
 
@@ -55,21 +55,21 @@ NFT_CONTRACT_ADDRESS=optional_nft_contract_address
       "commercialUse": true,
       "terms": "Commercial license terms..."
     },
-    "searContractAddress": "0x0734d90FA1857C073c4bf1e57f4F4151BE2e9f82"
+    "modredIpContractAddress": "0xeEFa27Ade566b6D4F6339EA2229aCf66a61D94e0"
   }
   ```
 
 ## Network Configuration
 
-- **Network**: Mantle Testnet
+- **Network**: Mantle Sepolia Testnet
 - **Chain ID**: 5003
 - **RPC URL**: https://rpc.sepolia.mantle.xyz
-- **Explorer**: https://sepolia-explorer.mantle.xyz
+- **Explorer**: https://explorer.testnet.mantle.xyz
 - **Native Token**: MNT (used as WIP_TOKEN_ADDRESS)
 
 ## Smart Contracts
 
-- **Sear**: Main contract for IP registration and license management
+- **ModredIP**: Main contract for IP registration and license management
 - **ERC6551Registry**: Token-bound account registry
 - **ERC6551Account**: Token-bound account implementation
 
@@ -92,5 +92,5 @@ The server will start on port 5000 by default.
 
 1. **Network**: Migrated from Story Protocol networks to Mantle testnet
 2. **Token**: Using native MNT token instead of WIP tokens
-3. **Contracts**: Using Sear contract instead of Story Protocol contracts
+3. **Contracts**: Using ModredIP contract instead of Story Protocol contracts
 4. **API**: Updated endpoints to work with Mantle-specific functionality 

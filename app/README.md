@@ -1,12 +1,12 @@
-# Sear Frontend
+# ModredIP Frontend
 
-A React-based frontend for the Sear intellectual property management system on Mantle.
+A React-based frontend for the ModredIP intellectual property management system on Mantle.
 
 ## Features
 
 ### 1. Register IP Asset
 - Mint an NFT representing ownership of your intellectual property
-- Register the NFT as an IP Asset on the Sear system
+- Register the NFT as an IP Asset on the ModredIP system
 - Upload IP content and metadata to IPFS
 - Set encryption flags for sensitive content
 
@@ -77,17 +77,17 @@ A React-based frontend for the Sear intellectual property management system on M
 
 ## Technical Details
 
-- **Blockchain**: Mantle Testnet (Chain ID: 5003)
-- **Smart Contract**: Sear.sol
+- **Blockchain**: Mantle Sepolia Testnet (Chain ID: 5003)
+- **Smart Contract**: ModredIP.sol
 - **Wallet Integration**: Thirdweb SDK
 - **IPFS**: Used for storing IP content, metadata, and license terms
 - **ERC-6551**: Token-bound accounts for IP management
 
 ## Contract Addresses
 
-- **Sear**: `0x0734d90FA1857C073c4bf1e57f4F4151BE2e9f82`
-- **ERC6551Registry**: `0xec79fC54BCb5D41Db79552c1c463FFC33479Be03`
-- **ERC6551Account**: `0x7296c77Edd04092Fd6a8117c7f797E0680d97fa1`
+- **ModredIP**: `0xeEFa27Ade566b6D4F6339EA2229aCf66a61D94e0`
+- **ERC6551Registry**: `0x9be86cb3691785f591DE11aa398863B89241B677`
+- **ERC6551Account**: `0x2fA171a2F9F579A210516150B44bcE8d720e657A`
 
 ## Security Features
 

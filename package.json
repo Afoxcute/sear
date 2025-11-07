@@ -1,7 +1,7 @@
 {
-  "name": "sear",
+  "name": "marketpulse",
   "version": "1.0.0",
-  "description": "IP management platform on Mantle",
+  "description": "bet platform on mantle",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

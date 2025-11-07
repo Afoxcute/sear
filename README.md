@@ -1,4 +1,4 @@
-# 🚀 Sear - Revolutionary IP Management Platform
+# 🚀 ModredIP - Revolutionary IP Management Platform
 
 > **The Future of Intellectual Property Management on Blockchain**
 
@@ -30,14 +30,14 @@
 To democratize intellectual property management by creating a decentralized, transparent, and automated platform that empowers creators to protect, monetize, and manage their IP assets with unprecedented efficiency.
 
 ### Mission
-Sear revolutionizes IP management by combining blockchain technology with AI-powered infringement detection, creating a comprehensive ecosystem where creators can register, license, monetize, and protect their intellectual property with built-in enforcement mechanisms.
+ModredIP revolutionizes IP management by combining blockchain technology with AI-powered infringement detection, creating a comprehensive ecosystem where creators can register, license, monetize, and protect their intellectual property with built-in enforcement mechanisms.
 
 ---
 
 ## 💼 Business Model
 
 ### Core Value Proposition
-Sear addresses critical pain points in the current IP management landscape:
+ModredIP addresses critical pain points in the current IP management landscape:
 
 1. **Fragmented IP Management**: Centralized platform for all IP lifecycle
 2. **Inefficient Licensing**: Automated, programmable licensing terms
@@ -84,7 +84,7 @@ Sear addresses critical pain points in the current IP management landscape:
 - **Account**: ERC6551Account for programmable logic
 
 ### Infrastructure
-- **Blockchain**: Mantle Testnet (Chain ID: 5003)
+- **Blockchain**: Mantle Sepolia Testnet (Chain ID: 5003)
 - **Storage**: IPFS for censorship-resistant content
 - **Monitoring**: Yakoa API for infringement detection
 - **Deployment**: Hardhat Ignition for contract deployment
@@ -316,10 +316,10 @@ The founders experienced firsthand the challenges of IP management:
 ### Quick Start
 ```bash
 # Clone the repository
-git clone https://github.com/sear/sear-platform.git
+git clone https://github.com/modredip/modredip-platform.git
 
 # Install dependencies
-cd sear-platform
+cd modredip-platform
 npm install
 
 # Start development server
@@ -344,6 +344,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Built with ❤️ by the Sear Team**
+**Built with ❤️ by the ModredIP Team**
 
 *Empowering creators to protect and monetize their intellectual property through blockchain technology.*

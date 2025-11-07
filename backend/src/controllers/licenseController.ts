@@ -5,13 +5,13 @@ import { convertBigIntsToStrings } from '../utils/bigIntSerializer';
 const handleLicenseMinting = async (req: Request, res: Response) => {
     console.log("🔥 Entered handleLicenseMinting");
     try {
-        const { tokenId, royaltyPercentage, duration, commercialUse, terms, searContractAddress } = req.body;
+        const { tokenId, royaltyPercentage, duration, commercialUse, terms, modredIpContractAddress } = req.body;
         console.log("📦 Received license request:", req.body);
 
         // Validate required parameters
-        if (!tokenId || !royaltyPercentage || !duration || commercialUse === undefined || !terms || !searContractAddress) {
+        if (!tokenId || !royaltyPercentage || !duration || commercialUse === undefined || !terms || !modredIpContractAddress) {
             return res.status(400).json({
-                error: 'Missing required parameters: tokenId, royaltyPercentage, duration, commercialUse, terms, searContractAddress'
+                error: 'Missing required parameters: tokenId, royaltyPercentage, duration, commercialUse, terms, modredIpContractAddress'
             });
         }
 
@@ -21,7 +21,7 @@ const handleLicenseMinting = async (req: Request, res: Response) => {
             duration,
             commercialUse,
             terms,
-            searContractAddress
+            modredIpContractAddress
         };
 
         const result = await mintLicense(licenseRequest);

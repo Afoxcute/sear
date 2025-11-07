@@ -4,10 +4,10 @@ import dotenv from 'dotenv'
 
 dotenv.config()
 
-// Mantle testnet configuration
+// Mantle Sepolia testnet configuration
 const mantleTestnet: Chain = {
   id: 5003,
-  name: 'Mantle Testnet',
+  name: 'Mantle Sepolia Testnet',
   nativeCurrency: {
     name: 'MNT',
     symbol: 'MNT',
@@ -15,16 +15,16 @@ const mantleTestnet: Chain = {
   },
   rpcUrls: {
     default: {
-      http: ['https://rpc.sepolia.mantle.xyz'],
+      http: ['https://mantle-sepolia.drpc.org'],
     },
     public: {
-      http: ['https://rpc.sepolia.mantle.xyz'],
+      http: ['https://mantle-sepolia.drpc.org'],
     },
   },
   blockExplorers: {
     default: {
       name: 'Mantle Testnet Explorer',
-      url: 'https://sepolia-explorer.mantle.xyz',
+      url: 'https://explorer.testnet.mantle.xyz',
     },
   },
 }
@@ -38,8 +38,8 @@ interface NetworkConfig {
 
 // Network configuration
 const networkConfig: NetworkConfig = {
-    rpcProviderUrl: 'https://rpc.sepolia.mantle.xyz',
-    blockExplorer: 'https://sepolia-explorer.mantle.xyz',
+    rpcProviderUrl: 'https://mantle-sepolia.drpc.org',
+    blockExplorer: 'https://explorer.testnet.mantle.xyz',
     chain: mantleTestnet,
     nativeTokenAddress: '0x0000000000000000000000000000000000000000' as Address, // Native MNT token
 }
@@ -63,7 +63,11 @@ export const account: Account = privateKeyToAccount(`0x${process.env.WALLET_PRIV
 
 const baseConfig = {
     chain: networkInfo.chain,
-    transport: http(networkInfo.rpcProviderUrl),
+    transport: http(networkInfo.rpcProviderUrl, {
+        timeout: 60000, // 60 seconds timeout
+        retryCount: 3,
+        retryDelay: 1000,
+    }),
 } as const
 
 export const publicClient = createPublicClient(baseConfig)

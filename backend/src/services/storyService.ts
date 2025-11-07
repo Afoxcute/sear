@@ -20,8 +20,8 @@ export interface IpMetadata {
     created_at?: string;
 }
 
-// Sear contract ABI (simplified for IP registration)
-const SEAR_ABI = [
+// ModredIP contract ABI (simplified for IP registration)
+const MODRED_IP_ABI = [
     {
         "inputs": [
             {
@@ -96,17 +96,17 @@ export const registerIpWithMantle = async (
     ipHash: string,
     metadata: string,
     isEncrypted: boolean,
-    searContractAddress: Address
+    modredIpContractAddress: Address
 ) => {
     try {
         console.log('ipHash:', ipHash);
         console.log('metadata:', metadata);
         console.log('isEncrypted:', isEncrypted);
 
-        // Register IP on Sear contract
+        // Register IP on ModredIP contract
         const { request } = await publicClient.simulateContract({
-            address: searContractAddress,
-            abi: SEAR_ABI,
+            address: modredIpContractAddress,
+            abi: MODRED_IP_ABI,
             functionName: 'registerIP',
             args: [
                 ipHash,
@@ -156,12 +156,12 @@ export const mintLicenseOnMantle = async (
     duration: number,
     commercialUse: boolean,
     terms: string,
-    searContractAddress: Address
+    modredIpContractAddress: Address
 ) => {
     try {
         const { request } = await publicClient.simulateContract({
-            address: searContractAddress,
-            abi: SEAR_ABI,
+            address: modredIpContractAddress,
+            abi: MODRED_IP_ABI,
             functionName: 'mintLicense',
             args: [
                 BigInt(tokenId),

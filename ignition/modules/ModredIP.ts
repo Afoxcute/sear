@@ -3,34 +3,36 @@
 
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 
-const SearModule = buildModule("SearModule", (m) => {
+const ModredIPModule = buildModule("ModredIPModule", (m) => {
+  // Get the deployer account for platform fee collector
+  const deployer = m.getAccount(0);
+
   // Deploy ERC-6551 Registry (no arguments needed)
   const registry = m.contract("ERC6551Registry");
 
   // Deploy Account Implementation for ERC-6551
   const accountImplementation = m.contract("ERC6551Account");
 
-  // Deploy Sear contract
-  const SearContract = m.contract("Sear", [
-    registry,
-    accountImplementation,
-    5003, // Mantle testnet chain ID
-    "0x0000000000000000000000000000000000000000" // Platform fee collector (to be set later)
-  ]);
-
   // Add implementation to registry
   m.call(registry, "addImplementation", [accountImplementation]);
 
-  // Initialize the contract
-  m.call(SearContract, "setPlatformFeeCollector", [
-    "0x0000000000000000000000000000000000000000"
+  // Deploy ModredIP contract with constructor arguments:
+  // - registry address
+  // - accountImplementation address
+  // - chainId (5003 for Mantle Sepolia Testnet)
+  // - platformFeeCollector address (using deployer)
+  const ModredIPContract = m.contract("ModredIP", [
+    registry,
+    accountImplementation,
+    5003, // Mantle Sepolia testnet chain ID
+    deployer // Platform fee collector
   ]);
 
   return { 
-    SearContract,
+    ModredIPContract,
     registry,
     accountImplementation
   };
 });
 
-export default SearModule; 
+export default ModredIPModule; 

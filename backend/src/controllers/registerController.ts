@@ -7,23 +7,23 @@ import { convertBigIntsToStrings } from '../utils/bigIntSerializer';
 const handleRegistration = async (req: Request, res: Response) => {
   console.log("🔥 Entered handleRegistration");
   try {
-    const { ipHash, metadata, isEncrypted, searContractAddress } = req.body;
+    const { ipHash, metadata, isEncrypted, modredIpContractAddress } = req.body;
     console.log("📦 Received body:", req.body);
 
     // Validate required parameters
-    if (!ipHash || !metadata || isEncrypted === undefined || !searContractAddress) {
+    if (!ipHash || !metadata || isEncrypted === undefined || !modredIpContractAddress) {
       return res.status(400).json({
-        error: 'Missing required parameters: ipHash, metadata, isEncrypted, searContractAddress'
+        error: 'Missing required parameters: ipHash, metadata, isEncrypted, modredIpContractAddress'
       });
     }
 
-    // 1. Register on Mantle using Sear contract
+    // 1. Register on Mantle using ModredIP contract
     const {
       txHash,
       ipAssetId,
       blockNumber,
       explorerUrl
-    } = await registerIpWithMantle(ipHash, metadata, isEncrypted, searContractAddress as Address);
+    } = await registerIpWithMantle(ipHash, metadata, isEncrypted, modredIpContractAddress as Address);
     console.log("✅ Mantle registration successful:", {
       txHash,
       ipAssetId,
@@ -34,7 +34,7 @@ const handleRegistration = async (req: Request, res: Response) => {
     // 2. Submit to Yakoa (if ipAssetId is available)
     if (ipAssetId) {
       // Ensure contract address is properly formatted
-      const contractAddress = searContractAddress.toLowerCase();
+      const contractAddress = modredIpContractAddress.toLowerCase();
       
       // Format ID as contract address with token ID: 0x[contract_address]:[token_id]
       // Use base ID format for Yakoa API compatibility
@@ -119,7 +119,7 @@ const handleRegistration = async (req: Request, res: Response) => {
           brand_name: null,
           data: {
             type: 'email' as const,
-            email_address: parsedMetadata.creator_email || 'creator@sear.com'
+            email_address: parsedMetadata.creator_email || 'creator@modredip.com'
           }
         }
       ];
@@ -133,7 +133,7 @@ const yakoaResponse = await registerToYakoa({
         media: yakoaMedia,
         brandId: null,
         brandName: null,
-        emailAddress: parsedMetadata.creator_email || 'creator@sear.com',
+        emailAddress: parsedMetadata.creator_email || 'creator@modredip.com',
         licenseParents: [],
         authorizations: authorizations,
 });

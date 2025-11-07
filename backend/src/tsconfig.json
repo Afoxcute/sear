@@ -21,6 +21,15 @@
         "outDir": "dist",
         "rootDir": "."
     },
-
-    "exclude": ["node_modules"]
+    "include": [
+        "**/*.ts"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist",
+        "**/*.tsx",
+        "**/*.jsx",
+        "../app/**/*",
+        "../../app/**/*"
+    ]
 }

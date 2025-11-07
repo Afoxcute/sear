@@ -26,4 +26,3 @@ async function uploadFileToIPFS(filePath, fileName, fileType) {
     const { IpfsHash } = await pinata.upload.file(file);
     return IpfsHash;
 }
-//# sourceMappingURL=uploadToIpfs.js.map

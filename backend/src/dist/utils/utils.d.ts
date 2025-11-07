@@ -40,6 +40,6 @@ export interface LicensingConfig {
 }
 export declare const defaultLicensingConfig: LicensingConfig;
 export declare function convertRoyaltyPercentToTokens(royaltyPercent: number): number;
-export declare function getEtherlinkExplorerUrl(txHash: string): string;
-export declare function getEtherlinkAddressExplorerUrl(address: string): string;
+export declare function getMantleExplorerUrl(txHash: string): string;
+export declare function getMantleAddressExplorerUrl(address: string): string;
 //# sourceMappingURL=utils.d.ts.map

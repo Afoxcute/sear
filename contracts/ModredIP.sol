@@ -91,7 +91,7 @@ contract ModredIP is ERC721, Ownable, ReentrancyGuard {
         address _accountImplementation,
         uint256 _chainId,
         address _platformFeeCollector
-    ) ERC721("ModredIP", "MIP") Ownable(msg.sender) {
+    ) ERC721("ModredIP", "MNT") Ownable(msg.sender) {
         registry = ERC6551Registry(_registry);
         accountImplementation = _accountImplementation;
         chainId = _chainId;
@@ -171,6 +171,7 @@ contract ModredIP is ERC721, Ownable, ReentrancyGuard {
         require(msg.value > 0, "Payment must be greater than 0");
         
         IPAsset storage asset = ipAssets[tokenId];
+        address ipOwner = ownerOf(tokenId);
         asset.totalRevenue += msg.value;
         
         // Calculate platform fee
@@ -184,15 +185,25 @@ contract ModredIP is ERC721, Ownable, ReentrancyGuard {
         }
         
         // Distribute to license holders
+        uint256 totalLicenseeRoyalties = 0;
         uint256[] memory licenseIds = tokenLicenses[tokenId];
+        RoyaltyVault storage vault = royaltyVaults[tokenId];
+        
         for (uint256 i = 0; i < licenseIds.length; i++) {
             License storage license = licenses[licenseIds[i]];
             if (license.isActive && block.timestamp < license.startDate + license.duration) {
                 uint256 royaltyAmount = (remainingAmount * license.royaltyPercentage) / ROYALTY_DECIMALS;
-                RoyaltyVault storage vault = royaltyVaults[tokenId];
                 vault.balances[license.licensee] += royaltyAmount;
                 vault.totalAccumulated += royaltyAmount;
+                totalLicenseeRoyalties += royaltyAmount;
             }
+        }
+        
+        // Give remaining amount to IP owner (author)
+        uint256 ownerRoyalty = remainingAmount - totalLicenseeRoyalties;
+        if (ownerRoyalty > 0) {
+            vault.balances[ipOwner] += ownerRoyalty;
+            vault.totalAccumulated += ownerRoyalty;
         }
         
         emit RevenuePaid(tokenId, msg.value);

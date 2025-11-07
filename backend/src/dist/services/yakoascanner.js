@@ -16,10 +16,25 @@ const YAKOA_API_KEY = process.env.YAKOA_API_KEY;
 const SUBDOMAIN = process.env.YAKOA_SUBDOMAIN;
 const NETWORK = process.env.YAKOA_NETWORK;
 const REGISTER_TOKEN_URL = `https://${SUBDOMAIN}.ip-api-sandbox.yakoa.io/${NETWORK}/token`;
+/**
+ * Extract base ID without timestamp for Yakoa API calls
+ * @param id - The full ID (may include timestamp)
+ * @returns Base ID in format contract:tokenId
+ */
+function getBaseIdForYakoa(id) {
+    const parts = id.split(':');
+    if (parts.length >= 2) {
+        // Return contract:tokenId format (first two parts)
+        return `${parts[0]}:${parts[1]}`;
+    }
+    return id; // Return as-is if no colon found
+}
 // Check if IP asset already exists in Yakoa
 async function checkYakoaTokenExists(id) {
     try {
-        const response = await axios_1.default.get(`${REGISTER_TOKEN_URL}/${id}`, {
+        const baseId = getBaseIdForYakoa(id);
+        console.log("🔍 Checking Yakoa with base ID:", baseId);
+        const response = await axios_1.default.get(`${REGISTER_TOKEN_URL}/${baseId}`, {
             headers: {
                 "X-API-KEY": YAKOA_API_KEY,
             },
@@ -50,8 +65,10 @@ async function registerToYakoa({ Id, transactionHash, blockNumber, creatorId, me
                 message: "IP asset already registered in Yakoa"
             };
         }
+        const baseId = getBaseIdForYakoa(Id);
+        console.log("🔍 Using base ID for Yakoa registration:", baseId);
         const payload = {
-            id: Id, // Keep original case for validation
+            id: baseId, // Use base ID without timestamp for Yakoa API
             registration_tx: {
                 hash: transactionHash.toLowerCase(),
                 block_number: blockNumber,
@@ -110,7 +127,9 @@ async function registerToYakoa({ Id, transactionHash, blockNumber, creatorId, me
 }
 async function getYakoaToken(id) {
     try {
-        const response = await axios_1.default.get(`${REGISTER_TOKEN_URL}/${id}`, {
+        const baseId = getBaseIdForYakoa(id);
+        console.log("🔍 Fetching Yakoa token with base ID:", baseId);
+        const response = await axios_1.default.get(`${REGISTER_TOKEN_URL}/${baseId}`, {
             headers: {
                 "X-API-KEY": YAKOA_API_KEY,
             },
@@ -125,7 +144,9 @@ async function getYakoaToken(id) {
 }
 async function getYakoaInfringementStatus(id) {
     try {
-        const response = await axios_1.default.get(`${REGISTER_TOKEN_URL}/${id}`, {
+        const baseId = getBaseIdForYakoa(id);
+        console.log("🔍 Fetching Yakoa infringement status with base ID:", baseId);
+        const response = await axios_1.default.get(`${REGISTER_TOKEN_URL}/${baseId}`, {
             headers: {
                 "X-API-KEY": YAKOA_API_KEY,
             },
@@ -150,4 +171,3 @@ async function getYakoaInfringementStatus(id) {
         throw err;
     }
 }
-//# sourceMappingURL=yakoascanner.js.map

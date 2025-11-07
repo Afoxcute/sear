@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const storyService_1 = require("../services/storyService");
 const yakoascanner_1 = require("../services/yakoascanner");
 const bigIntSerializer_1 = require("../utils/bigIntSerializer");
-const idGenerator_1 = require("../utils/idGenerator");
 const handleRegistration = async (req, res) => {
     console.log("🔥 Entered handleRegistration");
     try {
@@ -15,9 +14,9 @@ const handleRegistration = async (req, res) => {
                 error: 'Missing required parameters: ipHash, metadata, isEncrypted, modredIpContractAddress'
             });
         }
-        // 1. Register on Etherlink using ModredIP contract
-        const { txHash, ipAssetId, blockNumber, explorerUrl } = await (0, storyService_1.registerIpWithEtherlink)(ipHash, metadata, isEncrypted, modredIpContractAddress);
-        console.log("✅ Etherlink registration successful:", {
+        // 1. Register on Mantle using ModredIP contract
+        const { txHash, ipAssetId, blockNumber, explorerUrl } = await (0, storyService_1.registerIpWithMantle)(ipHash, metadata, isEncrypted, modredIpContractAddress);
+        console.log("✅ Mantle registration successful:", {
             txHash,
             ipAssetId,
             blockNumber,
@@ -28,8 +27,8 @@ const handleRegistration = async (req, res) => {
             // Ensure contract address is properly formatted
             const contractAddress = modredIpContractAddress.toLowerCase();
             // Format ID as contract address with token ID: 0x[contract_address]:[token_id]
-            // Generate unique timestamped ID for Yakoa registration to prevent conflicts
-            const Id = (0, idGenerator_1.generateTimestampedId)(contractAddress, ipAssetId);
+            // Use base ID format for Yakoa API compatibility
+            const Id = `${contractAddress.toLowerCase()}:${ipAssetId}`;
             console.log("📞 Calling registerToYakoa...");
             console.log("🔍 Yakoa ID format:", Id);
             console.log("🔍 Contract address:", contractAddress);
@@ -53,13 +52,20 @@ const handleRegistration = async (req, res) => {
             // Ensure creator address is lowercase for consistency
             creatorId = creatorId.toLowerCase();
             console.log("✅ Final creator_id for Yakoa:", creatorId);
+            // Extract hash from ipfs:// format for Yakoa API
+            const extractHash = (ipfsHash) => {
+                if (ipfsHash.startsWith('ipfs://')) {
+                    return ipfsHash.replace('ipfs://', '');
+                }
+                return ipfsHash;
+            };
             // Prepare comprehensive metadata for Yakoa
             const yakoaMetadata = {
                 title: parsedMetadata.name || 'Unknown',
                 description: parsedMetadata.description || '',
                 creator: creatorId,
                 created_at: parsedMetadata.created_at || new Date().toISOString(),
-                ip_hash: ipHash,
+                ip_hash: extractHash(ipHash), // Use extracted hash
                 is_encrypted: isEncrypted,
                 contract_address: contractAddress,
                 token_id: ipAssetId.toString(),
@@ -77,10 +83,10 @@ const handleRegistration = async (req, res) => {
             const yakoaMedia = [
                 {
                     media_id: parsedMetadata.name || 'Unknown',
-                    url: `https://ipfs.io/ipfs/${ipHash}`,
+                    url: `https://ipfs.io/ipfs/${extractHash(ipHash)}`, // Use extracted hash for URL
                     type: parsedMetadata.mime_type || 'unknown',
                     size: parsedMetadata.file_size || 0,
-                    hash: ipHash,
+                    // Removed hash field as it's not required by Yakoa API
                     metadata: {
                         name: parsedMetadata.name || 'Unknown',
                         description: parsedMetadata.description || '',
@@ -115,11 +121,11 @@ const handleRegistration = async (req, res) => {
             });
             // Determine success message based on Yakoa response
             const successMessage = yakoaResponse.alreadyRegistered
-                ? 'IP Asset registered on Etherlink, already exists in Yakoa'
-                : 'IP Asset successfully registered on Etherlink and Yakoa';
+                ? 'IP Asset registered on Mantle, already exists in Yakoa'
+                : 'IP Asset successfully registered on Mantle and Yakoa';
             const responseData = {
                 message: successMessage,
-                etherlink: {
+                mantle: {
                     txHash,
                     ipAssetId,
                     explorerUrl,
@@ -133,7 +139,7 @@ const handleRegistration = async (req, res) => {
         else {
             const responseData = {
                 message: 'Registration successful (IP Asset ID not extracted)',
-                etherlink: {
+                mantle: {
                     txHash,
                     ipAssetId: null,
                     explorerUrl,
@@ -153,4 +159,3 @@ const handleRegistration = async (req, res) => {
     }
 };
 exports.default = handleRegistration;
-//# sourceMappingURL=registerController.js.map

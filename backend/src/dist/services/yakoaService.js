@@ -37,4 +37,3 @@ async function fetchInfringementStatus(id) {
         throw error;
     }
 }
-//# sourceMappingURL=yakoaService.js.map

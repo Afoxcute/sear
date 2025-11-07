@@ -6,9 +6,9 @@ export declare const licenseAttachmentWorkflowsAbi: ({
     }[];
     stateMutability: string;
     type: string;
-    name?: never;
-    anonymous?: never;
-    outputs?: never;
+    name?: undefined;
+    anonymous?: undefined;
+    outputs?: undefined;
 } | {
     inputs: {
         internalType: string;
@@ -17,9 +17,9 @@ export declare const licenseAttachmentWorkflowsAbi: ({
     }[];
     name: string;
     type: string;
-    stateMutability?: never;
-    anonymous?: never;
-    outputs?: never;
+    stateMutability?: undefined;
+    anonymous?: undefined;
+    outputs?: undefined;
 } | {
     anonymous: boolean;
     inputs: {
@@ -30,14 +30,14 @@ export declare const licenseAttachmentWorkflowsAbi: ({
     }[];
     name: string;
     type: string;
-    stateMutability?: never;
-    outputs?: never;
+    stateMutability?: undefined;
+    outputs?: undefined;
 } | {
     inputs: ({
         internalType: string;
         name: string;
         type: string;
-        components?: never;
+        components?: undefined;
     } | {
         components: {
             internalType: string;
@@ -70,6 +70,6 @@ export declare const licenseAttachmentWorkflowsAbi: ({
     }[];
     stateMutability: string;
     type: string;
-    anonymous?: never;
+    anonymous?: undefined;
 })[];
 //# sourceMappingURL=licenseAttachmentWorkflowsAbi.d.ts.map

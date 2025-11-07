@@ -449,4 +449,3 @@ exports.licenseAttachmentWorkflowsAbi = [
         type: 'function',
     },
 ];
-//# sourceMappingURL=licenseAttachmentWorkflowsAbi.js.map

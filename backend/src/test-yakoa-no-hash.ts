@@ -1,4 +1,4 @@
-import { registerToYakoa, checkYakoaTokenExists } from '../services/yakoascanner';
+import { registerToYakoa, checkYakoaTokenExists } from './services/yakoascanner';
 
 async function testYakoaWithoutHash() {
   console.log("🧪 Testing Yakoa registration without hash field...");

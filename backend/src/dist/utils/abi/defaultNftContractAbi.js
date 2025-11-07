@@ -109,4 +109,3 @@ exports.defaultNftContractAbi = [
         type: "function",
     },
 ];
-//# sourceMappingURL=defaultNftContractAbi.js.map

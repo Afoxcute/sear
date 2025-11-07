@@ -61,4 +61,3 @@ const handleInfringementStatusByContract = async (req, res) => {
     }
 };
 exports.handleInfringementStatusByContract = handleInfringementStatusByContract;
-//# sourceMappingURL=infringementController.js.map

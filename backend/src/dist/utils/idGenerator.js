@@ -42,4 +42,3 @@ function parseYakoaId(id) {
         tokenId: parts[1]
     };
 }
-//# sourceMappingURL=idGenerator.js.map

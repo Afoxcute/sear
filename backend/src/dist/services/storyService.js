@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.mintLicenseOnEtherlink = exports.registerIpWithEtherlink = void 0;
+exports.mintLicenseOnMantle = exports.registerIpWithMantle = void 0;
 const config_1 = require("../utils/config");
 // ModredIP contract ABI (simplified for IP registration)
 const MODRED_IP_ABI = [
@@ -73,7 +73,7 @@ const MODRED_IP_ABI = [
         "type": "function"
     }
 ];
-const registerIpWithEtherlink = async (ipHash, metadata, isEncrypted, modredIpContractAddress) => {
+const registerIpWithMantle = async (ipHash, metadata, isEncrypted, modredIpContractAddress) => {
     try {
         console.log('ipHash:', ipHash);
         console.log('metadata:', metadata);
@@ -117,12 +117,12 @@ const registerIpWithEtherlink = async (ipHash, metadata, isEncrypted, modredIpCo
         };
     }
     catch (error) {
-        console.error('Error registering IP with Etherlink:', error);
+        console.error('Error registering IP with Mantle:', error);
         throw error;
     }
 };
-exports.registerIpWithEtherlink = registerIpWithEtherlink;
-const mintLicenseOnEtherlink = async (tokenId, royaltyPercentage, duration, commercialUse, terms, modredIpContractAddress) => {
+exports.registerIpWithMantle = registerIpWithMantle;
+const mintLicenseOnMantle = async (tokenId, royaltyPercentage, duration, commercialUse, terms, modredIpContractAddress) => {
     try {
         const { request } = await config_1.publicClient.simulateContract({
             address: modredIpContractAddress,
@@ -149,9 +149,8 @@ const mintLicenseOnEtherlink = async (tokenId, royaltyPercentage, duration, comm
         };
     }
     catch (error) {
-        console.error('Error minting license on Etherlink:', error);
+        console.error('Error minting license on Mantle:', error);
         throw error;
     }
 };
-exports.mintLicenseOnEtherlink = mintLicenseOnEtherlink;
-//# sourceMappingURL=storyService.js.map
+exports.mintLicenseOnMantle = mintLicenseOnMantle;

@@ -10,4 +10,3 @@ const asyncHandler_1 = require("../utils1/asyncHandler");
 const router = express_1.default.Router();
 router.post('/mint', (0, asyncHandler_1.asyncHandler)(licenseController_1.default));
 exports.default = router;
-//# sourceMappingURL=license.js.map

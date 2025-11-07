@@ -2,8 +2,8 @@ export declare const defaultNftContractAbi: ({
     inputs: never[];
     stateMutability: string;
     type: string;
-    name?: never;
-    outputs?: never;
+    name?: undefined;
+    outputs?: undefined;
 } | {
     inputs: {
         internalType: string;

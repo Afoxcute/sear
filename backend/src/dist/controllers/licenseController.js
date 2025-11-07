@@ -49,4 +49,3 @@ const handleLicenseMinting = async (req, res) => {
     }
 };
 exports.default = handleLicenseMinting;
-//# sourceMappingURL=licenseController.js.map

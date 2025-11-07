@@ -85,9 +85,9 @@ A React-based frontend for the ModredIP intellectual property management system 
 
 ## Contract Addresses
 
-- **ModredIP**: `0xeEFa27Ade566b6D4F6339EA2229aCf66a61D94e0`
-- **ERC6551Registry**: `0x9be86cb3691785f591DE11aa398863B89241B677`
-- **ERC6551Account**: `0x2fA171a2F9F579A210516150B44bcE8d720e657A`
+- **ModredIP**: `0x067fda4FcaaDAa37552e5B146d8bC441ae4B1351`
+- **ERC6551Registry**: `0xE8e9E9dce38bEa250e35Fc212DAE0EA836EF4E7B`
+- **ERC6551Account**: `0xe01C006f52F3b78ed62C9A71B8Cbd3644b5eA749`
 
 ## Security Features
 

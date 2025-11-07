@@ -11,4 +11,3 @@ router.get('/status/:id', infringementController_1.handleInfringementStatus);
 // Get infringement status by contract address and token ID
 router.get('/status/:contractAddress/:tokenId', infringementController_1.handleInfringementStatusByContract);
 exports.default = router;
-//# sourceMappingURL=infringement.js.map

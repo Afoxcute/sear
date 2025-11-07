@@ -47,4 +47,3 @@ function convertBigIntsToStrings(obj) {
     }
     return obj;
 }
-//# sourceMappingURL=bigIntSerializer.js.map

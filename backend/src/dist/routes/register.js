@@ -10,4 +10,3 @@ const asyncHandler_1 = require("../utils1/asyncHandler");
 const router = express_1.default.Router();
 router.post('/', (0, asyncHandler_1.asyncHandler)(registerController_1.default));
 exports.default = router;
-//# sourceMappingURL=register.js.map

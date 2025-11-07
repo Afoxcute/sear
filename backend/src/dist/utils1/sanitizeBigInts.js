@@ -17,4 +17,3 @@ function sanitizeBigInts(obj) {
     }
     return obj;
 }
-//# sourceMappingURL=sanitizeBigInts.js.map

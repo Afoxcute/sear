@@ -21,10 +21,9 @@ app.use('/api/yakoa', yakoaRoutes_1.default);
 app.use('/api/license', license_1.default);
 // Default route (optional)
 app.get('/', (_req, res) => {
-    res.send('✅ Yakoa + Etherlink backend is running!');
+    res.send('✅ Yakoa + Mantle backend is running!');
 });
 // Start the server
 app.listen(PORT, () => {
     console.log(`🚀 Backend server running at http://localhost:${PORT}`);
 });
-//# sourceMappingURL=app.js.map

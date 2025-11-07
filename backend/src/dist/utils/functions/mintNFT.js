@@ -31,4 +31,3 @@ async function mintNFT(to, uri) {
         throw error;
     }
 }
-//# sourceMappingURL=mintNFT.js.map

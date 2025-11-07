@@ -6,13 +6,13 @@ const config_1 = require("../utils/config");
 const bigIntSerializer_1 = require("../utils/bigIntSerializer");
 const mintLicense = async (licenseRequest) => {
     try {
-        const { txHash, blockNumber, explorerUrl } = await (0, storyService_1.mintLicenseOnEtherlink)(licenseRequest.tokenId, licenseRequest.royaltyPercentage, licenseRequest.duration, licenseRequest.commercialUse, licenseRequest.terms, licenseRequest.modredIpContractAddress);
+        const { txHash, blockNumber, explorerUrl } = await (0, storyService_1.mintLicenseOnMantle)(licenseRequest.tokenId, licenseRequest.royaltyPercentage, licenseRequest.duration, licenseRequest.commercialUse, licenseRequest.terms, licenseRequest.modredIpContractAddress);
         const result = {
             success: true,
             txHash,
             blockNumber,
             explorerUrl,
-            message: 'License minted successfully on Etherlink'
+            message: 'License minted successfully on Mantle'
         };
         // Convert any BigInt values to strings for JSON serialization
         return (0, bigIntSerializer_1.convertBigIntsToStrings)(result);
@@ -22,7 +22,7 @@ const mintLicense = async (licenseRequest) => {
         return {
             success: false,
             error: error instanceof Error ? error.message : 'Unknown error occurred',
-            message: 'Failed to mint license on Etherlink'
+            message: 'Failed to mint license on Mantle'
         };
     }
 };
@@ -31,4 +31,3 @@ const getLicenseExplorerUrl = (txHash) => {
     return `${config_1.BLOCK_EXPLORER_URL}/tx/${txHash}`;
 };
 exports.getLicenseExplorerUrl = getLicenseExplorerUrl;
-//# sourceMappingURL=licenseService.js.map

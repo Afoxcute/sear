@@ -117,4 +117,3 @@ async function registerToYakoa() {
         throw err;
     }
 }
-//# sourceMappingURL=yakoascanner.js.map

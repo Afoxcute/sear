@@ -363,7 +363,7 @@ export declare const publicClient: {
         authorizationList?: undefined | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
-        gasPrice?: bigint;
+        gasPrice?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & import("viem").FeeValuesLegacy ? "legacy" : never) | (request extends {
         accessList?: import("viem").AccessList | undefined;
@@ -372,8 +372,8 @@ export declare const publicClient: {
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
         maxFeePerBlobGas?: undefined | undefined;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
+        maxFeePerGas?: bigint | undefined;
+        maxPriorityFeePerGas?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & (import("viem").OneOf<{
         maxFeePerGas: import("viem").FeeValuesEIP1559["maxFeePerGas"];
@@ -419,7 +419,7 @@ export declare const publicClient: {
         sidecars: import("viem").TransactionSerializableEIP4844["sidecars"];
     }, import("viem").TransactionSerializableEIP4844>) ? "eip4844" : never) | (request extends ({
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -429,7 +429,7 @@ export declare const publicClient: {
         sidecars?: undefined | undefined;
     } | {
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -444,7 +444,7 @@ export declare const publicClient: {
         authorizationList?: undefined | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
-        gasPrice?: bigint;
+        gasPrice?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & import("viem").FeeValuesLegacy ? "legacy" : never) | (request extends {
         accessList?: import("viem").AccessList | undefined;
@@ -453,8 +453,8 @@ export declare const publicClient: {
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
         maxFeePerBlobGas?: undefined | undefined;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
+        maxFeePerGas?: bigint | undefined;
+        maxPriorityFeePerGas?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & (import("viem").OneOf<{
         maxFeePerGas: import("viem").FeeValuesEIP1559["maxFeePerGas"];
@@ -500,7 +500,7 @@ export declare const publicClient: {
         sidecars: import("viem").TransactionSerializableEIP4844["sidecars"];
     }, import("viem").TransactionSerializableEIP4844>) ? "eip4844" : never) | (request extends ({
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -510,7 +510,7 @@ export declare const publicClient: {
         sidecars?: undefined | undefined;
     } | {
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -525,7 +525,7 @@ export declare const publicClient: {
         authorizationList?: undefined | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
-        gasPrice?: bigint;
+        gasPrice?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & import("viem").FeeValuesLegacy ? "legacy" : never) | (request extends {
         accessList?: import("viem").AccessList | undefined;
@@ -534,8 +534,8 @@ export declare const publicClient: {
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
         maxFeePerBlobGas?: undefined | undefined;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
+        maxFeePerGas?: bigint | undefined;
+        maxPriorityFeePerGas?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & (import("viem").OneOf<{
         maxFeePerGas: import("viem").FeeValuesEIP1559["maxFeePerGas"];
@@ -581,7 +581,7 @@ export declare const publicClient: {
         sidecars: import("viem").TransactionSerializableEIP4844["sidecars"];
     }, import("viem").TransactionSerializableEIP4844>) ? "eip4844" : never) | (request extends ({
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -591,7 +591,7 @@ export declare const publicClient: {
         sidecars?: undefined | undefined;
     } | {
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -606,7 +606,7 @@ export declare const publicClient: {
         authorizationList?: undefined | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
-        gasPrice?: bigint;
+        gasPrice?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & import("viem").FeeValuesLegacy ? "legacy" : never) | (request extends {
         accessList?: import("viem").AccessList | undefined;
@@ -615,8 +615,8 @@ export declare const publicClient: {
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
         maxFeePerBlobGas?: undefined | undefined;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
+        maxFeePerGas?: bigint | undefined;
+        maxPriorityFeePerGas?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & (import("viem").OneOf<{
         maxFeePerGas: import("viem").FeeValuesEIP1559["maxFeePerGas"];
@@ -662,7 +662,7 @@ export declare const publicClient: {
         sidecars: import("viem").TransactionSerializableEIP4844["sidecars"];
     }, import("viem").TransactionSerializableEIP4844>) ? "eip4844" : never) | (request extends ({
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -672,7 +672,7 @@ export declare const publicClient: {
         sidecars?: undefined | undefined;
     } | {
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -687,7 +687,7 @@ export declare const publicClient: {
         authorizationList?: undefined | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
-        gasPrice?: bigint;
+        gasPrice?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & import("viem").FeeValuesLegacy ? "legacy" : never) | (request extends {
         accessList?: import("viem").AccessList | undefined;
@@ -696,8 +696,8 @@ export declare const publicClient: {
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
         maxFeePerBlobGas?: undefined | undefined;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
+        maxFeePerGas?: bigint | undefined;
+        maxPriorityFeePerGas?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & (import("viem").OneOf<{
         maxFeePerGas: import("viem").FeeValuesEIP1559["maxFeePerGas"];
@@ -743,7 +743,7 @@ export declare const publicClient: {
         sidecars: import("viem").TransactionSerializableEIP4844["sidecars"];
     }, import("viem").TransactionSerializableEIP4844>) ? "eip4844" : never) | (request extends ({
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -753,7 +753,7 @@ export declare const publicClient: {
         sidecars?: undefined | undefined;
     } | {
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -768,7 +768,7 @@ export declare const publicClient: {
         authorizationList?: undefined | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
-        gasPrice?: bigint;
+        gasPrice?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & import("viem").FeeValuesLegacy ? "legacy" : never) | (request extends {
         accessList?: import("viem").AccessList | undefined;
@@ -777,8 +777,8 @@ export declare const publicClient: {
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
         maxFeePerBlobGas?: undefined | undefined;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
+        maxFeePerGas?: bigint | undefined;
+        maxPriorityFeePerGas?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & (import("viem").OneOf<{
         maxFeePerGas: import("viem").FeeValuesEIP1559["maxFeePerGas"];
@@ -824,7 +824,7 @@ export declare const publicClient: {
         sidecars: import("viem").TransactionSerializableEIP4844["sidecars"];
     }, import("viem").TransactionSerializableEIP4844>) ? "eip4844" : never) | (request extends ({
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -834,7 +834,7 @@ export declare const publicClient: {
         sidecars?: undefined | undefined;
     } | {
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -849,7 +849,7 @@ export declare const publicClient: {
         authorizationList?: undefined | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
-        gasPrice?: bigint;
+        gasPrice?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & import("viem").FeeValuesLegacy ? "legacy" : never) | (request extends {
         accessList?: import("viem").AccessList | undefined;
@@ -858,8 +858,8 @@ export declare const publicClient: {
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
         maxFeePerBlobGas?: undefined | undefined;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
+        maxFeePerGas?: bigint | undefined;
+        maxPriorityFeePerGas?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & (import("viem").OneOf<{
         maxFeePerGas: import("viem").FeeValuesEIP1559["maxFeePerGas"];
@@ -905,7 +905,7 @@ export declare const publicClient: {
         sidecars: import("viem").TransactionSerializableEIP4844["sidecars"];
     }, import("viem").TransactionSerializableEIP4844>) ? "eip4844" : never) | (request extends ({
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -915,7 +915,7 @@ export declare const publicClient: {
         sidecars?: undefined | undefined;
     } | {
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -930,7 +930,7 @@ export declare const publicClient: {
         authorizationList?: undefined | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
-        gasPrice?: bigint;
+        gasPrice?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & import("viem").FeeValuesLegacy ? "legacy" : never) | (request extends {
         accessList?: import("viem").AccessList | undefined;
@@ -939,8 +939,8 @@ export declare const publicClient: {
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
         maxFeePerBlobGas?: undefined | undefined;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
+        maxFeePerGas?: bigint | undefined;
+        maxPriorityFeePerGas?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & (import("viem").OneOf<{
         maxFeePerGas: import("viem").FeeValuesEIP1559["maxFeePerGas"];
@@ -986,7 +986,7 @@ export declare const publicClient: {
         sidecars: import("viem").TransactionSerializableEIP4844["sidecars"];
     }, import("viem").TransactionSerializableEIP4844>) ? "eip4844" : never) | (request extends ({
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -996,7 +996,7 @@ export declare const publicClient: {
         sidecars?: undefined | undefined;
     } | {
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -1011,7 +1011,7 @@ export declare const publicClient: {
         authorizationList?: undefined | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
-        gasPrice?: bigint;
+        gasPrice?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & import("viem").FeeValuesLegacy ? "legacy" : never) | (request extends {
         accessList?: import("viem").AccessList | undefined;
@@ -1020,8 +1020,8 @@ export declare const publicClient: {
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
         maxFeePerBlobGas?: undefined | undefined;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
+        maxFeePerGas?: bigint | undefined;
+        maxPriorityFeePerGas?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & (import("viem").OneOf<{
         maxFeePerGas: import("viem").FeeValuesEIP1559["maxFeePerGas"];
@@ -1067,7 +1067,7 @@ export declare const publicClient: {
         sidecars: import("viem").TransactionSerializableEIP4844["sidecars"];
     }, import("viem").TransactionSerializableEIP4844>) ? "eip4844" : never) | (request extends ({
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -1077,7 +1077,7 @@ export declare const publicClient: {
         sidecars?: undefined | undefined;
     } | {
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -1092,7 +1092,7 @@ export declare const publicClient: {
         authorizationList?: undefined | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
-        gasPrice?: bigint;
+        gasPrice?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & import("viem").FeeValuesLegacy ? "legacy" : never) | (request extends {
         accessList?: import("viem").AccessList | undefined;
@@ -1101,8 +1101,8 @@ export declare const publicClient: {
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
         maxFeePerBlobGas?: undefined | undefined;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
+        maxFeePerGas?: bigint | undefined;
+        maxPriorityFeePerGas?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & (import("viem").OneOf<{
         maxFeePerGas: import("viem").FeeValuesEIP1559["maxFeePerGas"];
@@ -1148,7 +1148,7 @@ export declare const publicClient: {
         sidecars: import("viem").TransactionSerializableEIP4844["sidecars"];
     }, import("viem").TransactionSerializableEIP4844>) ? "eip4844" : never) | (request extends ({
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -1158,7 +1158,7 @@ export declare const publicClient: {
         sidecars?: undefined | undefined;
     } | {
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -1173,7 +1173,7 @@ export declare const publicClient: {
         authorizationList?: undefined | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
-        gasPrice?: bigint;
+        gasPrice?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & import("viem").FeeValuesLegacy ? "legacy" : never) | (request extends {
         accessList?: import("viem").AccessList | undefined;
@@ -1182,8 +1182,8 @@ export declare const publicClient: {
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
         maxFeePerBlobGas?: undefined | undefined;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
+        maxFeePerGas?: bigint | undefined;
+        maxPriorityFeePerGas?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & (import("viem").OneOf<{
         maxFeePerGas: import("viem").FeeValuesEIP1559["maxFeePerGas"];
@@ -1229,7 +1229,7 @@ export declare const publicClient: {
         sidecars: import("viem").TransactionSerializableEIP4844["sidecars"];
     }, import("viem").TransactionSerializableEIP4844>) ? "eip4844" : never) | (request extends ({
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -1239,7 +1239,7 @@ export declare const publicClient: {
         sidecars?: undefined | undefined;
     } | {
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -1254,7 +1254,7 @@ export declare const publicClient: {
         authorizationList?: undefined | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
-        gasPrice?: bigint;
+        gasPrice?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & import("viem").FeeValuesLegacy ? "legacy" : never) | (request extends {
         accessList?: import("viem").AccessList | undefined;
@@ -1263,8 +1263,8 @@ export declare const publicClient: {
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
         maxFeePerBlobGas?: undefined | undefined;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
+        maxFeePerGas?: bigint | undefined;
+        maxPriorityFeePerGas?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & (import("viem").OneOf<{
         maxFeePerGas: import("viem").FeeValuesEIP1559["maxFeePerGas"];
@@ -1310,7 +1310,7 @@ export declare const publicClient: {
         sidecars: import("viem").TransactionSerializableEIP4844["sidecars"];
     }, import("viem").TransactionSerializableEIP4844>) ? "eip4844" : never) | (request extends ({
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -1320,7 +1320,7 @@ export declare const publicClient: {
         sidecars?: undefined | undefined;
     } | {
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -1335,7 +1335,7 @@ export declare const publicClient: {
         authorizationList?: undefined | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
-        gasPrice?: bigint;
+        gasPrice?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & import("viem").FeeValuesLegacy ? "legacy" : never) | (request extends {
         accessList?: import("viem").AccessList | undefined;
@@ -1344,8 +1344,8 @@ export declare const publicClient: {
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
         maxFeePerBlobGas?: undefined | undefined;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
+        maxFeePerGas?: bigint | undefined;
+        maxPriorityFeePerGas?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & (import("viem").OneOf<{
         maxFeePerGas: import("viem").FeeValuesEIP1559["maxFeePerGas"];
@@ -1391,7 +1391,7 @@ export declare const publicClient: {
         sidecars: import("viem").TransactionSerializableEIP4844["sidecars"];
     }, import("viem").TransactionSerializableEIP4844>) ? "eip4844" : never) | (request extends ({
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -1401,7 +1401,7 @@ export declare const publicClient: {
         sidecars?: undefined | undefined;
     } | {
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -1416,7 +1416,7 @@ export declare const publicClient: {
         authorizationList?: undefined | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
-        gasPrice?: bigint;
+        gasPrice?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & import("viem").FeeValuesLegacy ? "legacy" : never) | (request extends {
         accessList?: import("viem").AccessList | undefined;
@@ -1425,8 +1425,8 @@ export declare const publicClient: {
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
         maxFeePerBlobGas?: undefined | undefined;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
+        maxFeePerGas?: bigint | undefined;
+        maxPriorityFeePerGas?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & (import("viem").OneOf<{
         maxFeePerGas: import("viem").FeeValuesEIP1559["maxFeePerGas"];
@@ -1472,7 +1472,7 @@ export declare const publicClient: {
         sidecars: import("viem").TransactionSerializableEIP4844["sidecars"];
     }, import("viem").TransactionSerializableEIP4844>) ? "eip4844" : never) | (request extends ({
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -1482,7 +1482,7 @@ export declare const publicClient: {
         sidecars?: undefined | undefined;
     } | {
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -1497,7 +1497,7 @@ export declare const publicClient: {
         authorizationList?: undefined | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
-        gasPrice?: bigint;
+        gasPrice?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & import("viem").FeeValuesLegacy ? "legacy" : never) | (request extends {
         accessList?: import("viem").AccessList | undefined;
@@ -1506,8 +1506,8 @@ export declare const publicClient: {
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
         maxFeePerBlobGas?: undefined | undefined;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
+        maxFeePerGas?: bigint | undefined;
+        maxPriorityFeePerGas?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & (import("viem").OneOf<{
         maxFeePerGas: import("viem").FeeValuesEIP1559["maxFeePerGas"];
@@ -1553,7 +1553,7 @@ export declare const publicClient: {
         sidecars: import("viem").TransactionSerializableEIP4844["sidecars"];
     }, import("viem").TransactionSerializableEIP4844>) ? "eip4844" : never) | (request extends ({
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -1563,7 +1563,7 @@ export declare const publicClient: {
         sidecars?: undefined | undefined;
     } | {
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -1578,7 +1578,7 @@ export declare const publicClient: {
         authorizationList?: undefined | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
-        gasPrice?: bigint;
+        gasPrice?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & import("viem").FeeValuesLegacy ? "legacy" : never) | (request extends {
         accessList?: import("viem").AccessList | undefined;
@@ -1587,8 +1587,8 @@ export declare const publicClient: {
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
         maxFeePerBlobGas?: undefined | undefined;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
+        maxFeePerGas?: bigint | undefined;
+        maxPriorityFeePerGas?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & (import("viem").OneOf<{
         maxFeePerGas: import("viem").FeeValuesEIP1559["maxFeePerGas"];
@@ -1634,7 +1634,7 @@ export declare const publicClient: {
         sidecars: import("viem").TransactionSerializableEIP4844["sidecars"];
     }, import("viem").TransactionSerializableEIP4844>) ? "eip4844" : never) | (request extends ({
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -1644,7 +1644,7 @@ export declare const publicClient: {
         sidecars?: undefined | undefined;
     } | {
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -1659,7 +1659,7 @@ export declare const publicClient: {
         authorizationList?: undefined | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
-        gasPrice?: bigint;
+        gasPrice?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & import("viem").FeeValuesLegacy ? "legacy" : never) | (request extends {
         accessList?: import("viem").AccessList | undefined;
@@ -1668,8 +1668,8 @@ export declare const publicClient: {
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
         maxFeePerBlobGas?: undefined | undefined;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
+        maxFeePerGas?: bigint | undefined;
+        maxPriorityFeePerGas?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & (import("viem").OneOf<{
         maxFeePerGas: import("viem").FeeValuesEIP1559["maxFeePerGas"];
@@ -1715,7 +1715,7 @@ export declare const publicClient: {
         sidecars: import("viem").TransactionSerializableEIP4844["sidecars"];
     }, import("viem").TransactionSerializableEIP4844>) ? "eip4844" : never) | (request extends ({
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -1725,7 +1725,7 @@ export declare const publicClient: {
         sidecars?: undefined | undefined;
     } | {
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -1740,7 +1740,7 @@ export declare const publicClient: {
         authorizationList?: undefined | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
-        gasPrice?: bigint;
+        gasPrice?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & import("viem").FeeValuesLegacy ? "legacy" : never) | (request extends {
         accessList?: import("viem").AccessList | undefined;
@@ -1749,8 +1749,8 @@ export declare const publicClient: {
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
         maxFeePerBlobGas?: undefined | undefined;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
+        maxFeePerGas?: bigint | undefined;
+        maxPriorityFeePerGas?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & (import("viem").OneOf<{
         maxFeePerGas: import("viem").FeeValuesEIP1559["maxFeePerGas"];
@@ -1796,7 +1796,7 @@ export declare const publicClient: {
         sidecars: import("viem").TransactionSerializableEIP4844["sidecars"];
     }, import("viem").TransactionSerializableEIP4844>) ? "eip4844" : never) | (request extends ({
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -1806,7 +1806,7 @@ export declare const publicClient: {
         sidecars?: undefined | undefined;
     } | {
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -1821,7 +1821,7 @@ export declare const publicClient: {
         authorizationList?: undefined | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
-        gasPrice?: bigint;
+        gasPrice?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & import("viem").FeeValuesLegacy ? "legacy" : never) | (request extends {
         accessList?: import("viem").AccessList | undefined;
@@ -1830,8 +1830,8 @@ export declare const publicClient: {
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
         maxFeePerBlobGas?: undefined | undefined;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
+        maxFeePerGas?: bigint | undefined;
+        maxPriorityFeePerGas?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & (import("viem").OneOf<{
         maxFeePerGas: import("viem").FeeValuesEIP1559["maxFeePerGas"];
@@ -1877,7 +1877,7 @@ export declare const publicClient: {
         sidecars: import("viem").TransactionSerializableEIP4844["sidecars"];
     }, import("viem").TransactionSerializableEIP4844>) ? "eip4844" : never) | (request extends ({
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -1887,7 +1887,7 @@ export declare const publicClient: {
         sidecars?: undefined | undefined;
     } | {
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -1902,7 +1902,7 @@ export declare const publicClient: {
         authorizationList?: undefined | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
-        gasPrice?: bigint;
+        gasPrice?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & import("viem").FeeValuesLegacy ? "legacy" : never) | (request extends {
         accessList?: import("viem").AccessList | undefined;
@@ -1911,8 +1911,8 @@ export declare const publicClient: {
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
         maxFeePerBlobGas?: undefined | undefined;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
+        maxFeePerGas?: bigint | undefined;
+        maxPriorityFeePerGas?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & (import("viem").OneOf<{
         maxFeePerGas: import("viem").FeeValuesEIP1559["maxFeePerGas"];
@@ -1958,7 +1958,7 @@ export declare const publicClient: {
         sidecars: import("viem").TransactionSerializableEIP4844["sidecars"];
     }, import("viem").TransactionSerializableEIP4844>) ? "eip4844" : never) | (request extends ({
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -1968,7 +1968,7 @@ export declare const publicClient: {
         sidecars?: undefined | undefined;
     } | {
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -1983,7 +1983,7 @@ export declare const publicClient: {
         authorizationList?: undefined | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
-        gasPrice?: bigint;
+        gasPrice?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & import("viem").FeeValuesLegacy ? "legacy" : never) | (request extends {
         accessList?: import("viem").AccessList | undefined;
@@ -1992,8 +1992,8 @@ export declare const publicClient: {
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
         maxFeePerBlobGas?: undefined | undefined;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
+        maxFeePerGas?: bigint | undefined;
+        maxPriorityFeePerGas?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & (import("viem").OneOf<{
         maxFeePerGas: import("viem").FeeValuesEIP1559["maxFeePerGas"];
@@ -2039,7 +2039,7 @@ export declare const publicClient: {
         sidecars: import("viem").TransactionSerializableEIP4844["sidecars"];
     }, import("viem").TransactionSerializableEIP4844>) ? "eip4844" : never) | (request extends ({
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -2049,7 +2049,7 @@ export declare const publicClient: {
         sidecars?: undefined | undefined;
     } | {
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -2064,7 +2064,7 @@ export declare const publicClient: {
         authorizationList?: undefined | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
-        gasPrice?: bigint;
+        gasPrice?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & import("viem").FeeValuesLegacy ? "legacy" : never) | (request extends {
         accessList?: import("viem").AccessList | undefined;
@@ -2073,8 +2073,8 @@ export declare const publicClient: {
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
         maxFeePerBlobGas?: undefined | undefined;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
+        maxFeePerGas?: bigint | undefined;
+        maxPriorityFeePerGas?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & (import("viem").OneOf<{
         maxFeePerGas: import("viem").FeeValuesEIP1559["maxFeePerGas"];
@@ -2120,7 +2120,7 @@ export declare const publicClient: {
         sidecars: import("viem").TransactionSerializableEIP4844["sidecars"];
     }, import("viem").TransactionSerializableEIP4844>) ? "eip4844" : never) | (request extends ({
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -2130,7 +2130,7 @@ export declare const publicClient: {
         sidecars?: undefined | undefined;
     } | {
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -2145,7 +2145,7 @@ export declare const publicClient: {
         authorizationList?: undefined | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
-        gasPrice?: bigint;
+        gasPrice?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & import("viem").FeeValuesLegacy ? "legacy" : never) | (request extends {
         accessList?: import("viem").AccessList | undefined;
@@ -2154,8 +2154,8 @@ export declare const publicClient: {
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
         maxFeePerBlobGas?: undefined | undefined;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
+        maxFeePerGas?: bigint | undefined;
+        maxPriorityFeePerGas?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & (import("viem").OneOf<{
         maxFeePerGas: import("viem").FeeValuesEIP1559["maxFeePerGas"];
@@ -2201,7 +2201,7 @@ export declare const publicClient: {
         sidecars: import("viem").TransactionSerializableEIP4844["sidecars"];
     }, import("viem").TransactionSerializableEIP4844>) ? "eip4844" : never) | (request extends ({
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -2211,7 +2211,7 @@ export declare const publicClient: {
         sidecars?: undefined | undefined;
     } | {
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -2226,7 +2226,7 @@ export declare const publicClient: {
         authorizationList?: undefined | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
-        gasPrice?: bigint;
+        gasPrice?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & import("viem").FeeValuesLegacy ? "legacy" : never) | (request extends {
         accessList?: import("viem").AccessList | undefined;
@@ -2235,8 +2235,8 @@ export declare const publicClient: {
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
         maxFeePerBlobGas?: undefined | undefined;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
+        maxFeePerGas?: bigint | undefined;
+        maxPriorityFeePerGas?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & (import("viem").OneOf<{
         maxFeePerGas: import("viem").FeeValuesEIP1559["maxFeePerGas"];
@@ -2282,7 +2282,7 @@ export declare const publicClient: {
         sidecars: import("viem").TransactionSerializableEIP4844["sidecars"];
     }, import("viem").TransactionSerializableEIP4844>) ? "eip4844" : never) | (request extends ({
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -2292,7 +2292,7 @@ export declare const publicClient: {
         sidecars?: undefined | undefined;
     } | {
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -2307,7 +2307,7 @@ export declare const publicClient: {
         authorizationList?: undefined | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
-        gasPrice?: bigint;
+        gasPrice?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & import("viem").FeeValuesLegacy ? "legacy" : never) | (request extends {
         accessList?: import("viem").AccessList | undefined;
@@ -2316,8 +2316,8 @@ export declare const publicClient: {
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
         maxFeePerBlobGas?: undefined | undefined;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
+        maxFeePerGas?: bigint | undefined;
+        maxPriorityFeePerGas?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & (import("viem").OneOf<{
         maxFeePerGas: import("viem").FeeValuesEIP1559["maxFeePerGas"];
@@ -2363,7 +2363,7 @@ export declare const publicClient: {
         sidecars: import("viem").TransactionSerializableEIP4844["sidecars"];
     }, import("viem").TransactionSerializableEIP4844>) ? "eip4844" : never) | (request extends ({
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -2373,7 +2373,7 @@ export declare const publicClient: {
         sidecars?: undefined | undefined;
     } | {
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -2388,7 +2388,7 @@ export declare const publicClient: {
         authorizationList?: undefined | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
-        gasPrice?: bigint;
+        gasPrice?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & import("viem").FeeValuesLegacy ? "legacy" : never) | (request extends {
         accessList?: import("viem").AccessList | undefined;
@@ -2397,8 +2397,8 @@ export declare const publicClient: {
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
         maxFeePerBlobGas?: undefined | undefined;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
+        maxFeePerGas?: bigint | undefined;
+        maxPriorityFeePerGas?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & (import("viem").OneOf<{
         maxFeePerGas: import("viem").FeeValuesEIP1559["maxFeePerGas"];
@@ -2444,7 +2444,7 @@ export declare const publicClient: {
         sidecars: import("viem").TransactionSerializableEIP4844["sidecars"];
     }, import("viem").TransactionSerializableEIP4844>) ? "eip4844" : never) | (request extends ({
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -2454,7 +2454,7 @@ export declare const publicClient: {
         sidecars?: undefined | undefined;
     } | {
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -2469,7 +2469,7 @@ export declare const publicClient: {
         authorizationList?: undefined | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
-        gasPrice?: bigint;
+        gasPrice?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & import("viem").FeeValuesLegacy ? "legacy" : never) | (request extends {
         accessList?: import("viem").AccessList | undefined;
@@ -2478,8 +2478,8 @@ export declare const publicClient: {
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
         maxFeePerBlobGas?: undefined | undefined;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
+        maxFeePerGas?: bigint | undefined;
+        maxPriorityFeePerGas?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & (import("viem").OneOf<{
         maxFeePerGas: import("viem").FeeValuesEIP1559["maxFeePerGas"];
@@ -2525,7 +2525,7 @@ export declare const publicClient: {
         sidecars: import("viem").TransactionSerializableEIP4844["sidecars"];
     }, import("viem").TransactionSerializableEIP4844>) ? "eip4844" : never) | (request extends ({
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -2535,7 +2535,7 @@ export declare const publicClient: {
         sidecars?: undefined | undefined;
     } | {
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -2550,7 +2550,7 @@ export declare const publicClient: {
         authorizationList?: undefined | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
-        gasPrice?: bigint;
+        gasPrice?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & import("viem").FeeValuesLegacy ? "legacy" : never) | (request extends {
         accessList?: import("viem").AccessList | undefined;
@@ -2559,8 +2559,8 @@ export declare const publicClient: {
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
         maxFeePerBlobGas?: undefined | undefined;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
+        maxFeePerGas?: bigint | undefined;
+        maxPriorityFeePerGas?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & (import("viem").OneOf<{
         maxFeePerGas: import("viem").FeeValuesEIP1559["maxFeePerGas"];
@@ -2606,7 +2606,7 @@ export declare const publicClient: {
         sidecars: import("viem").TransactionSerializableEIP4844["sidecars"];
     }, import("viem").TransactionSerializableEIP4844>) ? "eip4844" : never) | (request extends ({
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -2616,7 +2616,7 @@ export declare const publicClient: {
         sidecars?: undefined | undefined;
     } | {
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -2631,7 +2631,7 @@ export declare const publicClient: {
         authorizationList?: undefined | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
-        gasPrice?: bigint;
+        gasPrice?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & import("viem").FeeValuesLegacy ? "legacy" : never) | (request extends {
         accessList?: import("viem").AccessList | undefined;
@@ -2640,8 +2640,8 @@ export declare const publicClient: {
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
         maxFeePerBlobGas?: undefined | undefined;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
+        maxFeePerGas?: bigint | undefined;
+        maxPriorityFeePerGas?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & (import("viem").OneOf<{
         maxFeePerGas: import("viem").FeeValuesEIP1559["maxFeePerGas"];
@@ -2687,7 +2687,7 @@ export declare const publicClient: {
         sidecars: import("viem").TransactionSerializableEIP4844["sidecars"];
     }, import("viem").TransactionSerializableEIP4844>) ? "eip4844" : never) | (request extends ({
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -2697,7 +2697,7 @@ export declare const publicClient: {
         sidecars?: undefined | undefined;
     } | {
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -2712,7 +2712,7 @@ export declare const publicClient: {
         authorizationList?: undefined | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
-        gasPrice?: bigint;
+        gasPrice?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & import("viem").FeeValuesLegacy ? "legacy" : never) | (request extends {
         accessList?: import("viem").AccessList | undefined;
@@ -2721,8 +2721,8 @@ export declare const publicClient: {
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
         maxFeePerBlobGas?: undefined | undefined;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
+        maxFeePerGas?: bigint | undefined;
+        maxPriorityFeePerGas?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & (import("viem").OneOf<{
         maxFeePerGas: import("viem").FeeValuesEIP1559["maxFeePerGas"];
@@ -2768,7 +2768,7 @@ export declare const publicClient: {
         sidecars: import("viem").TransactionSerializableEIP4844["sidecars"];
     }, import("viem").TransactionSerializableEIP4844>) ? "eip4844" : never) | (request extends ({
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -2778,7 +2778,7 @@ export declare const publicClient: {
         sidecars?: undefined | undefined;
     } | {
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -2793,7 +2793,7 @@ export declare const publicClient: {
         authorizationList?: undefined | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
-        gasPrice?: bigint;
+        gasPrice?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & import("viem").FeeValuesLegacy ? "legacy" : never) | (request extends {
         accessList?: import("viem").AccessList | undefined;
@@ -2802,8 +2802,8 @@ export declare const publicClient: {
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
         maxFeePerBlobGas?: undefined | undefined;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
+        maxFeePerGas?: bigint | undefined;
+        maxPriorityFeePerGas?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & (import("viem").OneOf<{
         maxFeePerGas: import("viem").FeeValuesEIP1559["maxFeePerGas"];
@@ -2849,7 +2849,7 @@ export declare const publicClient: {
         sidecars: import("viem").TransactionSerializableEIP4844["sidecars"];
     }, import("viem").TransactionSerializableEIP4844>) ? "eip4844" : never) | (request extends ({
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -2859,7 +2859,7 @@ export declare const publicClient: {
         sidecars?: undefined | undefined;
     } | {
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -2874,7 +2874,7 @@ export declare const publicClient: {
         authorizationList?: undefined | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
-        gasPrice?: bigint;
+        gasPrice?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & import("viem").FeeValuesLegacy ? "legacy" : never) | (request extends {
         accessList?: import("viem").AccessList | undefined;
@@ -2883,8 +2883,8 @@ export declare const publicClient: {
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
         maxFeePerBlobGas?: undefined | undefined;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
+        maxFeePerGas?: bigint | undefined;
+        maxPriorityFeePerGas?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & (import("viem").OneOf<{
         maxFeePerGas: import("viem").FeeValuesEIP1559["maxFeePerGas"];
@@ -2930,7 +2930,7 @@ export declare const publicClient: {
         sidecars: import("viem").TransactionSerializableEIP4844["sidecars"];
     }, import("viem").TransactionSerializableEIP4844>) ? "eip4844" : never) | (request extends ({
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -2940,7 +2940,7 @@ export declare const publicClient: {
         sidecars?: undefined | undefined;
     } | {
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -2955,7 +2955,7 @@ export declare const publicClient: {
         authorizationList?: undefined | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
-        gasPrice?: bigint;
+        gasPrice?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & import("viem").FeeValuesLegacy ? "legacy" : never) | (request extends {
         accessList?: import("viem").AccessList | undefined;
@@ -2964,8 +2964,8 @@ export declare const publicClient: {
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
         maxFeePerBlobGas?: undefined | undefined;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
+        maxFeePerGas?: bigint | undefined;
+        maxPriorityFeePerGas?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & (import("viem").OneOf<{
         maxFeePerGas: import("viem").FeeValuesEIP1559["maxFeePerGas"];
@@ -3011,7 +3011,7 @@ export declare const publicClient: {
         sidecars: import("viem").TransactionSerializableEIP4844["sidecars"];
     }, import("viem").TransactionSerializableEIP4844>) ? "eip4844" : never) | (request extends ({
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -3021,7 +3021,7 @@ export declare const publicClient: {
         sidecars?: undefined | undefined;
     } | {
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -3036,7 +3036,7 @@ export declare const publicClient: {
         authorizationList?: undefined | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
-        gasPrice?: bigint;
+        gasPrice?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & import("viem").FeeValuesLegacy ? "legacy" : never) | (request extends {
         accessList?: import("viem").AccessList | undefined;
@@ -3045,8 +3045,8 @@ export declare const publicClient: {
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
         maxFeePerBlobGas?: undefined | undefined;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
+        maxFeePerGas?: bigint | undefined;
+        maxPriorityFeePerGas?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & (import("viem").OneOf<{
         maxFeePerGas: import("viem").FeeValuesEIP1559["maxFeePerGas"];
@@ -3092,7 +3092,7 @@ export declare const publicClient: {
         sidecars: import("viem").TransactionSerializableEIP4844["sidecars"];
     }, import("viem").TransactionSerializableEIP4844>) ? "eip4844" : never) | (request extends ({
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -3102,7 +3102,7 @@ export declare const publicClient: {
         sidecars?: undefined | undefined;
     } | {
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -3117,7 +3117,7 @@ export declare const publicClient: {
         authorizationList?: undefined | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
-        gasPrice?: bigint;
+        gasPrice?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & import("viem").FeeValuesLegacy ? "legacy" : never) | (request extends {
         accessList?: import("viem").AccessList | undefined;
@@ -3126,8 +3126,8 @@ export declare const publicClient: {
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
         maxFeePerBlobGas?: undefined | undefined;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
+        maxFeePerGas?: bigint | undefined;
+        maxPriorityFeePerGas?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & (import("viem").OneOf<{
         maxFeePerGas: import("viem").FeeValuesEIP1559["maxFeePerGas"];
@@ -3173,7 +3173,7 @@ export declare const publicClient: {
         sidecars: import("viem").TransactionSerializableEIP4844["sidecars"];
     }, import("viem").TransactionSerializableEIP4844>) ? "eip4844" : never) | (request extends ({
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -3183,7 +3183,7 @@ export declare const publicClient: {
         sidecars?: undefined | undefined;
     } | {
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -3198,7 +3198,7 @@ export declare const publicClient: {
         authorizationList?: undefined | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
-        gasPrice?: bigint;
+        gasPrice?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & import("viem").FeeValuesLegacy ? "legacy" : never) | (request extends {
         accessList?: import("viem").AccessList | undefined;
@@ -3207,8 +3207,8 @@ export declare const publicClient: {
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
         maxFeePerBlobGas?: undefined | undefined;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
+        maxFeePerGas?: bigint | undefined;
+        maxPriorityFeePerGas?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & (import("viem").OneOf<{
         maxFeePerGas: import("viem").FeeValuesEIP1559["maxFeePerGas"];
@@ -3254,7 +3254,7 @@ export declare const publicClient: {
         sidecars: import("viem").TransactionSerializableEIP4844["sidecars"];
     }, import("viem").TransactionSerializableEIP4844>) ? "eip4844" : never) | (request extends ({
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -3264,7 +3264,7 @@ export declare const publicClient: {
         sidecars?: undefined | undefined;
     } | {
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -3279,7 +3279,7 @@ export declare const publicClient: {
         authorizationList?: undefined | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
-        gasPrice?: bigint;
+        gasPrice?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & import("viem").FeeValuesLegacy ? "legacy" : never) | (request extends {
         accessList?: import("viem").AccessList | undefined;
@@ -3288,8 +3288,8 @@ export declare const publicClient: {
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
         maxFeePerBlobGas?: undefined | undefined;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
+        maxFeePerGas?: bigint | undefined;
+        maxPriorityFeePerGas?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & (import("viem").OneOf<{
         maxFeePerGas: import("viem").FeeValuesEIP1559["maxFeePerGas"];
@@ -3335,7 +3335,7 @@ export declare const publicClient: {
         sidecars: import("viem").TransactionSerializableEIP4844["sidecars"];
     }, import("viem").TransactionSerializableEIP4844>) ? "eip4844" : never) | (request extends ({
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -3345,7 +3345,7 @@ export declare const publicClient: {
         sidecars?: undefined | undefined;
     } | {
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -3360,7 +3360,7 @@ export declare const publicClient: {
         authorizationList?: undefined | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
-        gasPrice?: bigint;
+        gasPrice?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & import("viem").FeeValuesLegacy ? "legacy" : never) | (request extends {
         accessList?: import("viem").AccessList | undefined;
@@ -3369,8 +3369,8 @@ export declare const publicClient: {
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
         maxFeePerBlobGas?: undefined | undefined;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
+        maxFeePerGas?: bigint | undefined;
+        maxPriorityFeePerGas?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & (import("viem").OneOf<{
         maxFeePerGas: import("viem").FeeValuesEIP1559["maxFeePerGas"];
@@ -3416,7 +3416,7 @@ export declare const publicClient: {
         sidecars: import("viem").TransactionSerializableEIP4844["sidecars"];
     }, import("viem").TransactionSerializableEIP4844>) ? "eip4844" : never) | (request extends ({
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -3426,7 +3426,7 @@ export declare const publicClient: {
         sidecars?: undefined | undefined;
     } | {
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -3441,7 +3441,7 @@ export declare const publicClient: {
         authorizationList?: undefined | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
-        gasPrice?: bigint;
+        gasPrice?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & import("viem").FeeValuesLegacy ? "legacy" : never) | (request extends {
         accessList?: import("viem").AccessList | undefined;
@@ -3450,8 +3450,8 @@ export declare const publicClient: {
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
         maxFeePerBlobGas?: undefined | undefined;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
+        maxFeePerGas?: bigint | undefined;
+        maxPriorityFeePerGas?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & (import("viem").OneOf<{
         maxFeePerGas: import("viem").FeeValuesEIP1559["maxFeePerGas"];
@@ -3497,7 +3497,7 @@ export declare const publicClient: {
         sidecars: import("viem").TransactionSerializableEIP4844["sidecars"];
     }, import("viem").TransactionSerializableEIP4844>) ? "eip4844" : never) | (request extends ({
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -3507,7 +3507,7 @@ export declare const publicClient: {
         sidecars?: undefined | undefined;
     } | {
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -3522,7 +3522,7 @@ export declare const publicClient: {
         authorizationList?: undefined | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
-        gasPrice?: bigint;
+        gasPrice?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & import("viem").FeeValuesLegacy ? "legacy" : never) | (request extends {
         accessList?: import("viem").AccessList | undefined;
@@ -3531,8 +3531,8 @@ export declare const publicClient: {
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
         maxFeePerBlobGas?: undefined | undefined;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
+        maxFeePerGas?: bigint | undefined;
+        maxPriorityFeePerGas?: bigint | undefined;
         sidecars?: undefined | undefined;
     } & (import("viem").OneOf<{
         maxFeePerGas: import("viem").FeeValuesEIP1559["maxFeePerGas"];
@@ -3578,7 +3578,7 @@ export declare const publicClient: {
         sidecars: import("viem").TransactionSerializableEIP4844["sidecars"];
     }, import("viem").TransactionSerializableEIP4844>) ? "eip4844" : never) | (request extends ({
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -3588,7 +3588,7 @@ export declare const publicClient: {
         sidecars?: undefined | undefined;
     } | {
         accessList?: import("viem").AccessList | undefined;
-        authorizationList?: import("viem").SignedAuthorizationList;
+        authorizationList?: import("viem").SignedAuthorizationList | undefined;
         blobs?: undefined | undefined;
         blobVersionedHashes?: undefined | undefined;
         gasPrice?: undefined | undefined;
@@ -3603,10 +3603,12 @@ export declare const publicClient: {
     }, (request["parameters"] extends readonly import("viem").PrepareTransactionRequestParameterType[] ? request["parameters"][number] : "type" | "fees" | "gas" | "nonce" | "blobVersionedHashes" | "chainId") extends infer T_13 ? T_13 extends (request["parameters"] extends readonly import("viem").PrepareTransactionRequestParameterType[] ? request["parameters"][number] : "type" | "fees" | "gas" | "nonce" | "blobVersionedHashes" | "chainId") ? T_13 extends "fees" ? "gasPrice" | "maxFeePerGas" | "maxPriorityFeePerGas" : T_13 : never : never> & (unknown extends request["kzg"] ? {} : Pick<request, "kzg">) extends infer T ? { [K in keyof T]: T[K]; } : never>;
     readContract: <const abi extends import("viem").Abi | readonly unknown[], functionName extends import("viem").ContractFunctionName<abi, "pure" | "view">, const args extends import("viem").ContractFunctionArgs<abi, "pure" | "view", functionName>>(args: import("viem").ReadContractParameters<abi, functionName, args>) => Promise<import("viem").ReadContractReturnType<abi, functionName, args>>;
     sendRawTransaction: (args: import("viem").SendRawTransactionParameters) => Promise<import("viem").SendRawTransactionReturnType>;
+    sendRawTransactionSync: (args: import("viem").SendRawTransactionSyncParameters) => Promise<import("viem").TransactionReceipt>;
     simulate: <const calls extends readonly unknown[]>(args: import("viem").SimulateBlocksParameters<calls>) => Promise<import("viem").SimulateBlocksReturnType<calls>>;
     simulateBlocks: <const calls extends readonly unknown[]>(args: import("viem").SimulateBlocksParameters<calls>) => Promise<import("viem").SimulateBlocksReturnType<calls>>;
     simulateCalls: <const calls extends readonly unknown[]>(args: import("viem").SimulateCallsParameters<calls>) => Promise<import("viem").SimulateCallsReturnType<calls>>;
     simulateContract: <const abi extends import("viem").Abi | readonly unknown[], functionName extends import("viem").ContractFunctionName<abi, "nonpayable" | "payable">, const args_1 extends import("viem").ContractFunctionArgs<abi, "nonpayable" | "payable", functionName>, chainOverride extends Chain | undefined, accountOverride extends Account | Address | undefined = undefined>(args: import("viem").SimulateContractParameters<abi, functionName, args_1, Chain, chainOverride, accountOverride>) => Promise<import("viem").SimulateContractReturnType<abi, functionName, args_1, Chain, Account | undefined, chainOverride, accountOverride>>;
+    verifyHash: (args: import("viem").VerifyHashActionParameters) => Promise<import("viem").VerifyHashActionReturnType>;
     verifyMessage: (args: import("viem").VerifyMessageActionParameters) => Promise<import("viem").VerifyMessageActionReturnType>;
     verifySiweMessage: (args: import("viem/_types/actions/siwe/verifySiweMessage").VerifySiweMessageParameters) => Promise<import("viem/_types/actions/siwe/verifySiweMessage").VerifySiweMessageReturnType>;
     verifyTypedData: (args: import("viem").VerifyTypedDataActionParameters) => Promise<import("viem").VerifyTypedDataActionReturnType>;

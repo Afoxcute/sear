@@ -11,4 +11,3 @@ const handleRegistration = async (req, res) => {
     }
 };
 exports.handleRegistration = handleRegistration;
-//# sourceMappingURL=handleRegistration.js.map

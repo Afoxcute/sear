@@ -6,9 +6,9 @@ export declare const totalLicenseTokenLimitHook: ({
     }[];
     stateMutability: string;
     type: string;
-    name?: never;
-    anonymous?: never;
-    outputs?: never;
+    name?: undefined;
+    anonymous?: undefined;
+    outputs?: undefined;
 } | {
     inputs: {
         internalType: string;
@@ -17,9 +17,9 @@ export declare const totalLicenseTokenLimitHook: ({
     }[];
     name: string;
     type: string;
-    stateMutability?: never;
-    anonymous?: never;
-    outputs?: never;
+    stateMutability?: undefined;
+    anonymous?: undefined;
+    outputs?: undefined;
 } | {
     anonymous: boolean;
     inputs: {
@@ -30,8 +30,8 @@ export declare const totalLicenseTokenLimitHook: ({
     }[];
     name: string;
     type: string;
-    stateMutability?: never;
-    outputs?: never;
+    stateMutability?: undefined;
+    outputs?: undefined;
 } | {
     inputs: {
         internalType: string;
@@ -46,6 +46,6 @@ export declare const totalLicenseTokenLimitHook: ({
     }[];
     stateMutability: string;
     type: string;
-    anonymous?: never;
+    anonymous?: undefined;
 })[];
 //# sourceMappingURL=totalLicenseTokenLimitHook.d.ts.map

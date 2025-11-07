@@ -8,36 +8,36 @@ const viem_1 = require("viem");
 const accounts_1 = require("viem/accounts");
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
-// Etherlink testnet configuration
-const etherlinkTestnet = {
-    id: 128123,
-    name: 'Etherlink Testnet',
+// Mantle Sepolia testnet configuration
+const mantleTestnet = {
+    id: 5003,
+    name: 'Mantle Sepolia Testnet',
     nativeCurrency: {
-        name: 'XTZ',
-        symbol: 'XTZ',
+        name: 'MNT',
+        symbol: 'MNT',
         decimals: 18,
     },
     rpcUrls: {
         default: {
-            http: ['https://node.ghostnet.etherlink.com'],
+            http: ['https://mantle-sepolia.drpc.org'],
         },
         public: {
-            http: ['https://node.ghostnet.etherlink.com'],
+            http: ['https://mantle-sepolia.drpc.org'],
         },
     },
     blockExplorers: {
         default: {
-            name: 'Etherlink Testnet Explorer',
-            url: 'https://testnet.explorer.etherlink.com',
+            name: 'Mantle Testnet Explorer',
+            url: 'https://explorer.testnet.mantle.xyz',
         },
     },
 };
 // Network configuration
 const networkConfig = {
-    rpcProviderUrl: 'https://node.ghostnet.etherlink.com',
-    blockExplorer: 'https://testnet.explorer.etherlink.com',
-    chain: etherlinkTestnet,
-    nativeTokenAddress: '0x0000000000000000000000000000000000000000', // Native XTZ token
+    rpcProviderUrl: 'https://mantle-sepolia.drpc.org',
+    blockExplorer: 'https://explorer.testnet.mantle.xyz',
+    chain: mantleTestnet,
+    nativeTokenAddress: '0x0000000000000000000000000000000000000000', // Native MNT token
 };
 // Helper functions
 const validateEnvironmentVars = () => {
@@ -54,7 +54,11 @@ exports.networkInfo = {
 exports.account = (0, accounts_1.privateKeyToAccount)(`0x${process.env.WALLET_PRIVATE_KEY}`);
 const baseConfig = {
     chain: exports.networkInfo.chain,
-    transport: (0, viem_1.http)(exports.networkInfo.rpcProviderUrl),
+    transport: (0, viem_1.http)(exports.networkInfo.rpcProviderUrl, {
+        timeout: 60000, // 60 seconds timeout
+        retryCount: 3,
+        retryDelay: 1000,
+    }),
 };
 exports.publicClient = (0, viem_1.createPublicClient)(baseConfig);
 exports.walletClient = (0, viem_1.createWalletClient)({
@@ -64,4 +68,3 @@ exports.walletClient = (0, viem_1.createWalletClient)({
 // Export constants
 exports.NATIVE_TOKEN_ADDRESS = exports.networkInfo.nativeTokenAddress;
 exports.BLOCK_EXPLORER_URL = exports.networkInfo.blockExplorer;
-//# sourceMappingURL=config.js.map

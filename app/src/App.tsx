@@ -1112,9 +1112,29 @@ export default function App({ thirdwebClient }: AppProps) {
       // Reload data
       await loadContractData();
 
-    } catch (error) {
-      console.error("Error claiming royalties:", error);
-      notifyError('Claim Failed', "Failed to claim royalties");
+    } catch (error: any) {
+      // Check for specific error messages in multiple possible locations
+      const errorMessage = 
+        error?.message || 
+        error?.shortMessage || 
+        error?.cause?.message || 
+        error?.cause?.shortMessage ||
+        error?.toString() || 
+        '';
+      
+      // Check if the error is about no royalties available
+      const isNoRoyaltiesError = 
+        errorMessage.includes('No royalties to claim') || 
+        errorMessage.includes('No royalties available') ||
+        errorMessage.includes('No balance to claim') ||
+        (errorMessage.includes('revert') && errorMessage.includes('No royalties'));
+      
+      if (isNoRoyaltiesError) {
+        notifyWarning('No Royalties Available', 'There are no royalties available to claim for this IP asset.');
+      } else {
+        console.error("Error claiming royalties:", error);
+        notifyError('Claim Failed', errorMessage || "Failed to claim royalties. Please try again.");
+      }
     } finally {
       setLoading(false);
     }

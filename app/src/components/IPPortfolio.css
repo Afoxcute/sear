@@ -630,6 +630,18 @@
   border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
+.asset-actions {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-border-primary);
+}
+
+.asset-actions .btn {
+  width: 100%;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
 /* Portfolios Section */
 .portfolios-section {
   display: flex;

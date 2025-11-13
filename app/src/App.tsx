@@ -31,10 +31,10 @@ const mantleTestnet = {
   },
   rpcUrls: {
     default: {
-      http: ["https://rpc.sepolia.mantle.xyz"],
+      http: ["https://mantle-sepolia.drpc.org"],
     },
     public: {
-      http: ["https://rpc.sepolia.mantle.xyz"],
+      http: ["https://mantle-sepolia.drpc.org"],
     },
   },
   blockExplorers: {
@@ -366,6 +366,213 @@ const MODRED_IP_ABI = [
     outputs: [],
     stateMutability: "nonpayable",
     type: "function"
+  },
+  {
+    inputs: [
+      { name: "tokenId", type: "uint256" },
+      { name: "reason", type: "string" }
+    ],
+    name: "raiseDispute",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    inputs: [],
+    name: "registerArbitrator",
+    outputs: [],
+    stateMutability: "payable",
+    type: "function"
+  },
+  {
+    inputs: [
+      { name: "disputeId", type: "uint256" },
+      { name: "selectedArbitrators", type: "address[]" }
+    ],
+    name: "assignArbitrators",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    inputs: [
+      { name: "disputeId", type: "uint256" },
+      { name: "decision", type: "bool" },
+      { name: "resolution", type: "string" }
+    ],
+    name: "submitArbitrationDecision",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    inputs: [
+      { name: "disputeId", type: "uint256" }
+    ],
+    name: "checkAndResolveArbitration",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    inputs: [
+      { name: "disputeId", type: "uint256" }
+    ],
+    name: "resolveArbitrationAfterDeadline",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    inputs: [
+      { name: "disputeId", type: "uint256" }
+    ],
+    name: "resolveDisputeWithoutArbitrators",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    inputs: [
+      { name: "tokenId", type: "uint256" }
+    ],
+    name: "getTokenDisputes",
+    outputs: [
+      { name: "", type: "uint256[]" }
+    ],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [
+      { name: "tokenId", type: "uint256" }
+    ],
+    name: "hasActiveDisputes",
+    outputs: [
+      { name: "", type: "bool" }
+    ],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [
+      { name: "tokenId", type: "uint256" },
+      { name: "to", type: "address" }
+    ],
+    name: "transferIP",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    inputs: [
+      { name: "disputeId", type: "uint256" }
+    ],
+    name: "getDispute",
+    outputs: [
+      { name: "disputeId_", type: "uint256" },
+      { name: "tokenId_", type: "uint256" },
+      { name: "disputer_", type: "address" },
+      { name: "reason_", type: "string" },
+      { name: "timestamp_", type: "uint256" },
+      { name: "isResolved_", type: "bool" },
+      { name: "arbitrationId_", type: "uint256" }
+    ],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [
+      { name: "arbitrationId", type: "uint256" }
+    ],
+    name: "getArbitration",
+    outputs: [
+      { name: "arbitrationId_", type: "uint256" },
+      { name: "disputeId_", type: "uint256" },
+      { name: "arbitrators_", type: "address[]" },
+      { name: "votesFor_", type: "uint256" },
+      { name: "votesAgainst_", type: "uint256" },
+      { name: "deadline_", type: "uint256" },
+      { name: "isResolved_", type: "bool" },
+      { name: "resolution_", type: "string" },
+      { name: "threeUpholdVotesTimestamp_", type: "uint256" }
+    ],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [
+      { name: "arbitrator", type: "address" }
+    ],
+    name: "getArbitratorActiveDisputes",
+    outputs: [
+      { name: "", type: "uint256" }
+    ],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [
+      { name: "arbitrator", type: "address" }
+    ],
+    name: "getArbitrator",
+    outputs: [
+      { name: "arbitrator_", type: "address" },
+      { name: "stake_", type: "uint256" },
+      { name: "reputation_", type: "uint256" },
+      { name: "totalCases_", type: "uint256" },
+      { name: "successfulCases_", type: "uint256" },
+      { name: "isActive_", type: "bool" },
+      { name: "registrationDate_", type: "uint256" }
+    ],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [],
+    name: "getAllArbitrators",
+    outputs: [
+      { name: "", type: "address[]" }
+    ],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [],
+    name: "owner",
+    outputs: [
+      { name: "", type: "address" }
+    ],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [],
+    name: "MIN_ARBITRATOR_STAKE",
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [],
+    name: "REQUIRED_ARBITRATORS",
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [],
+    name: "getActiveArbitratorsCount",
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [],
+    name: "nextDisputeId",
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function"
   }
 ] as const;
 
@@ -523,8 +730,27 @@ export default function App({ thirdwebClient }: AppProps) {
   
   const [claimTokenId, setClaimTokenId] = useState<number>(1);
 
+
+  // Arbitration states
+  const [disputesMap, setDisputesMap] = useState<Map<number, any>>(new Map());
+  // const [arbitrationsMap, setArbitrationsMap] = useState<Map<number, any>>(new Map()); // Reserved for future use
+  const [arbitratorsMap, setArbitratorsMap] = useState<Map<string, any>>(new Map());
+  const [disputeTokenId, setDisputeTokenId] = useState<number>(1);
+  const [disputeReason, setDisputeReason] = useState<string>("");
+  const [arbitrationDecision, setArbitrationDecision] = useState<boolean>(true);
+  const [arbitrationResolution, setArbitrationResolution] = useState<string>("");
+  const [arbitrationDisputeId, setArbitrationDisputeId] = useState<number>(0);
+  const [minArbitratorStake, setMinArbitratorStake] = useState<string>("0.000000001");
+  const [allArbitrators, setAllArbitrators] = useState<string[]>([]);
+  const [activeArbitratorsCount, setActiveArbitratorsCount] = useState<number>(0);
+  const [resolveDisputeId, setResolveDisputeId] = useState<number>(0);
+  const [assignDisputeId, setAssignDisputeId] = useState<number>(0);
+  const [selectedArbitrators, setSelectedArbitrators] = useState<string[]>([]);
+  const [arbitrationsMap, setArbitrationsMap] = useState<Map<number, any>>(new Map());
+  const [isOwner, setIsOwner] = useState<boolean>(false);
+
   const [filePreview, setFilePreview] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'register' | 'license' | 'revenue'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'register' | 'license' | 'revenue' | 'arbitration'>('dashboard');
 
   // Check backend status
   const checkBackendStatus = async () => {
@@ -671,11 +897,14 @@ export default function App({ thirdwebClient }: AppProps) {
 
     try {
       setLoading(true);
+      const contractAddress = CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"];
+      console.log("📋 Using ModredIP Contract:", contractAddress);
+      
       const contract = getContract({
         abi: MODRED_IP_ABI,
           client: thirdwebClient,
           chain: defineChain(mantleTestnet.id),
-        address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
+        address: contractAddress,
       });
 
       // Get next token ID
@@ -1063,9 +1292,36 @@ export default function App({ thirdwebClient }: AppProps) {
       // Reload data
       await loadContractData();
 
-      } catch (error) {
+    } catch (error: any) {
+      // Check for specific error messages in multiple possible locations
+      const errorMessage = 
+        error?.message || 
+        error?.shortMessage || 
+        error?.cause?.message || 
+        error?.cause?.shortMessage ||
+        error?.toString() || 
+        '';
+      
+      // Check if it's a network/RPC error
+      const isNetworkError = 
+        errorMessage.includes('Failed to fetch') ||
+        errorMessage.includes('fetch failed') ||
+        errorMessage.includes('NetworkError') ||
+        errorMessage.includes('timeout') ||
+        errorMessage.includes('ECONNREFUSED') ||
+        errorMessage.includes('ENOTFOUND') ||
+        error?.name === 'TypeError' && errorMessage.includes('fetch');
+      
+      if (isNetworkError) {
+        console.error("Network error paying revenue:", error);
+        notifyError(
+          'Network Error', 
+          'Failed to connect to the blockchain network. Please check your internet connection and try again. If the problem persists, the RPC endpoint may be temporarily unavailable.'
+        );
+      } else {
       console.error("Error paying revenue:", error);
-      notifyError('Payment Failed', "Failed to pay revenue");
+        notifyError('Payment Failed', errorMessage || "Failed to pay revenue. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -1132,13 +1388,624 @@ export default function App({ thirdwebClient }: AppProps) {
       if (isNoRoyaltiesError) {
         notifyWarning('No Royalties Available', 'There are no royalties available to claim for this IP asset.');
       } else {
-        console.error("Error claiming royalties:", error);
+      console.error("Error claiming royalties:", error);
         notifyError('Claim Failed', errorMessage || "Failed to claim royalties. Please try again.");
       }
     } finally {
       setLoading(false);
     }
   };
+
+  // Arbitration Functions
+  const raiseDispute = async () => {
+    if (!account?.address || !disputeReason.trim()) {
+      notifyError("Invalid Input", "Please enter a dispute reason");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      notifyInfo('Raising Dispute', 'Submitting dispute...');
+
+      const contract = getContract({
+        abi: MODRED_IP_ABI,
+        client: thirdwebClient,
+        chain: defineChain(mantleTestnet.id),
+        address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
+      });
+
+      const preparedCall = await prepareContractCall({
+        contract,
+        method: "raiseDispute",
+        params: [BigInt(disputeTokenId), disputeReason],
+      });
+
+      const transaction = await sendTransaction({
+        transaction: preparedCall,
+        account: account,
+      });
+
+      await waitForReceipt({
+        client: thirdwebClient,
+        chain: defineChain(mantleTestnet.id),
+        transactionHash: transaction.transactionHash,
+      });
+
+      // Get the next dispute ID (it will be the new dispute's ID)
+      const nextDisputeId = await readContract({
+        contract,
+        method: "nextDisputeId",
+        params: [],
+      });
+      const newDisputeId = Number(nextDisputeId) - 1; // The dispute ID that was just created
+      
+      // Reload data
+      await loadArbitrationData();
+      await loadContractData();
+      
+      notifySuccess('Dispute Raised', `Dispute #${newDisputeId} has been successfully raised! You can see it in the disputes list below.`);
+      setDisputeReason("");
+    } catch (error: any) {
+      console.error("Error raising dispute:", error);
+      notifyError('Dispute Failed', error?.message || "Failed to raise dispute");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const registerArbitrator = async () => {
+    if (!account?.address) {
+      notifyError("Wallet Not Connected", "Please connect your wallet");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      notifyInfo('Registering Arbitrator', `Registering with ${minArbitratorStake} MNT stake...`);
+
+      const contract = getContract({
+        abi: MODRED_IP_ABI,
+        client: thirdwebClient,
+        chain: defineChain(mantleTestnet.id),
+        address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
+      });
+
+      const preparedCall = await prepareContractCall({
+        contract,
+        method: "registerArbitrator",
+        params: [],
+        value: parseEther(minArbitratorStake),
+      });
+
+      const transaction = await sendTransaction({
+        transaction: preparedCall,
+        account: account,
+      });
+
+      await waitForReceipt({
+        client: thirdwebClient,
+        chain: defineChain(mantleTestnet.id),
+        transactionHash: transaction.transactionHash,
+      });
+
+      notifySuccess('Arbitrator Registered', 'Successfully registered as an arbitrator!');
+      await loadArbitrationData();
+    } catch (error: any) {
+      console.error("Error registering arbitrator:", error);
+      notifyError('Registration Failed', error?.message || "Failed to register as arbitrator");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const assignArbitrators = async (disputeId: number, selectedArbitrators: string[]) => {
+    if (!account?.address) {
+      notifyError("Wallet Not Connected", "Please connect your wallet");
+      return;
+    }
+
+    if (selectedArbitrators.length === 0) {
+      notifyError("Invalid Selection", "Please select at least one arbitrator");
+      return;
+    }
+
+    if (selectedArbitrators.length > 3) {
+      notifyError("Invalid Selection", "Maximum 3 arbitrators can be assigned");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      notifyInfo('Assigning Arbitrators', `Assigning ${selectedArbitrators.length} arbitrator(s) to dispute...`);
+
+      const contract = getContract({
+        abi: MODRED_IP_ABI,
+        client: thirdwebClient,
+        chain: defineChain(mantleTestnet.id),
+        address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
+      });
+
+      const preparedCall = await prepareContractCall({
+        contract,
+        method: "assignArbitrators",
+        params: [BigInt(disputeId), selectedArbitrators],
+      });
+
+      const transaction = await sendTransaction({
+        transaction: preparedCall,
+        account: account,
+      });
+
+      await waitForReceipt({
+        client: thirdwebClient,
+        chain: defineChain(mantleTestnet.id),
+        transactionHash: transaction.transactionHash,
+      });
+
+      notifySuccess('Arbitrators Assigned', `${selectedArbitrators.length} arbitrator(s) have been assigned to dispute #${disputeId}!`);
+      await loadArbitrationData();
+    } catch (error: any) {
+      console.error("Error assigning arbitrators:", error);
+      const errorMessage = error?.message || error?.shortMessage || error?.cause?.message || "Failed to assign arbitrators";
+      
+      if (errorMessage.includes("Arbitrators already assigned")) {
+        notifyError('Already Assigned', 'This dispute already has arbitrators assigned.');
+      } else if (errorMessage.includes("Arbitrator not active")) {
+        notifyError('Invalid Arbitrator', 'One or more selected arbitrators are not active.');
+      } else {
+        notifyError('Assignment Failed', errorMessage);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const checkAndResolveArbitration = async (disputeId: number) => {
+    if (!account?.address) {
+      notifyError("Wallet Not Connected", "Please connect your wallet");
+      return;
+    }
+
+    if (!isOwner) {
+      notifyError("Unauthorized", "Only the contract owner can manually trigger resolution.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      notifyInfo('Checking Resolution', 'Checking if dispute can be resolved after 24h wait period...');
+
+      const contract = getContract({
+        abi: MODRED_IP_ABI,
+        client: thirdwebClient,
+        chain: defineChain(mantleTestnet.id),
+        address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
+      });
+
+      const preparedCall = await prepareContractCall({
+        contract,
+        method: "checkAndResolveArbitration",
+        params: [BigInt(disputeId)],
+      });
+
+      const transaction = await sendTransaction({
+        transaction: preparedCall,
+        account: account,
+      });
+
+      await waitForReceipt({
+        client: thirdwebClient,
+        chain: defineChain(mantleTestnet.id),
+        transactionHash: transaction.transactionHash,
+      });
+
+      notifySuccess('Dispute Resolved', 'Dispute has been resolved after 24 hour waiting period!');
+      await loadArbitrationData();
+      await loadContractData();
+    } catch (error: any) {
+      console.error("Error checking and resolving arbitration:", error);
+      const errorMessage = error?.message || error?.shortMessage || error?.cause?.message || "Failed to resolve dispute";
+      
+      if (errorMessage.includes("Minimum uphold votes not reached")) {
+        notifyError('Not Enough Votes', 'At least 3 uphold votes are required to resolve.');
+      } else if (errorMessage.includes("24 hour waiting period not passed")) {
+        notifyError('Waiting Period', '24 hours have not passed since 3 uphold votes were reached.');
+      } else if (errorMessage.includes("Three uphold votes timestamp not set")) {
+        notifyError('No Timestamp', 'Three uphold votes have not been reached yet.');
+      } else {
+        notifyError('Resolution Failed', errorMessage);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const transferIP = async (tokenId: number, recipient: string) => {
+    if (!account?.address) {
+      notifyError("Wallet Not Connected", "Please connect your wallet");
+      return;
+    }
+
+    if (!recipient || !recipient.trim()) {
+      notifyError("Invalid Recipient", "Please enter a recipient address");
+      return;
+    }
+
+    // Basic address validation
+    if (!recipient.startsWith("0x") || recipient.length !== 42) {
+      notifyError("Invalid Address", "Please enter a valid Ethereum address (0x...)");
+      return;
+    }
+
+    // Check if user owns the token
+    const asset = ipAssets.get(tokenId);
+    if (!asset) {
+      notifyError("Token Not Found", "IP asset not found");
+      return;
+    }
+
+    if (asset.owner.toLowerCase() !== account.address.toLowerCase()) {
+      notifyError("Not Owner", "You are not the owner of this IP asset");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      notifyInfo('Transferring IP', 'Initiating IP asset transfer...');
+
+      const contract = getContract({
+        abi: MODRED_IP_ABI,
+        client: thirdwebClient,
+        chain: defineChain(mantleTestnet.id),
+        address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
+      });
+
+      // Check for active disputes first
+      try {
+        const hasActive = await readContract({
+          contract,
+          method: "hasActiveDisputes",
+          params: [BigInt(tokenId)],
+        });
+        if (hasActive) {
+          // Get all disputes for this token to show details
+          try {
+            const disputeIds = await readContract({
+              contract,
+              method: "getTokenDisputes",
+              params: [BigInt(tokenId)],
+            });
+            
+            const unresolvedDisputes: number[] = [];
+            for (const disputeId of disputeIds) {
+              try {
+                const dispute = await readContract({
+                  contract,
+                  method: "getDispute",
+                  params: [BigInt(disputeId)],
+                });
+                if (!dispute[5]) { // isResolved is at index 5
+                  unresolvedDisputes.push(Number(disputeId));
+                }
+              } catch (e) {
+                console.error(`Error fetching dispute ${disputeId}:`, e);
+              }
+            }
+            
+            if (unresolvedDisputes.length > 0) {
+              notifyError(
+                "Active Disputes", 
+                `Cannot transfer IP asset. There are ${unresolvedDisputes.length} unresolved dispute(s): ${unresolvedDisputes.join(", ")}. Please resolve all disputes first.`
+              );
+            } else {
+              notifyError("Active Disputes", "Cannot transfer IP asset with active disputes. Please resolve all disputes first.");
+            }
+          } catch (e) {
+            console.error("Error fetching dispute details:", e);
+            notifyError("Active Disputes", "Cannot transfer IP asset with active disputes. Please resolve all disputes first.");
+          }
+          setLoading(false);
+          return;
+        }
+      } catch (e) {
+        console.error("Error checking active disputes:", e);
+        // If the check itself fails, we should still try to proceed
+        // but the contract will revert if there are active disputes
+      }
+
+      const preparedCall = await prepareContractCall({
+        contract,
+        method: "transferIP",
+        params: [BigInt(tokenId), recipient as `0x${string}`],
+      });
+
+      const transaction = await sendTransaction({
+        transaction: preparedCall,
+        account: account,
+      });
+
+      await waitForReceipt({
+        client: thirdwebClient,
+        chain: defineChain(mantleTestnet.id),
+        transactionHash: transaction.transactionHash,
+      });
+
+      notifySuccess('Transfer Successful', `IP asset #${tokenId} has been transferred to ${recipient.substring(0, 10)}...${recipient.substring(recipient.length - 8)}`);
+      await loadContractData();
+    } catch (error: any) {
+      console.error("Error transferring IP:", error);
+      const errorMessage = error?.message || error?.shortMessage || error?.cause?.message || "Failed to transfer IP asset";
+      
+      if (errorMessage.includes("Cannot transfer IP with active disputes") || errorMessage.includes("active disputes")) {
+        notifyError('Active Disputes', 'This IP asset has active disputes. Please resolve them before transferring.');
+      } else if (errorMessage.includes("Not the owner")) {
+        notifyError('Not Owner', 'You are not the owner of this IP asset.');
+      } else if (errorMessage.includes("Token does not exist")) {
+        notifyError('Token Not Found', 'IP asset does not exist.');
+      } else {
+        notifyError('Transfer Failed', errorMessage);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resolveDisputeWithoutArbitrators = async (disputeId: number) => {
+    if (!account?.address) {
+      notifyError("Wallet Not Connected", "Please connect your wallet");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      notifyInfo('Resolving Dispute', 'Resolving dispute without arbitrators...');
+
+      const contract = getContract({
+        abi: MODRED_IP_ABI,
+        client: thirdwebClient,
+        chain: defineChain(mantleTestnet.id),
+        address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
+      });
+
+      const preparedCall = await prepareContractCall({
+        contract,
+        method: "resolveDisputeWithoutArbitrators",
+        params: [BigInt(disputeId)],
+      });
+
+      const transaction = await sendTransaction({
+        transaction: preparedCall,
+        account: account,
+      });
+
+      await waitForReceipt({
+        client: thirdwebClient,
+        chain: defineChain(mantleTestnet.id),
+        transactionHash: transaction.transactionHash,
+      });
+
+      notifySuccess('Dispute Resolved', 'Dispute has been auto-rejected due to no arbitrators available.');
+      await loadArbitrationData();
+    } catch (error: any) {
+      console.error("Error resolving dispute:", error);
+      const errorMessage = error?.message || error?.shortMessage || error?.cause?.message || "Failed to resolve dispute";
+      
+      // Check for specific error messages
+      if (errorMessage.includes("Only the dispute author can resolve") || errorMessage.includes("dispute author")) {
+        notifyError('Authorization Failed', 'Only the person who raised the dispute can resolve it when no arbitrators are available.');
+      } else if (errorMessage.includes("Deadline not passed")) {
+        notifyError('Deadline Not Passed', 'The 7-day deadline has not yet passed. Please wait until after the deadline.');
+      } else if (errorMessage.includes("Arbitrators already assigned")) {
+        notifyError('Arbitrators Assigned', 'This dispute already has arbitrators assigned. Use the normal arbitration process.');
+      } else {
+        notifyError('Resolution Failed', errorMessage);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const submitArbitrationDecision = async (disputeId: number) => {
+    if (!account?.address || !arbitrationResolution.trim()) {
+      notifyError("Invalid Input", "Please enter a resolution statement");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      notifyInfo('Submitting Decision', 'Submitting arbitration decision...');
+
+      const contract = getContract({
+        abi: MODRED_IP_ABI,
+        client: thirdwebClient,
+        chain: defineChain(mantleTestnet.id),
+        address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
+      });
+
+      const preparedCall = await prepareContractCall({
+        contract,
+        method: "submitArbitrationDecision",
+        params: [BigInt(disputeId), arbitrationDecision, arbitrationResolution],
+      });
+
+      const transaction = await sendTransaction({
+        transaction: preparedCall,
+        account: account,
+      });
+
+      await waitForReceipt({
+        client: thirdwebClient,
+        chain: defineChain(mantleTestnet.id),
+        transactionHash: transaction.transactionHash,
+      });
+
+      notifySuccess('Decision Submitted', 'Your arbitration decision has been submitted!');
+      setArbitrationResolution("");
+      await loadArbitrationData();
+      await loadContractData();
+    } catch (error: any) {
+      console.error("Error submitting decision:", error);
+      notifyError('Submission Failed', error?.message || "Failed to submit arbitration decision");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadArbitrationData = async () => {
+    if (!account?.address) return;
+
+    try {
+      const contract = getContract({
+        abi: MODRED_IP_ABI,
+        client: thirdwebClient,
+        chain: defineChain(mantleTestnet.id),
+        address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
+      });
+
+      // Load minimum stake
+      const minStake = await readContract({
+        contract,
+        method: "MIN_ARBITRATOR_STAKE",
+        params: [],
+      });
+      setMinArbitratorStake(formatEther(minStake));
+
+      // Load active arbitrator count
+      const activeCount = await readContract({
+        contract,
+        method: "getActiveArbitratorsCount",
+        params: [],
+      });
+      setActiveArbitratorsCount(Number(activeCount));
+
+      // Load all arbitrators
+      const arbitratorAddresses = await readContract({
+        contract,
+        method: "getAllArbitrators",
+        params: [],
+      });
+      setAllArbitrators([...arbitratorAddresses]); // Convert readonly array to mutable array
+
+      // Load arbitrator details
+      const arbitratorDetails = new Map<string, any>();
+      for (const addr of arbitratorAddresses) {
+        try {
+          const details = await readContract({
+            contract,
+            method: "getArbitrator",
+            params: [addr],
+          });
+          // Get active disputes count for this arbitrator
+          let activeDisputes = 0;
+          try {
+            const activeDisputesCount = await readContract({
+              contract,
+              method: "getArbitratorActiveDisputes",
+              params: [addr],
+            });
+            activeDisputes = Number(activeDisputesCount);
+          } catch (e) {
+            console.error(`Error loading active disputes for ${addr}:`, e);
+          }
+          
+          arbitratorDetails.set(addr, {
+            arbitrator: details[0],
+            stake: details[1],
+            reputation: details[2],
+            totalCases: details[3],
+            successfulCases: details[4],
+            isActive: details[5],
+            registrationDate: details[6],
+            activeDisputes: activeDisputes,
+          });
+        } catch (e) {
+          console.error(`Error loading arbitrator ${addr}:`, e);
+        }
+      }
+      setArbitratorsMap(arbitratorDetails);
+
+      // Load all disputes
+      const nextDisputeId = await readContract({
+        contract,
+        method: "nextDisputeId",
+        params: [],
+      });
+      const nextDisputeIdNum = Number(nextDisputeId);
+
+      const disputesData = new Map<number, any>();
+      for (let i = 1; i < nextDisputeIdNum; i++) {
+        try {
+          const dispute = await readContract({
+            contract,
+            method: "getDispute",
+            params: [BigInt(i)],
+          });
+          disputesData.set(i, {
+            disputeId: Number(dispute[0]),
+            tokenId: Number(dispute[1]),
+            disputer: dispute[2],
+            reason: dispute[3],
+            timestamp: dispute[4],
+            isResolved: dispute[5],
+            arbitrationId: Number(dispute[6]),
+          });
+        } catch (e) {
+          // Dispute doesn't exist, skip
+          console.error(`Error loading dispute ${i}:`, e);
+        }
+      }
+      setDisputesMap(disputesData);
+
+      // Load arbitration details for resolved disputes
+      const arbitrationsData = new Map<number, any>();
+      for (const [, dispute] of disputesData.entries()) {
+        if (dispute.isResolved) {
+          try {
+            const arbitration = await readContract({
+              contract,
+              method: "getArbitration",
+              params: [BigInt(dispute.arbitrationId)],
+            });
+            arbitrationsData.set(dispute.arbitrationId, {
+              arbitrationId: Number(arbitration[0]),
+              disputeId: Number(arbitration[1]),
+              arbitrators: arbitration[2],
+              votesFor: Number(arbitration[3]),
+              votesAgainst: Number(arbitration[4]),
+              deadline: arbitration[5],
+              isResolved: arbitration[6],
+              resolution: arbitration[7],
+              threeUpholdVotesTimestamp: arbitration[8],
+            });
+          } catch (e) {
+            console.error(`Error loading arbitration ${dispute.arbitrationId}:`, e);
+          }
+        }
+      }
+      setArbitrationsMap(arbitrationsData);
+
+      // Load contract owner
+      try {
+        const ownerAddress = await readContract({
+          contract,
+          method: "owner",
+          params: [],
+        });
+        setIsOwner(account?.address?.toLowerCase() === ownerAddress.toLowerCase());
+      } catch (e) {
+        console.error("Error loading contract owner:", e);
+      }
+    } catch (error) {
+      console.error("Error loading arbitration data:", error);
+    }
+  };
+
+  // Load arbitration data on mount
+  useEffect(() => {
+    if (account?.address) {
+      loadArbitrationData();
+    }
+  }, [account?.address]);
 
   return (
     <div className="app">
@@ -1204,6 +2071,12 @@ export default function App({ thirdwebClient }: AppProps) {
             >
               💰 Revenue & Analytics
             </button>
+            <button 
+              className={`nav-tab ${activeTab === 'arbitration' ? 'active' : ''}`}
+              onClick={() => setActiveTab('arbitration')}
+            >
+              ⚖️ Arbitration
+            </button>
           </div>
 
           {/* Tab Content */}
@@ -1215,6 +2088,7 @@ export default function App({ thirdwebClient }: AppProps) {
                 licenses={licenses}
                 metadata={parsedMetadata}
                 userAddress={account?.address}
+                onTransferIP={transferIP}
               />
             )}
 
@@ -1651,6 +2525,599 @@ export default function App({ thirdwebClient }: AppProps) {
             >
               {loading ? '⏳ Claiming...' : '🏆 Claim Royalties'}
             </button>
+                </div>
+                </section>
+              </>
+            )}
+
+            {/* Arbitration Tab */}
+            {activeTab === 'arbitration' && (
+              <>
+                {/* Register as Arbitrator */}
+                <section className="section">
+                  <div className="section-header">
+                    <span className="section-icon">⚖️</span>
+                    <h2 className="section-title">Register as Arbitrator</h2>
+                  </div>
+          
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label className="form-label">💰 Minimum Stake (MNT)</label>
+                      <input
+                        type="number"
+                        className="form-input"
+                        value={minArbitratorStake}
+                        onChange={(e) => setMinArbitratorStake(e.target.value)}
+                        min="0.000000001"
+                        step="0.000000001"
+                        placeholder="0.000000001"
+                        readOnly
+                      />
+                      <small className="form-hint">Minimum stake required to become an arbitrator</small>
+                    </div>
+            
+                    <button 
+                      className="btn btn-primary btn-full"
+                      onClick={registerArbitrator} 
+                      disabled={loading || !account?.address}
+                    >
+                      {loading ? '⏳ Registering...' : '⚖️ Register as Arbitrator'}
+                    </button>
+                  </div>
+                </section>
+
+                {/* Raise Dispute */}
+                <section className="section">
+                  <div className="section-header">
+                    <span className="section-icon">🚨</span>
+                    <h2 className="section-title">Raise Dispute</h2>
+                  </div>
+          
+                  <div className="form-grid">
+                    {activeArbitratorsCount === 0 && (
+                      <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                        <div style={{ 
+                          padding: '1rem', 
+                          backgroundColor: 'var(--color-warning-bg, #fff3cd)', 
+                          border: '1px solid var(--color-warning-border, #ffc107)',
+                          borderRadius: '8px',
+                          marginBottom: '1rem'
+                        }}>
+                          <strong>⚠️ Warning:</strong> No active arbitrators are currently registered. 
+                          If you raise a dispute, it will be automatically rejected after 7 days if no arbitrators are assigned.
+                          Consider registering as an arbitrator first to ensure disputes can be properly reviewed.
+                        </div>
+                      </div>
+                    )}
+                    {activeArbitratorsCount > 0 && activeArbitratorsCount < 3 && (
+                      <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                        <div style={{ 
+                          padding: '1rem', 
+                          backgroundColor: 'var(--color-info-bg, #d1ecf1)', 
+                          border: '1px solid var(--color-info-border, #0c5460)',
+                          borderRadius: '8px',
+                          marginBottom: '1rem'
+                        }}>
+                          <strong>ℹ️ Info:</strong> Only {activeArbitratorsCount} active arbitrator{activeArbitratorsCount !== 1 ? 's' : ''} available 
+                          (recommended: 3). Disputes can still be processed with fewer arbitrators.
+                        </div>
+                      </div>
+                    )}
+                    <div className="form-group">
+                      <label className="form-label">🎯 Select IP Asset</label>
+                      <select
+                        className="form-select"
+                        value={disputeTokenId}
+                        onChange={(e) => setDisputeTokenId(Number(e.target.value))}
+                      >
+                        {Array.from(ipAssets.keys()).map((id) => {
+                          const asset = ipAssets.get(id);
+                          const metadata = parsedMetadata.get(id) || { name: "Unknown" };
+                          return (
+                            <option key={id} value={id}>
+                              #{id} - {metadata.name || asset?.ipHash.substring(0, 10) || 'Unknown'}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </div>
+            
+                    <div className="form-group">
+                      <label className="form-label">📝 Dispute Reason</label>
+                      <textarea
+                        className="form-input"
+                        value={disputeReason}
+                        onChange={(e) => setDisputeReason(e.target.value)}
+                        rows={4}
+                        placeholder="Explain why you are disputing this IP asset..."
+                      />
+                    </div>
+            
+                    <button 
+                      className="btn btn-primary btn-full"
+                      onClick={raiseDispute} 
+                      disabled={loading || !account?.address || !disputeReason.trim()}
+                    >
+                      {loading ? '⏳ Submitting...' : '🚨 Raise Dispute'}
+                    </button>
+                  </div>
+                </section>
+
+                {/* Assign Arbitrators */}
+                <section className="section">
+                  <div className="section-header">
+                    <span className="section-icon">👥</span>
+                    <h2 className="section-title">Assign Arbitrators to Dispute</h2>
+                  </div>
+          
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label className="form-label">🎯 Dispute ID</label>
+                      <input
+                        type="number"
+                        className="form-input"
+                        placeholder="Enter dispute ID"
+                        min="1"
+                        value={assignDisputeId || ""}
+                        onChange={(e) => {
+                          setAssignDisputeId(Number(e.target.value) || 0);
+                          setSelectedArbitrators([]); // Reset selection when dispute changes
+                        }}
+                      />
+                      <small className="form-hint">
+                        Select 1-3 active arbitrators to assign to this dispute. 
+                        You can select from the list of registered arbitrators below.
+                      </small>
+                    </div>
+            
+                    <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                      <label className="form-label">⚖️ Select Arbitrators ({selectedArbitrators.length}/3 selected)</label>
+                      <div style={{ 
+                        display: 'grid', 
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', 
+                        gap: '0.75rem',
+                        marginTop: '0.5rem'
+                      }}>
+                        {allArbitrators
+                          .filter(addr => {
+                            const arb = arbitratorsMap.get(addr);
+                            return arb && arb.isActive;
+                          })
+                          .map((addr) => {
+                            const arb = arbitratorsMap.get(addr);
+                            if (!arb) return null;
+                            const isSelected = selectedArbitrators.includes(addr);
+                            
+                            return (
+                              <div
+                                key={addr}
+                                onClick={() => {
+                                  if (isSelected) {
+                                    setSelectedArbitrators(selectedArbitrators.filter(a => a !== addr));
+                                  } else {
+                                    if (selectedArbitrators.length < 3) {
+                                      // Warn if arbitrator has high workload
+                                      if ((arb.activeDisputes || 0) >= 5) {
+                                        notifyWarning('High Workload', `This arbitrator already has ${arb.activeDisputes} active disputes. Consider selecting someone with less workload.`);
+                                      }
+                                      setSelectedArbitrators([...selectedArbitrators, addr]);
+                                    } else {
+                                      notifyWarning('Maximum Reached', 'You can only select up to 3 arbitrators');
+                                    }
+                                  }
+                                }}
+                                style={{
+                                  padding: '1rem',
+                                  border: `2px solid ${isSelected ? 'var(--color-primary, #007bff)' : 
+                                    (arb.activeDisputes || 0) >= 5 ? 'var(--color-danger, #dc3545)' :
+                                    (arb.activeDisputes || 0) >= 3 ? 'var(--color-warning, #ffc107)' :
+                                    'var(--color-border, #ddd)'}`,
+                                  borderRadius: '8px',
+                                  cursor: 'pointer',
+                                  backgroundColor: isSelected ? 'var(--color-primary-bg, rgba(0, 123, 255, 0.1))' : 
+                                    (arb.activeDisputes || 0) >= 5 ? 'rgba(220, 53, 69, 0.1)' :
+                                    (arb.activeDisputes || 0) >= 3 ? 'rgba(255, 193, 7, 0.1)' :
+                                    'transparent',
+                                  transition: 'all 0.2s',
+                                  opacity: (arb.activeDisputes || 0) >= 10 ? 0.6 : 1
+                                }}
+                              >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                                  <input
+                                    type="checkbox"
+                                    checked={isSelected}
+                                    onChange={() => {}}
+                                    style={{ cursor: 'pointer' }}
+                                  />
+                                  <strong style={{ fontSize: '0.9rem' }}>
+                                    {addr.substring(0, 10)}...{addr.substring(addr.length - 8)}
+                                  </strong>
+                                </div>
+                                <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
+                                  <div>⭐ Reputation: {Number(arb.reputation)}</div>
+                                  <div>📊 Total Cases: {Number(arb.totalCases)}</div>
+                                  <div style={{ 
+                                    color: (arb.activeDisputes || 0) >= 5 ? 'var(--color-danger, #dc3545)' : 
+                                           (arb.activeDisputes || 0) >= 3 ? 'var(--color-warning, #ffc107)' : 
+                                           'var(--color-text-secondary)',
+                                    fontWeight: (arb.activeDisputes || 0) >= 3 ? 'bold' : 'normal'
+                                  }}>
+                                    ⚖️ Active Disputes: {arb.activeDisputes || 0}
+                                    {(arb.activeDisputes || 0) >= 5 && ' ⚠️ (High Workload)'}
+                                    {(arb.activeDisputes || 0) >= 3 && (arb.activeDisputes || 0) < 5 && ' ⚡ (Moderate)'}
+                                  </div>
+                                  <div>💰 Stake: {formatEther(arb.stake)} MNT</div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                      </div>
+                      {allArbitrators.filter(addr => {
+                        const arb = arbitratorsMap.get(addr);
+                        return arb && arb.isActive;
+                      }).length === 0 && (
+                        <div style={{ 
+                          padding: '1rem', 
+                          textAlign: 'center', 
+                          color: 'var(--color-text-tertiary)',
+                          marginTop: '0.5rem'
+                        }}>
+                          No active arbitrators available. Register as an arbitrator first.
+                        </div>
+                      )}
+                    </div>
+            
+                    <button 
+                      className="btn btn-primary btn-full"
+                      onClick={() => {
+                        if (assignDisputeId > 0 && selectedArbitrators.length > 0) {
+                          assignArbitrators(assignDisputeId, selectedArbitrators);
+                        } else {
+                          notifyError("Invalid Input", "Please select a dispute ID and at least one arbitrator");
+                        }
+                      }}
+                      disabled={loading || !account?.address || assignDisputeId <= 0 || selectedArbitrators.length === 0}
+                    >
+                      {loading ? '⏳ Assigning...' : `👥 Assign ${selectedArbitrators.length} Arbitrator${selectedArbitrators.length !== 1 ? 's' : ''}`}
+                    </button>
+                  </div>
+                </section>
+
+                {/* Submit Arbitration Decision */}
+                <section className="section">
+                  <div className="section-header">
+                    <span className="section-icon">⚖️</span>
+                    <h2 className="section-title">Submit Arbitration Decision</h2>
+                  </div>
+          
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label className="form-label">🎯 Dispute ID</label>
+                      <input
+                        type="number"
+                        className="form-input"
+                        placeholder="Enter dispute ID"
+                        min="1"
+                        value={arbitrationDisputeId || ""}
+                        onChange={(e) => setArbitrationDisputeId(Number(e.target.value) || 0)}
+                      />
+                    </div>
+            
+                    <div className="form-group">
+                      <label className="form-label">📊 Decision</label>
+                      <select
+                        className="form-select"
+                        value={arbitrationDecision ? "true" : "false"}
+                        onChange={(e) => setArbitrationDecision(e.target.value === "true")}
+                      >
+                        <option value="true">✅ Uphold Dispute</option>
+                        <option value="false">❌ Reject Dispute</option>
+                      </select>
+                    </div>
+            
+                    <div className="form-group">
+                      <label className="form-label">📝 Resolution Statement</label>
+                      <textarea
+                        className="form-input"
+                        value={arbitrationResolution}
+                        onChange={(e) => setArbitrationResolution(e.target.value)}
+                        rows={4}
+                        placeholder="Explain your decision..."
+                      />
+                    </div>
+            
+                    <button 
+                      className="btn btn-primary btn-full"
+                      onClick={() => {
+                        if (arbitrationDisputeId > 0) {
+                          submitArbitrationDecision(arbitrationDisputeId);
+                        } else {
+                          notifyError("Invalid Input", "Please enter a dispute ID");
+                        }
+                      }}
+                      disabled={loading || !account?.address || !arbitrationResolution.trim() || arbitrationDisputeId <= 0}
+                    >
+                      {loading ? '⏳ Submitting...' : '⚖️ Submit Decision'}
+                    </button>
+                  </div>
+                </section>
+
+                {/* Check and Resolve After 24h */}
+                <section className="section">
+                  <div className="section-header">
+                    <span className="section-icon">⏱️</span>
+                    <h2 className="section-title">Resolve After 24h Wait Period</h2>
+                  </div>
+          
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label className="form-label">🎯 Dispute ID</label>
+                      <input
+                        type="number"
+                        className="form-input"
+                        placeholder="Enter dispute ID"
+                        min="1"
+                        value={resolveDisputeId || ""}
+                        onChange={(e) => setResolveDisputeId(Number(e.target.value) || 0)}
+                      />
+                      <small className="form-hint">
+                        Disputes automatically resolve when 3+ uphold votes exist and 24 hours have passed since the 3rd uphold vote. 
+                        This button manually triggers resolution if needed (e.g., if auto-resolution didn't trigger yet).
+                      </small>
+                    </div>
+            
+                    {!isOwner && (
+                      <div style={{ 
+                        padding: '1rem', 
+                        backgroundColor: 'var(--color-warning-bg, rgba(255, 193, 7, 0.1))', 
+                        borderRadius: '8px',
+                        color: 'var(--color-warning, #ffc107)',
+                        marginBottom: '1rem'
+                      }}>
+                        ⚠️ Only the contract owner can manually trigger resolution.
+                      </div>
+                    )}
+                    <button 
+                      className="btn btn-primary btn-full"
+                      onClick={() => checkAndResolveArbitration(resolveDisputeId)}
+                      disabled={loading || !account?.address || resolveDisputeId <= 0 || !isOwner}
+                    >
+                      {loading ? '⏳ Checking...' : '✅ Check & Resolve After 24h'}
+                    </button>
+                  </div>
+                </section>
+
+                {/* Resolve Dispute Without Arbitrators */}
+                <section className="section">
+                  <div className="section-header">
+                    <span className="section-icon">⏰</span>
+                    <h2 className="section-title">Resolve Dispute (No Arbitrators)</h2>
+                  </div>
+          
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label className="form-label">🎯 Dispute ID</label>
+                      <input
+                        type="number"
+                        className="form-input"
+                        placeholder="Enter dispute ID"
+                        min="1"
+                        value={resolveDisputeId || ""}
+                        onChange={(e) => setResolveDisputeId(Number(e.target.value) || 0)}
+                      />
+                      <small className="form-hint">
+                        Only the dispute author can resolve disputes with no arbitrators after the deadline has passed. 
+                        The dispute will be automatically rejected.
+                      </small>
+                    </div>
+            
+                    <button 
+                      className="btn btn-secondary btn-full"
+                      onClick={() => resolveDisputeWithoutArbitrators(resolveDisputeId)}
+                      disabled={loading || !account?.address || resolveDisputeId <= 0}
+                    >
+                      {loading ? '⏳ Resolving...' : '⏰ Auto-Resolve Dispute'}
+                    </button>
+                  </div>
+                </section>
+
+                {/* Disputes List */}
+                <section className="section">
+                  <div className="section-header">
+                    <span className="section-icon">📋</span>
+                    <h2 className="section-title">All Disputes ({disputesMap.size} Total)</h2>
+                  </div>
+          
+                  <div className="grid grid-2">
+                    {disputesMap.size > 0 ? (
+                      Array.from(disputesMap.entries()).map(([id, dispute]) => {
+                        const metadata = parsedMetadata.get(dispute.tokenId) || { name: "Unknown" };
+                        const disputeDate = new Date(Number(dispute.timestamp) * 1000).toLocaleDateString();
+                        
+                        return (
+                          <div key={id} className="card">
+                            <div className="card-header">
+                              <h3 className="card-title">Dispute #{dispute.disputeId}</h3>
+                              <span className={`badge ${dispute.isResolved ? 'badge-success' : 'badge-warning'}`}>
+                                {dispute.isResolved ? '✅ Resolved' : '⏳ Pending'}
+                              </span>
+                            </div>
+                            <div className="card-body">
+                              <div className="card-field">
+                                <span className="card-field-label">Dispute ID</span>
+                                <span className="card-field-value">#{dispute.disputeId}</span>
+                              </div>
+                              <div className="card-field">
+                                <span className="card-field-label">IP Asset</span>
+                                <span className="card-field-value">
+                                  #{dispute.tokenId} - {metadata.name || 'Unknown'}
+                                </span>
+                              </div>
+                              <div className="card-field">
+                                <span className="card-field-label">Disputer</span>
+                                <span className="card-field-value address">
+                                  {dispute.disputer.substring(0, 10)}...{dispute.disputer.substring(dispute.disputer.length - 8)}
+                                </span>
+                              </div>
+                              <div className="card-field">
+                                <span className="card-field-label">Reason</span>
+                                <span className="card-field-value" style={{ wordBreak: 'break-word' }}>
+                                  {dispute.reason.length > 100 
+                                    ? `${dispute.reason.substring(0, 100)}...` 
+                                    : dispute.reason}
+                                </span>
+                              </div>
+                              <div className="card-field">
+                                <span className="card-field-label">Date</span>
+                                <span className="card-field-value">{disputeDate}</span>
+                              </div>
+                              <div className="card-field">
+                                <span className="card-field-label">Arbitration ID</span>
+                                <span className="card-field-value">#{dispute.arbitrationId}</span>
+                              </div>
+                              {dispute.isResolved && arbitrationsMap.has(dispute.arbitrationId) && (() => {
+                                const arbitration = arbitrationsMap.get(dispute.arbitrationId);
+                                const isUpheld = arbitration.votesFor > arbitration.votesAgainst;
+                                return (
+                                  <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: 'var(--color-bg-secondary, #f5f5f5)', borderRadius: '8px' }}>
+                                    <div className="card-field" style={{ marginBottom: '0.5rem' }}>
+                                      <span className="card-field-label">Resolution Outcome</span>
+                                      <span className={`card-field-value ${isUpheld ? 'text-success' : 'text-danger'}`} style={{ fontWeight: 'bold' }}>
+                                        {isUpheld ? '✅ Dispute Upheld' : '❌ Dispute Rejected'}
+                                      </span>
+                                    </div>
+                                    <div className="card-field">
+                                      <span className="card-field-label">Votes</span>
+                                      <span className="card-field-value">
+                                        {arbitration.votesFor} For / {arbitration.votesAgainst} Against
+                                      </span>
+                                    </div>
+                                    {arbitration.resolution && arbitration.resolution.trim() && (
+                                      <div className="card-field" style={{ marginTop: '0.5rem' }}>
+                                        <span className="card-field-label">Resolution Statement</span>
+                                        <span className="card-field-value" style={{ wordBreak: 'break-word', fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>
+                                          {arbitration.resolution}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })()}
+                              {!dispute.isResolved && (
+                                <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                  <button
+                                    className="btn btn-sm btn-secondary"
+                                    onClick={() => {
+                                      setArbitrationDisputeId(dispute.disputeId);
+                                      setResolveDisputeId(dispute.disputeId);
+                                    }}
+                                  >
+                                    Use This ID
+                                  </button>
+                                  <button
+                                    className="btn btn-sm btn-primary"
+                                    onClick={() => {
+                                      setAssignDisputeId(dispute.disputeId);
+                                      setSelectedArbitrators([]);
+                                      // Scroll to assign arbitrators section
+                                      setTimeout(() => {
+                                        const sections = document.querySelectorAll('.section');
+                                        sections.forEach((section) => {
+                                          const title = section.querySelector('.section-title');
+                                          if (title && title.textContent?.includes('Assign Arbitrators')) {
+                                            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                          }
+                                        });
+                                      }, 100);
+                                    }}
+                                  >
+                                    👥 Assign Arbitrators
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="card" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem' }}>
+                        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📋</div>
+                        <h3 style={{ marginBottom: '0.5rem', color: 'var(--color-text-secondary)' }}>No Disputes Yet</h3>
+                        <p style={{ color: 'var(--color-text-tertiary)' }}>No disputes have been raised yet.</p>
+                      </div>
+                    )}
+                  </div>
+                </section>
+
+                {/* Arbitrators List */}
+                <section className="section">
+                  <div className="section-header">
+                    <span className="section-icon">👥</span>
+                    <h2 className="section-title">Registered Arbitrators ({activeArbitratorsCount} Active)</h2>
+                  </div>
+          
+                  <div className="grid grid-2">
+                    {allArbitrators.length > 0 ? (
+                      allArbitrators.map((addr) => {
+                        const arb = arbitratorsMap.get(addr);
+                        if (!arb) return null;
+                        return (
+                          <div key={addr} className="card">
+                            <div className="card-header">
+                              <h3 className="card-title">Arbitrator</h3>
+                              <span className={`badge ${arb.isActive ? 'badge-success' : 'badge-error'}`}>
+                                {arb.isActive ? '✅ Active' : '❌ Inactive'}
+                              </span>
+                            </div>
+                            <div className="card-body">
+                              <div className="card-field">
+                                <span className="card-field-label">Address</span>
+                                <span className="card-field-value address">{addr.substring(0, 10)}...</span>
+                              </div>
+                              <div className="card-field">
+                                <span className="card-field-label">Stake</span>
+                                <span className="card-field-value">💰 {formatEther(arb.stake)} MNT</span>
+                              </div>
+                              <div className="card-field">
+                                <span className="card-field-label">Reputation</span>
+                                <span className="card-field-value">⭐ {Number(arb.reputation)}</span>
+                              </div>
+                              <div className="card-field">
+                                <span className="card-field-label">Total Cases</span>
+                                <span className="card-field-value">📊 {Number(arb.totalCases)}</span>
+                              </div>
+                              <div className="card-field">
+                                <span className="card-field-label">Active Disputes</span>
+                                <span className="card-field-value" style={{
+                                  color: (arb.activeDisputes || 0) >= 5 ? 'var(--color-danger, #dc3545)' : 
+                                         (arb.activeDisputes || 0) >= 3 ? 'var(--color-warning, #ffc107)' : 
+                                         'inherit',
+                                  fontWeight: (arb.activeDisputes || 0) >= 3 ? 'bold' : 'normal'
+                                }}>
+                                  ⚖️ {arb.activeDisputes || 0}
+                                  {(arb.activeDisputes || 0) >= 5 && ' ⚠️'}
+                                  {(arb.activeDisputes || 0) >= 3 && (arb.activeDisputes || 0) < 5 && ' ⚡'}
+                                </span>
+                              </div>
+                              <div className="card-field">
+                                <span className="card-field-label">Success Rate</span>
+                                <span className="card-field-value">
+                                  {arb.totalCases > 0 
+                                    ? `${Math.round((Number(arb.successfulCases) / Number(arb.totalCases)) * 100)}%`
+                                    : 'N/A'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="card" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem' }}>
+                        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>👥</div>
+                        <h3 style={{ marginBottom: '0.5rem', color: 'var(--color-text-secondary)' }}>No Arbitrators Yet</h3>
+                        <p style={{ color: 'var(--color-text-tertiary)' }}>Be the first to register as an arbitrator!</p>
+                      </div>
+                    )}
                 </div>
                 </section>
               </>

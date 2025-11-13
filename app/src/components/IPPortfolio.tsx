@@ -41,13 +41,15 @@ interface IPPortfolioProps {
   licenses: Map<number, License>;
   metadata: Map<number, any>;
   userAddress?: string;
+  onTransferIP?: (tokenId: number, recipient: string) => Promise<void>;
 }
 
 export const IPPortfolio: React.FC<IPPortfolioProps> = ({
   assets,
   licenses,
   metadata,
-  userAddress
+  userAddress,
+  onTransferIP
 }) => {
   const { notifySuccess, notifyError } = useNotificationHelpers();
   const [activeTab, setActiveTab] = useState<'overview' | 'assets' | 'portfolios' | 'analytics'>('overview');
@@ -60,6 +62,12 @@ export const IPPortfolio: React.FC<IPPortfolioProps> = ({
     isPublic: true,
     bundledLicenseTerms: ''
   });
+  const [transferModal, setTransferModal] = useState<{ open: boolean; tokenId: number | null; recipient: string }>({
+    open: false,
+    tokenId: null,
+    recipient: ''
+  });
+  const [transferLoading, setTransferLoading] = useState(false);
 
   // Filter user's assets
   const userAssets = Array.from(assets.entries()).filter(([_, asset]) => 
@@ -545,7 +553,7 @@ export const IPPortfolio: React.FC<IPPortfolioProps> = ({
                       <AssetPreview assetId={id} asset={asset} metadata={metadata.get(id)} />
                       <div className="recent-asset-info">
                         <div className="asset-name">{metadata.get(id)?.name || `Asset #${id}`}</div>
-                        <div className="asset-revenue">{formatEther(asset.totalRevenue)} XTZ</div>
+                        <div className="asset-revenue">{formatEther(asset.totalRevenue)} MNT</div>
                       </div>
                     </div>
                   ))}
@@ -559,7 +567,7 @@ export const IPPortfolio: React.FC<IPPortfolioProps> = ({
                   <div className="metric">
                     <span className="metric-label">Average Revenue per Asset</span>
                     <span className="metric-value">
-                      {totalAssets > 0 ? formatEther(totalRevenue / BigInt(totalAssets)) : '0'} XTZ
+                      {totalAssets > 0 ? formatEther(totalRevenue / BigInt(totalAssets)) : '0'} MNT
                     </span>
                   </div>
                   <div className="metric">
@@ -639,7 +647,7 @@ export const IPPortfolio: React.FC<IPPortfolioProps> = ({
                     <div className="asset-metrics">
                       <div className="metric">
                         <span>💰 Revenue</span>
-                        <span>{formatEther(asset.totalRevenue)} XTZ</span>
+                        <span>{formatEther(asset.totalRevenue)} MNT</span>
                       </div>
                       <div className="metric">
                         <span>🎯 Royalty</span>
@@ -655,6 +663,29 @@ export const IPPortfolio: React.FC<IPPortfolioProps> = ({
                       {asset.isEncrypted && <span className="status-tag encrypted">🔒 Encrypted</span>}
                       {asset.isDisputed && <span className="status-tag disputed">⚠️ Disputed</span>}
                     </div>
+                    
+                    {onTransferIP && asset.owner.toLowerCase() === userAddress?.toLowerCase() && (
+                      <div className="asset-actions" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          className="btn btn-secondary"
+                          onClick={() => setTransferModal({ open: true, tokenId: id, recipient: '' })}
+                          disabled={transferLoading || asset.isDisputed}
+                          title={asset.isDisputed ? "Cannot transfer: IP asset has active disputes" : "Transfer this IP asset"}
+                        >
+                          🔄 Transfer
+                        </button>
+                        {asset.isDisputed && (
+                          <small style={{ 
+                            display: 'block', 
+                            marginTop: '0.5rem', 
+                            color: 'var(--color-error, #dc3545)',
+                            fontSize: '0.75rem'
+                          }}>
+                            ⚠️ Active disputes must be resolved first
+                          </small>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -716,7 +747,7 @@ export const IPPortfolio: React.FC<IPPortfolioProps> = ({
                   <div className="portfolio-metrics">
                     <div className="metric">
                       <span>💰 Total Value</span>
-                      <span>{formatEther(portfolio.totalValue)} XTZ</span>
+                      <span>{formatEther(portfolio.totalValue)} MNT</span>
                     </div>
                     <div className="metric">
                       <span>📅 Created</span>
@@ -761,7 +792,7 @@ export const IPPortfolio: React.FC<IPPortfolioProps> = ({
                           }}
                         ></div>
                       </div>
-                      <div className="bar-value">{formatEther(asset.totalRevenue)} XTZ</div>
+                      <div className="bar-value">{formatEther(asset.totalRevenue)} MNT</div>
                     </div>
                   ))}
                 </div>
@@ -778,7 +809,7 @@ export const IPPortfolio: React.FC<IPPortfolioProps> = ({
                         <AssetPreview assetId={id} asset={asset} metadata={metadata.get(id)} />
                         <div className="performance-info">
                           <div className="asset-name">{metadata.get(id)?.name || `Asset #${id}`}</div>
-                          <div className="asset-revenue">{formatEther(asset.totalRevenue)} XTZ</div>
+                          <div className="asset-revenue">{formatEther(asset.totalRevenue)} MNT</div>
                         </div>
                       </div>
                     ))}
@@ -871,6 +902,85 @@ export const IPPortfolio: React.FC<IPPortfolioProps> = ({
                 disabled={!portfolioForm.name.trim() || selectedAssets.size === 0}
               >
                 Create Portfolio
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Transfer Modal */}
+      {transferModal.open && transferModal.tokenId !== null && (
+        <div className="modal-overlay" onClick={() => setTransferModal({ open: false, tokenId: null, recipient: '' })}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>🔄 Transfer IP Asset #{transferModal.tokenId}</h3>
+              <button 
+                className="modal-close"
+                onClick={() => setTransferModal({ open: false, tokenId: null, recipient: '' })}
+              >
+                ×
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="form-group">
+                <label className="form-label">👤 Recipient Address</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="0x..."
+                  value={transferModal.recipient}
+                  onChange={(e) => setTransferModal({ ...transferModal, recipient: e.target.value.trim() })}
+                />
+                <small className="form-hint">
+                  Enter the Ethereum address of the recipient. The IP asset will be transferred to this address.
+                </small>
+              </div>
+              
+              {metadata.get(transferModal.tokenId) && (
+                <div style={{ 
+                  padding: '1rem', 
+                  backgroundColor: 'var(--color-bg-secondary, #f5f5f5)', 
+                  borderRadius: '8px',
+                  marginBottom: '1rem'
+                }}>
+                  <div><strong>Asset:</strong> {metadata.get(transferModal.tokenId)?.name || `IP Asset #${transferModal.tokenId}`}</div>
+                </div>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button
+                className="btn btn-secondary"
+                onClick={() => setTransferModal({ open: false, tokenId: null, recipient: '' })}
+                disabled={transferLoading}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={async () => {
+                  if (!transferModal.recipient || !transferModal.recipient.trim()) {
+                    notifyError("Invalid Input", "Please enter a recipient address");
+                    return;
+                  }
+                  if (!transferModal.recipient.startsWith("0x") || transferModal.recipient.length !== 42) {
+                    notifyError("Invalid Address", "Please enter a valid Ethereum address (0x...)");
+                    return;
+                  }
+                  if (onTransferIP) {
+                    setTransferLoading(true);
+                    try {
+                      await onTransferIP(transferModal.tokenId!, transferModal.recipient);
+                      setTransferModal({ open: false, tokenId: null, recipient: '' });
+                    } catch (error) {
+                      console.error("Transfer error:", error);
+                    } finally {
+                      setTransferLoading(false);
+                    }
+                  }
+                }}
+                disabled={transferLoading || !transferModal.recipient.trim()}
+              >
+                {transferLoading ? '⏳ Transferring...' : '🔄 Transfer IP Asset'}
               </button>
             </div>
           </div>

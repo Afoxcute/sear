@@ -38,7 +38,7 @@ NFT_CONTRACT_ADDRESS=optional_nft_contract_address
       "description": "NFT Description",
       "image": "https://ipfs.io/ipfs/..."
     },
-    "modredIpContractAddress": "0x067fda4FcaaDAa37552e5B146d8bC441ae4B1351"
+    "modredIpContractAddress": "0xe1D7ecf7b6631D6a3f334e42b57295CC3d954e26"
   }
   ```
 
@@ -55,7 +55,7 @@ NFT_CONTRACT_ADDRESS=optional_nft_contract_address
       "commercialUse": true,
       "terms": "Commercial license terms..."
     },
-    "modredIpContractAddress": "0x067fda4FcaaDAa37552e5B146d8bC441ae4B1351"
+    "modredIpContractAddress": "0xe1D7ecf7b6631D6a3f334e42b57295CC3d954e26"
   }
   ```
 

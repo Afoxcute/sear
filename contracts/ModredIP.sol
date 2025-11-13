@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+ // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
@@ -15,6 +15,11 @@ contract ModredIP is ERC721, Ownable, ReentrancyGuard {
     uint256 public constant ROYALTY_DECIMALS = 10000; // 10000 = 100%
     uint256 public constant MINIMUM_LICENSE_DURATION = 1 days;
     uint256 public constant DISPUTE_TIMEOUT = 30 days;
+    uint256 public constant MIN_ARBITRATOR_STAKE = 0.000000001 ether; // Minimum stake to become arbitrator (1 gwei)
+    uint256 public constant REQUIRED_ARBITRATORS = 3; // Number of arbitrators required per dispute
+    uint256 public constant ARBITRATION_TIMEOUT = 7 days; // Time limit for arbitration
+    uint256 public constant MIN_UPHOLD_VOTES = 3; // Minimum uphold votes required to resolve
+    uint256 public constant UPHOLD_WAIT_PERIOD = 24 hours; // Wait period after 3 uphold votes
     
     // ERC-6551 Integration
     ERC6551Registry public registry;
@@ -29,6 +34,7 @@ contract ModredIP is ERC721, Ownable, ReentrancyGuard {
     uint256 public nextTokenId = 1;
     uint256 public nextLicenseId = 1;
     uint256 public nextDisputeId = 1;
+    uint256 public nextArbitrationId = 1;
     
     // Structs
     struct IPAsset {
@@ -62,6 +68,31 @@ contract ModredIP is ERC721, Ownable, ReentrancyGuard {
         string reason;
         uint256 timestamp;
         bool isResolved;
+        uint256 arbitrationId; // Associated arbitration case
+    }
+    
+    struct Arbitrator {
+        address arbitrator;
+        uint256 stake;
+        uint256 reputation; // Track successful arbitrations
+        uint256 totalCases;
+        uint256 successfulCases;
+        bool isActive;
+        uint256 registrationDate;
+    }
+    
+    struct Arbitration {
+        uint256 arbitrationId;
+        uint256 disputeId;
+        address[] arbitrators;
+        mapping(address => bool) hasVoted;
+        mapping(address => bool) decision; // true = uphold dispute, false = reject dispute
+        uint256 votesFor; // Votes to uphold dispute
+        uint256 votesAgainst; // Votes to reject dispute
+        uint256 deadline;
+        bool isResolved;
+        string resolution;
+        uint256 threeUpholdVotesTimestamp; // Timestamp when 3 uphold votes were first reached (0 if not reached)
     }
     
     struct RoyaltyVault {
@@ -76,6 +107,10 @@ contract ModredIP is ERC721, Ownable, ReentrancyGuard {
     mapping(uint256 => Dispute) public disputes;
     mapping(uint256 => RoyaltyVault) public royaltyVaults;
     mapping(uint256 => uint256[]) public tokenLicenses; // tokenId => licenseIds
+    mapping(uint256 => uint256[]) public tokenDisputes; // tokenId => disputeIds (allows multiple disputes per IP)
+    mapping(address => Arbitrator) public arbitrators;
+    mapping(uint256 => Arbitration) public arbitrations;
+    address[] public arbitratorList; // List of all registered arbitrators
     
     // Events
     event IPRegistered(uint256 indexed tokenId, address indexed owner, string ipHash);
@@ -85,6 +120,10 @@ contract ModredIP is ERC721, Ownable, ReentrancyGuard {
     event DisputeRaised(uint256 indexed disputeId, uint256 indexed tokenId, address indexed disputer);
     event DisputeResolved(uint256 indexed disputeId, uint256 indexed tokenId, bool resolved);
     event IPTransferred(uint256 indexed tokenId, address indexed from, address indexed to);
+    event ArbitratorRegistered(address indexed arbitrator, uint256 stake);
+    event ArbitratorsAssigned(uint256 indexed arbitrationId, uint256 indexed disputeId, address[] arbitrators);
+    event ArbitrationVote(uint256 indexed arbitrationId, address indexed arbitrator, bool decision);
+    event ArbitrationResolved(uint256 indexed arbitrationId, uint256 indexed disputeId, bool upheld);
     
     constructor(
         address _registry,
@@ -228,12 +267,13 @@ contract ModredIP is ERC721, Ownable, ReentrancyGuard {
     
     /**
      * @dev Raise a dispute for an IP asset
+     * @notice Multiple disputes can be raised for the same IP asset
      */
     function raiseDispute(uint256 tokenId, string memory reason) public {
         require(_ownerOf(tokenId) != address(0), "Token does not exist");
-        require(!ipAssets[tokenId].isDisputed, "IP already disputed");
         
         uint256 disputeId = nextDisputeId++;
+        uint256 arbitrationId = nextArbitrationId++;
         
         disputes[disputeId] = Dispute({
             disputeId: disputeId,
@@ -241,15 +281,50 @@ contract ModredIP is ERC721, Ownable, ReentrancyGuard {
             disputer: msg.sender,
             reason: reason,
             timestamp: block.timestamp,
-            isResolved: false
+            isResolved: false,
+            arbitrationId: arbitrationId
         });
         
-        ipAssets[tokenId].isDisputed = true;
+        // Add dispute to token's dispute list
+        tokenDisputes[tokenId].push(disputeId);
+        
+        // Initialize arbitration case
+        Arbitration storage arbitration = arbitrations[arbitrationId];
+        arbitration.arbitrationId = arbitrationId;
+        arbitration.disputeId = disputeId;
+        arbitration.deadline = block.timestamp + ARBITRATION_TIMEOUT;
+        arbitration.isResolved = false;
+        
+        // Set isDisputed to true if this is the first active dispute
+        if (!ipAssets[tokenId].isDisputed) {
+            ipAssets[tokenId].isDisputed = true;
+        }
+        
         emit DisputeRaised(disputeId, tokenId, msg.sender);
     }
     
     /**
-     * @dev Resolve a dispute (only owner)
+     * @dev Check if an IP asset has any active (unresolved) disputes
+     */
+    function hasActiveDisputes(uint256 tokenId) public view returns (bool) {
+        uint256[] memory disputeIds = tokenDisputes[tokenId];
+        for (uint256 i = 0; i < disputeIds.length; i++) {
+            if (!disputes[disputeIds[i]].isResolved) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * @dev Get all dispute IDs for a token
+     */
+    function getTokenDisputes(uint256 tokenId) public view returns (uint256[] memory) {
+        return tokenDisputes[tokenId];
+    }
+    
+    /**
+     * @dev Resolve a dispute (only owner - fallback method)
      */
     function resolveDispute(uint256 disputeId, bool resolved) public onlyOwner {
         Dispute storage dispute = disputes[disputeId];
@@ -257,11 +332,307 @@ contract ModredIP is ERC721, Ownable, ReentrancyGuard {
         require(!dispute.isResolved, "Dispute already resolved");
         
         dispute.isResolved = resolved;
-        if (resolved) {
+        
+        // Update isDisputed flag based on whether there are any active disputes remaining
+        if (!hasActiveDisputes(dispute.tokenId)) {
             ipAssets[dispute.tokenId].isDisputed = false;
+        } else {
+            ipAssets[dispute.tokenId].isDisputed = true;
         }
         
         emit DisputeResolved(disputeId, dispute.tokenId, resolved);
+    }
+    
+    /**
+     * @dev Register as an arbitrator (requires minimum stake)
+     */
+    function registerArbitrator() public payable {
+        require(msg.value >= MIN_ARBITRATOR_STAKE, "Insufficient stake");
+        require(arbitrators[msg.sender].arbitrator == address(0) || !arbitrators[msg.sender].isActive, "Already registered");
+        
+        if (arbitrators[msg.sender].arbitrator == address(0)) {
+            arbitratorList.push(msg.sender);
+            arbitrators[msg.sender] = Arbitrator({
+                arbitrator: msg.sender,
+                stake: msg.value,
+                reputation: 0,
+                totalCases: 0,
+                successfulCases: 0,
+                isActive: true,
+                registrationDate: block.timestamp
+            });
+        } else {
+            // Re-registering (was deactivated)
+            arbitrators[msg.sender].stake += msg.value;
+            arbitrators[msg.sender].isActive = true;
+        }
+        
+        emit ArbitratorRegistered(msg.sender, msg.value);
+    }
+    
+    /**
+     * @dev Deactivate an arbitrator (only owner)
+     */
+    function deactivateArbitrator(address arbitrator) public onlyOwner {
+        require(arbitrators[arbitrator].arbitrator != address(0), "Arbitrator not registered");
+        arbitrators[arbitrator].isActive = false;
+    }
+    
+    /**
+     * @dev Activate an arbitrator (only owner)
+     */
+    function activateArbitrator(address arbitrator) public onlyOwner {
+        require(arbitrators[arbitrator].arbitrator != address(0), "Arbitrator not registered");
+        arbitrators[arbitrator].isActive = true;
+    }
+    
+    /**
+     * @dev Assign arbitrators to a dispute (owner or automated selection)
+     * @notice Allows 1-3 arbitrators to be assigned (flexible when insufficient arbitrators available)
+     */
+    function assignArbitrators(uint256 disputeId, address[] memory selectedArbitrators) public {
+        Dispute storage dispute = disputes[disputeId];
+        require(dispute.disputeId != 0, "Dispute does not exist");
+        require(!dispute.isResolved, "Dispute already resolved");
+        require(selectedArbitrators.length > 0 && selectedArbitrators.length <= REQUIRED_ARBITRATORS, "Invalid number of arbitrators");
+        
+        uint256 arbitrationId = dispute.arbitrationId;
+        Arbitration storage arbitration = arbitrations[arbitrationId];
+        require(arbitration.arbitrators.length == 0, "Arbitrators already assigned");
+        
+        // Verify all selected arbitrators are active
+        for (uint256 i = 0; i < selectedArbitrators.length; i++) {
+            require(arbitrators[selectedArbitrators[i]].isActive, "Arbitrator not active");
+            require(arbitrators[selectedArbitrators[i]].arbitrator != address(0), "Arbitrator not registered");
+            arbitration.arbitrators.push(selectedArbitrators[i]);
+        }
+        
+        emit ArbitratorsAssigned(arbitrationId, disputeId, selectedArbitrators);
+    }
+    
+    /**
+     * @dev Submit arbitration decision (only assigned arbitrators)
+     */
+    function submitArbitrationDecision(uint256 disputeId, bool decision, string memory resolution) public {
+        Dispute storage dispute = disputes[disputeId];
+        require(dispute.disputeId != 0, "Dispute does not exist");
+        require(!dispute.isResolved, "Dispute already resolved");
+        
+        uint256 arbitrationId = dispute.arbitrationId;
+        Arbitration storage arbitration = arbitrations[arbitrationId];
+        require(arbitration.arbitrationId != 0, "Arbitration not found");
+        require(block.timestamp <= arbitration.deadline, "Arbitration deadline passed");
+        require(!arbitration.isResolved, "Arbitration already resolved");
+        
+        // Verify sender is an assigned arbitrator
+        bool isArbitrator = false;
+        for (uint256 i = 0; i < arbitration.arbitrators.length; i++) {
+            if (arbitration.arbitrators[i] == msg.sender) {
+                isArbitrator = true;
+                break;
+            }
+        }
+        require(isArbitrator, "Not an assigned arbitrator");
+        require(!arbitration.hasVoted[msg.sender], "Already voted");
+        
+        // Record vote
+        arbitration.hasVoted[msg.sender] = true;
+        arbitration.decision[msg.sender] = decision;
+        
+        if (decision) {
+            arbitration.votesFor++;
+        } else {
+            arbitration.votesAgainst++;
+        }
+        
+        // Update arbitrator stats
+        arbitrators[msg.sender].totalCases++;
+        
+        emit ArbitrationVote(arbitrationId, msg.sender, decision);
+        
+        // Track when 3 uphold votes are first reached
+        if (decision && arbitration.votesFor == MIN_UPHOLD_VOTES && arbitration.threeUpholdVotesTimestamp == 0) {
+            arbitration.threeUpholdVotesTimestamp = block.timestamp;
+        }
+        
+        // Check resolution conditions:
+        // 1. Need minimum 3 uphold votes to resolve as upheld
+        // 2. If 3 uphold votes reached, wait 24 hours before resolving (auto-resolve after 24h)
+        // 3. Can resolve as rejected if majority votes against (but still need all votes or timeout)
+        
+        uint256 totalVotes = arbitration.votesFor + arbitration.votesAgainst;
+        bool allVoted = totalVotes >= arbitration.arbitrators.length;
+        bool canResolve = false;
+        
+        // Auto-resolve if 3+ uphold votes exist and 24 hours have passed (even if not all arbitrators voted)
+        if (arbitration.votesFor >= MIN_UPHOLD_VOTES) {
+            if (arbitration.threeUpholdVotesTimestamp > 0 && 
+                block.timestamp >= arbitration.threeUpholdVotesTimestamp + UPHOLD_WAIT_PERIOD) {
+                // Auto-resolve as upheld if 24h passed (even if not all arbitrators voted)
+                canResolve = true;
+            }
+        }
+        
+        // Can resolve as rejected if all voted and majority votes against (no minimum required for rejection)
+        if (allVoted && arbitration.votesAgainst > arbitration.votesFor) {
+            canResolve = true;
+        }
+        
+        // Auto-resolve if conditions are met
+        if (canResolve) {
+            _resolveArbitration(arbitrationId, disputeId, resolution);
+        }
+    }
+    
+    /**
+     * @dev Internal function to resolve arbitration
+     */
+    function _resolveArbitration(uint256 arbitrationId, uint256 disputeId, string memory resolution) internal {
+        Arbitration storage arbitration = arbitrations[arbitrationId];
+        Dispute storage dispute = disputes[disputeId];
+        
+        require(!arbitration.isResolved, "Already resolved");
+        
+        // Dispute is upheld only if votesFor >= MIN_UPHOLD_VOTES and votesFor > votesAgainst
+        // Otherwise, it's rejected
+        bool upheld = arbitration.votesFor >= MIN_UPHOLD_VOTES && arbitration.votesFor > arbitration.votesAgainst;
+        arbitration.isResolved = true;
+        arbitration.resolution = resolution;
+        dispute.isResolved = true;
+        
+        if (upheld) {
+            // Dispute upheld - IP remains disputed
+            // Could add additional logic here (e.g., transfer ownership, burn token, etc.)
+        } else {
+            // Dispute rejected - check if there are any other active disputes
+            if (!hasActiveDisputes(dispute.tokenId)) {
+                ipAssets[dispute.tokenId].isDisputed = false;
+            }
+        }
+        
+        // Update arbitrator reputations
+        for (uint256 i = 0; i < arbitration.arbitrators.length; i++) {
+            address arbitrator = arbitration.arbitrators[i];
+            if (arbitration.hasVoted[arbitrator]) {
+                bool arbitratorVote = arbitration.decision[arbitrator];
+                if (arbitratorVote == upheld) {
+                    arbitrators[arbitrator].successfulCases++;
+                    arbitrators[arbitrator].reputation += 10; // Reward for correct decision
+                } else {
+                    if (arbitrators[arbitrator].reputation > 0) {
+                        arbitrators[arbitrator].reputation -= 5; // Penalty for incorrect decision
+                    }
+                }
+            }
+        }
+        
+        emit ArbitrationResolved(arbitrationId, disputeId, upheld);
+        emit DisputeResolved(disputeId, dispute.tokenId, upheld);
+    }
+    
+    /**
+     * @dev Resolve arbitration after deadline (if not all votes received)
+     * @notice Resolves based on votes received, but still requires minimum 3 uphold votes to uphold
+     */
+    function resolveArbitrationAfterDeadline(uint256 disputeId) public {
+        Dispute storage dispute = disputes[disputeId];
+        require(dispute.disputeId != 0, "Dispute does not exist");
+        require(!dispute.isResolved, "Dispute already resolved");
+        
+        uint256 arbitrationId = dispute.arbitrationId;
+        Arbitration storage arbitration = arbitrations[arbitrationId];
+        require(block.timestamp > arbitration.deadline, "Deadline not passed");
+        require(!arbitration.isResolved, "Arbitration already resolved");
+        
+        // Resolve based on votes received
+        // If 3+ uphold votes and 24h passed since reaching 3, can resolve as upheld
+        // Otherwise, resolve as rejected
+        string memory resolution = "Arbitration resolved after deadline based on received votes";
+        
+        bool canResolve = false;
+        if (arbitration.votesFor >= MIN_UPHOLD_VOTES) {
+            if (arbitration.threeUpholdVotesTimestamp > 0 && 
+                block.timestamp >= arbitration.threeUpholdVotesTimestamp + UPHOLD_WAIT_PERIOD) {
+                canResolve = true;
+            }
+        }
+        
+        // Can always resolve as rejected if deadline passed
+        if (!canResolve || arbitration.votesAgainst >= arbitration.votesFor) {
+            // Resolve as rejected
+            arbitration.isResolved = true;
+            arbitration.resolution = resolution;
+            dispute.isResolved = true;
+            
+            // Check if there are any other active disputes
+            if (!hasActiveDisputes(dispute.tokenId)) {
+                ipAssets[dispute.tokenId].isDisputed = false;
+            } else {
+                ipAssets[dispute.tokenId].isDisputed = true;
+            }
+            
+            emit ArbitrationResolved(arbitrationId, disputeId, false);
+            emit DisputeResolved(disputeId, dispute.tokenId, false);
+        } else {
+            _resolveArbitration(arbitrationId, disputeId, resolution);
+        }
+    }
+    
+    /**
+     * @dev Check and resolve arbitration if 3 uphold votes reached and 24 hours passed
+     * @notice Only the contract owner can manually trigger resolution after waiting period
+     */
+    function checkAndResolveArbitration(uint256 disputeId) public onlyOwner {
+        Dispute storage dispute = disputes[disputeId];
+        require(dispute.disputeId != 0, "Dispute does not exist");
+        require(!dispute.isResolved, "Dispute already resolved");
+        
+        uint256 arbitrationId = dispute.arbitrationId;
+        Arbitration storage arbitration = arbitrations[arbitrationId];
+        require(!arbitration.isResolved, "Arbitration already resolved");
+        require(arbitration.votesFor >= MIN_UPHOLD_VOTES, "Minimum uphold votes not reached");
+        require(arbitration.threeUpholdVotesTimestamp > 0, "Three uphold votes timestamp not set");
+        require(
+            block.timestamp >= arbitration.threeUpholdVotesTimestamp + UPHOLD_WAIT_PERIOD,
+            "24 hour waiting period not passed"
+        );
+        
+        // Get the latest resolution from the last vote (if available)
+        // For now, use a default resolution
+        string memory resolution = "Arbitration resolved after 24 hour waiting period with 3+ uphold votes";
+        _resolveArbitration(arbitrationId, disputeId, resolution);
+    }
+    
+    /**
+     * @dev Auto-resolve dispute when no arbitrators are available after timeout
+     * @notice Only the dispute author can resolve if no arbitrators assigned and deadline passed
+     */
+    function resolveDisputeWithoutArbitrators(uint256 disputeId) public {
+        Dispute storage dispute = disputes[disputeId];
+        require(dispute.disputeId != 0, "Dispute does not exist");
+        require(!dispute.isResolved, "Dispute already resolved");
+        require(msg.sender == dispute.disputer, "Only the dispute author can resolve");
+        
+        uint256 arbitrationId = dispute.arbitrationId;
+        Arbitration storage arbitration = arbitrations[arbitrationId];
+        require(arbitration.arbitrators.length == 0, "Arbitrators already assigned");
+        require(block.timestamp > arbitration.deadline, "Deadline not passed");
+        require(!arbitration.isResolved, "Arbitration already resolved");
+        
+        // Auto-reject dispute when no arbitrators available (dispute rejected by default)
+        arbitration.isResolved = true;
+        arbitration.resolution = "Dispute auto-rejected: No arbitrators available within deadline";
+        dispute.isResolved = true;
+        
+        // Check if there are any other active disputes
+        if (!hasActiveDisputes(dispute.tokenId)) {
+            ipAssets[dispute.tokenId].isDisputed = false;
+        } else {
+            ipAssets[dispute.tokenId].isDisputed = true;
+        }
+        
+        emit ArbitrationResolved(arbitrationId, disputeId, false);
+        emit DisputeResolved(disputeId, dispute.tokenId, false);
     }
     
     /**
@@ -269,7 +640,7 @@ contract ModredIP is ERC721, Ownable, ReentrancyGuard {
      */
     function transferIP(uint256 tokenId, address to) public {
         require(ownerOf(tokenId) == msg.sender, "Not the owner");
-        require(!ipAssets[tokenId].isDisputed, "Cannot transfer disputed IP");
+        require(!hasActiveDisputes(tokenId), "Cannot transfer IP with active disputes");
         
         address from = ownerOf(tokenId);
         _transfer(from, to, tokenId);
@@ -356,11 +727,144 @@ contract ModredIP is ERC721, Ownable, ReentrancyGuard {
     function getIPAccount(uint256 tokenId) public view returns (address) {
         return registry.account(
             accountImplementation,
-            chainId,
+                chainId,
             address(this),
-            tokenId,
+                tokenId,
             0
         );
+    }
+    
+    /**
+     * @dev Get dispute details
+     */
+    function getDispute(uint256 disputeId) public view returns (
+        uint256 disputeId_,
+        uint256 tokenId_,
+        address disputer_,
+        string memory reason_,
+        uint256 timestamp_,
+        bool isResolved_,
+        uint256 arbitrationId_
+    ) {
+        Dispute storage dispute = disputes[disputeId];
+        return (
+            dispute.disputeId,
+            dispute.tokenId,
+            dispute.disputer,
+            dispute.reason,
+            dispute.timestamp,
+            dispute.isResolved,
+            dispute.arbitrationId
+        );
+    }
+    
+    /**
+     * @dev Get arbitrator details
+     */
+    function getArbitrator(address arbitrator) public view returns (
+        address arbitrator_,
+        uint256 stake_,
+        uint256 reputation_,
+        uint256 totalCases_,
+        uint256 successfulCases_,
+        bool isActive_,
+        uint256 registrationDate_
+    ) {
+        Arbitrator storage arb = arbitrators[arbitrator];
+        return (
+            arb.arbitrator,
+            arb.stake,
+            arb.reputation,
+            arb.totalCases,
+            arb.successfulCases,
+            arb.isActive,
+            arb.registrationDate
+        );
+    }
+    
+    /**
+     * @dev Get arbitration details
+     */
+    function getArbitration(uint256 arbitrationId) public view returns (
+        uint256 arbitrationId_,
+        uint256 disputeId_,
+        address[] memory arbitrators_,
+        uint256 votesFor_,
+        uint256 votesAgainst_,
+        uint256 deadline_,
+        bool isResolved_,
+        string memory resolution_,
+        uint256 threeUpholdVotesTimestamp_
+    ) {
+        Arbitration storage arbitration = arbitrations[arbitrationId];
+        return (
+            arbitration.arbitrationId,
+            arbitration.disputeId,
+            arbitration.arbitrators,
+            arbitration.votesFor,
+            arbitration.votesAgainst,
+            arbitration.deadline,
+            arbitration.isResolved,
+            arbitration.resolution,
+            arbitration.threeUpholdVotesTimestamp
+        );
+    }
+    
+    /**
+     * @dev Check if an arbitrator has voted on a specific arbitration
+     */
+    function hasArbitratorVoted(uint256 arbitrationId, address arbitrator) public view returns (bool) {
+        return arbitrations[arbitrationId].hasVoted[arbitrator];
+    }
+    
+    /**
+     * @dev Get arbitrator's decision for a specific arbitration
+     */
+    function getArbitratorDecision(uint256 arbitrationId, address arbitrator) public view returns (bool) {
+        return arbitrations[arbitrationId].decision[arbitrator];
+    }
+    
+    /**
+     * @dev Get list of all registered arbitrators
+     */
+    function getAllArbitrators() public view returns (address[] memory) {
+        return arbitratorList;
+    }
+    
+    /**
+     * @dev Get active arbitrators count
+     */
+    function getActiveArbitratorsCount() public view returns (uint256) {
+        uint256 count = 0;
+        for (uint256 i = 0; i < arbitratorList.length; i++) {
+            if (arbitrators[arbitratorList[i]].isActive) {
+                count++;
+            }
+        }
+        return count;
+    }
+    
+    /**
+     * @dev Get the number of active (unresolved) disputes assigned to an arbitrator
+     * @param arbitrator The address of the arbitrator
+     * @return The count of active disputes assigned to this arbitrator
+     */
+    function getArbitratorActiveDisputes(address arbitrator) public view returns (uint256) {
+        uint256 count = 0;
+        // Iterate through all arbitrations
+        for (uint256 i = 1; i < nextArbitrationId; i++) {
+            Arbitration storage arbitration = arbitrations[i];
+            // Check if arbitrator is assigned and arbitration is not resolved
+            if (!arbitration.isResolved) {
+                for (uint256 j = 0; j < arbitration.arbitrators.length; j++) {
+                    if (arbitration.arbitrators[j] == arbitrator) {
+                        count++;
+                        break; // Count each arbitration only once
+                    }
+                }
+            }
+        }
+        return count;
     }
     
     /**
@@ -383,7 +887,7 @@ contract ModredIP is ERC721, Ownable, ReentrancyGuard {
      */
     function transferFrom(address from, address to, uint256 tokenId) public override {
         if (from != address(0) && to != address(0)) {
-            require(!ipAssets[tokenId].isDisputed, "Cannot transfer disputed IP");
+            require(!hasActiveDisputes(tokenId), "Cannot transfer IP with active disputes");
         }
         super.transferFrom(from, to, tokenId);
     }
@@ -393,7 +897,7 @@ contract ModredIP is ERC721, Ownable, ReentrancyGuard {
      */
     function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data) public override {
         if (from != address(0) && to != address(0)) {
-            require(!ipAssets[tokenId].isDisputed, "Cannot transfer disputed IP");
+            require(!hasActiveDisputes(tokenId), "Cannot transfer IP with active disputes");
         }
         super.safeTransferFrom(from, to, tokenId, data);
     }
@@ -426,4 +930,4 @@ contract ModredIP is ERC721, Ownable, ReentrancyGuard {
         require(_ownerOf(tokenId) != address(0), "Token does not exist");
         return ipAssets[tokenId].metadata;
     }
-}
+} 

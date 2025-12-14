@@ -1,4 +1,4 @@
-import { mintLicenseOnMantle } from './storyService';
+import { mintLicenseOnMantle, checkExistingLicenses } from './storyService';
 import { Address } from 'viem';
 import { BLOCK_EXPLORER_URL } from '../utils/config';
 import { convertBigIntsToStrings } from '../utils/bigIntSerializer';
@@ -9,11 +9,25 @@ export interface LicenseRequest {
     duration: number;
     commercialUse: boolean;
     terms: string;
-    modredIpContractAddress: Address;
+    searContractAddress: Address;
 }
 
 export const mintLicense = async (licenseRequest: LicenseRequest) => {
     try {
+        // Check if a license already exists for this IP (tokenId)
+        const hasExistingLicense = await checkExistingLicenses(
+            licenseRequest.tokenId,
+            licenseRequest.searContractAddress
+        );
+
+        if (hasExistingLicense) {
+            return {
+                success: false,
+                error: 'A license already exists for this IP asset. Only one license can be minted per IP.',
+                message: 'License minting failed: IP already has a license'
+            };
+        }
+
         const {
             txHash,
             blockNumber,
@@ -24,7 +38,7 @@ export const mintLicense = async (licenseRequest: LicenseRequest) => {
             licenseRequest.duration,
             licenseRequest.commercialUse,
             licenseRequest.terms,
-            licenseRequest.modredIpContractAddress
+            licenseRequest.searContractAddress
         );
 
         const result = {

@@ -121,6 +121,7 @@ contract ModredIP is ERC721, Ownable, ReentrancyGuard {
     event DisputeResolved(uint256 indexed disputeId, uint256 indexed tokenId, bool resolved);
     event IPTransferred(uint256 indexed tokenId, address indexed from, address indexed to);
     event ArbitratorRegistered(address indexed arbitrator, uint256 stake);
+    event ArbitratorUnstaked(address indexed arbitrator, uint256 stake);
     event ArbitratorsAssigned(uint256 indexed arbitrationId, uint256 indexed disputeId, address[] arbitrators);
     event ArbitrationVote(uint256 indexed arbitrationId, address indexed arbitrator, bool decision);
     event ArbitrationResolved(uint256 indexed arbitrationId, uint256 indexed disputeId, bool upheld);
@@ -371,6 +372,29 @@ contract ModredIP is ERC721, Ownable, ReentrancyGuard {
     }
     
     /**
+     * @dev Unstake and deactivate as an arbitrator (self-service)
+     * @notice Allows arbitrators to withdraw their stake and deactivate themselves
+     * @notice Cannot unstake if currently assigned to active disputes
+     */
+    function unstake() public nonReentrant {
+        require(arbitrators[msg.sender].arbitrator != address(0), "Not registered as arbitrator");
+        require(arbitrators[msg.sender].stake > 0, "No stake to withdraw");
+        
+        // Check if arbitrator has active disputes
+        require(getArbitratorActiveDisputes(msg.sender) == 0, "Cannot unstake while assigned to active disputes");
+        
+        uint256 stakeAmount = arbitrators[msg.sender].stake;
+        arbitrators[msg.sender].stake = 0;
+        arbitrators[msg.sender].isActive = false;
+        
+        // Transfer stake back to arbitrator
+        (bool success, ) = payable(msg.sender).call{value: stakeAmount}("");
+        require(success, "Transfer failed");
+        
+        emit ArbitratorUnstaked(msg.sender, stakeAmount);
+    }
+    
+    /**
      * @dev Deactivate an arbitrator (only owner)
      */
     function deactivateArbitrator(address arbitrator) public onlyOwner {
@@ -455,27 +479,31 @@ contract ModredIP is ERC721, Ownable, ReentrancyGuard {
             arbitration.threeUpholdVotesTimestamp = block.timestamp;
         }
         
-        // Check resolution conditions:
-        // 1. Need minimum 3 uphold votes to resolve as upheld
-        // 2. If 3 uphold votes reached, wait 24 hours before resolving (auto-resolve after 24h)
-        // 3. Can resolve as rejected if majority votes against (but still need all votes or timeout)
+        // Auto-resolve based on vote majority:
+        // 1. If uphold votes > reject votes → resolve as upheld
+        // 2. If reject votes > uphold votes → resolve as rejected
+        // 3. Resolve immediately when majority is clear (no need to wait for all votes)
         
         uint256 totalVotes = arbitration.votesFor + arbitration.votesAgainst;
         bool allVoted = totalVotes >= arbitration.arbitrators.length;
         bool canResolve = false;
         
-        // Auto-resolve if 3+ uphold votes exist and 24 hours have passed (even if not all arbitrators voted)
-        if (arbitration.votesFor >= MIN_UPHOLD_VOTES) {
-            if (arbitration.threeUpholdVotesTimestamp > 0 && 
-                block.timestamp >= arbitration.threeUpholdVotesTimestamp + UPHOLD_WAIT_PERIOD) {
-                // Auto-resolve as upheld if 24h passed (even if not all arbitrators voted)
-                canResolve = true;
-            }
-        }
-        
-        // Can resolve as rejected if all voted and majority votes against (no minimum required for rejection)
-        if (allVoted && arbitration.votesAgainst > arbitration.votesFor) {
+        // Auto-resolve if all arbitrators have voted (immediate resolution)
+        if (allVoted) {
             canResolve = true;
+        } else {
+            // Auto-resolve if majority is clear (even if not all voted)
+            // Need at least 2 votes to have a majority
+            if (totalVotes >= 2) {
+                // If uphold votes > reject votes, resolve as upheld
+                if (arbitration.votesFor > arbitration.votesAgainst) {
+                    canResolve = true;
+                }
+                // If reject votes > uphold votes, resolve as rejected
+                else if (arbitration.votesAgainst > arbitration.votesFor) {
+                    canResolve = true;
+                }
+            }
         }
         
         // Auto-resolve if conditions are met
@@ -493,9 +521,9 @@ contract ModredIP is ERC721, Ownable, ReentrancyGuard {
         
         require(!arbitration.isResolved, "Already resolved");
         
-        // Dispute is upheld only if votesFor >= MIN_UPHOLD_VOTES and votesFor > votesAgainst
+        // Dispute is upheld if votesFor > votesAgainst
         // Otherwise, it's rejected
-        bool upheld = arbitration.votesFor >= MIN_UPHOLD_VOTES && arbitration.votesFor > arbitration.votesAgainst;
+        bool upheld = arbitration.votesFor > arbitration.votesAgainst;
         arbitration.isResolved = true;
         arbitration.resolution = resolution;
         dispute.isResolved = true;
@@ -544,38 +572,13 @@ contract ModredIP is ERC721, Ownable, ReentrancyGuard {
         require(block.timestamp > arbitration.deadline, "Deadline not passed");
         require(!arbitration.isResolved, "Arbitration already resolved");
         
-        // Resolve based on votes received
-        // If 3+ uphold votes and 24h passed since reaching 3, can resolve as upheld
-        // Otherwise, resolve as rejected
-        string memory resolution = "Arbitration resolved after deadline based on received votes";
-        
-        bool canResolve = false;
-        if (arbitration.votesFor >= MIN_UPHOLD_VOTES) {
-            if (arbitration.threeUpholdVotesTimestamp > 0 && 
-                block.timestamp >= arbitration.threeUpholdVotesTimestamp + UPHOLD_WAIT_PERIOD) {
-                canResolve = true;
-            }
-        }
-        
-        // Can always resolve as rejected if deadline passed
-        if (!canResolve || arbitration.votesAgainst >= arbitration.votesFor) {
-            // Resolve as rejected
-            arbitration.isResolved = true;
-            arbitration.resolution = resolution;
-            dispute.isResolved = true;
-            
-            // Check if there are any other active disputes
-            if (!hasActiveDisputes(dispute.tokenId)) {
-                ipAssets[dispute.tokenId].isDisputed = false;
-            } else {
-                ipAssets[dispute.tokenId].isDisputed = true;
-            }
-            
-            emit ArbitrationResolved(arbitrationId, disputeId, false);
-            emit DisputeResolved(disputeId, dispute.tokenId, false);
-        } else {
-            _resolveArbitration(arbitrationId, disputeId, resolution);
-        }
+        // Resolve based on vote majority after deadline
+        // If uphold votes > reject votes → resolve as upheld
+        // If reject votes > uphold votes → resolve as rejected
+        string memory resolution = "Arbitration resolved after deadline based on vote majority";
+
+        // Use the same resolution logic as submitArbitrationDecision
+        _resolveArbitration(arbitrationId, disputeId, resolution);
     }
     
     /**

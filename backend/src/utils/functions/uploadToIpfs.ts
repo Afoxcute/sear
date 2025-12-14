@@ -2,8 +2,12 @@ import { PinataSDK } from 'pinata-web3'
 import fs from 'fs'
 import path from 'path'
 
+if (!process.env.PINATA_JWT) {
+    console.warn('⚠️ Warning: PINATA_JWT not set in environment variables');
+}
+
 const pinata = new PinataSDK({
-    pinataJwt: process.env.PINATA_JWT,
+    pinataJwt: process.env.PINATA_JWT || '',
 })
 
 export async function uploadJSONToIPFS(jsonMetadata: any): Promise<string> {
@@ -15,11 +19,27 @@ export async function uploadJSONToIPFS(jsonMetadata: any): Promise<string> {
     return IpfsHash
 }
 
-// could use this to upload music (audio files) to IPFS
-export async function uploadFileToIPFS(filePath: string, fileName: string, fileType: string): Promise<string> {
+// Upload file to IPFS (accepts File object directly)
+export async function uploadFileToIPFS(file: File): Promise<string> {
+    if (!file) {
+        throw new Error('❌ uploadFileToIPFS: No file provided');
+    }
+
+    console.log('📤 Uploading file to Pinata:', {
+        name: file.name,
+        size: file.size,
+        type: file.type
+    });
+
+    const { IpfsHash } = await pinata.upload.file(file);
+    console.log('✅ File uploaded to IPFS:', IpfsHash);
+    return IpfsHash;
+}
+
+// Legacy function for file path uploads (kept for backward compatibility)
+export async function uploadFileToIPFSFromPath(filePath: string, fileName: string, fileType: string): Promise<string> {
     const fullPath = path.join(process.cwd(), filePath)
     const blob = new Blob([fs.readFileSync(fullPath)])
     const file = new File([blob], fileName, { type: fileType })
-    const { IpfsHash } = await pinata.upload.file(file)
-    return IpfsHash
+    return uploadFileToIPFS(file);
 }

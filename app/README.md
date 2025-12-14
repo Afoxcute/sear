@@ -1,17 +1,18 @@
-# ModredIP Frontend
+# Sear Frontend
 
-A React-based frontend for the ModredIP intellectual property management system on Mantle.
+A React-based frontend for the Sear intellectual property management system on Mantle.
 
 ## Features
 
 ### 1. Register IP Asset
 - Mint an NFT representing ownership of your intellectual property
-- Register the NFT as an IP Asset on the ModredIP system
+- Register the NFT as an IP Asset on the Sear system
 - Upload IP content and metadata to IPFS
 - Set encryption flags for sensitive content
 
 ### 2. Mint License Tokens
 - Create license tokens from registered IP Assets
+- **One License Per IP**: Only one license can be minted per IP asset (enforced validation)
 - Set royalty percentages (1-100%)
 - Define license duration in seconds
 - Specify commercial use permissions
@@ -26,6 +27,13 @@ A React-based frontend for the ModredIP intellectual property management system 
 - License holders can claim their accumulated royalties
 - Automatic calculation based on royalty percentages
 - Direct transfer to wallet addresses
+
+### 5. Arbitration System
+- **Register as Arbitrator**: Stake MNT to become an arbitrator
+- **Unstake**: Withdraw stake when no active disputes assigned
+- **Submit Decisions**: Vote on disputes (uphold or reject)
+- **Auto-Resolution**: Disputes resolve automatically when majority is clear
+- **Reputation System**: Earn reputation for correct decisions
 
 ## Getting Started
 
@@ -78,24 +86,30 @@ A React-based frontend for the ModredIP intellectual property management system 
 ## Technical Details
 
 - **Blockchain**: Mantle Sepolia Testnet (Chain ID: 5003)
-- **Smart Contract**: ModredIP.sol
+- **Smart Contract**: Sear.sol
 - **Wallet Integration**: Thirdweb SDK
 - **IPFS**: Used for storing IP content, metadata, and license terms
 - **ERC-6551**: Token-bound accounts for IP management
 
 ## Contract Addresses
 
-- **ModredIP**: `0x067fda4FcaaDAa37552e5B146d8bC441ae4B1351`
+Current deployed contract addresses are stored in `src/deployed_addresses.json`:
+- **Sear (V2)**: `0x2D0456CE5e446ef9C8f513832a0bd361201990Ab` (ModredIPModule#ModredIP)
 - **ERC6551Registry**: `0xE8e9E9dce38bEa250e35Fc212DAE0EA836EF4E7B`
 - **ERC6551Account**: `0xe01C006f52F3b78ed62C9A71B8Cbd3644b5eA749`
+
+**Note**: The contract key "ModredIPModule#ModredIP" is maintained for compatibility, but the application name is "Sear".
 
 ## Security Features
 
 - Reentrancy protection
 - Access control for admin functions
-- Dispute resolution system
+- Dispute resolution system with arbitration
 - Encrypted content support
 - On-chain royalty tracking
+- License validation (one license per IP)
+- Nonce management with retry logic
+- Transaction error handling and recovery
 
 ## Support
 

@@ -12,13 +12,13 @@ export interface IpMetadata {
     creator?: string;
     created_at?: string;
 }
-export declare const registerIpWithMantle: (ipHash: string, metadata: string, isEncrypted: boolean, modredIpContractAddress: Address) => Promise<{
+export declare const registerIpWithMantle: (ipHash: string, metadata: string, isEncrypted: boolean, searContractAddress: Address) => Promise<{
     txHash: `0x${string}`;
     ipAssetId: number | undefined;
     blockNumber: bigint;
     explorerUrl: string;
 }>;
-export declare const mintLicenseOnMantle: (tokenId: number, royaltyPercentage: number, duration: number, commercialUse: boolean, terms: string, modredIpContractAddress: Address) => Promise<{
+export declare const mintLicenseOnMantle: (tokenId: number, royaltyPercentage: number, duration: number, commercialUse: boolean, terms: string, searContractAddress: Address) => Promise<{
     txHash: `0x${string}`;
     blockNumber: bigint;
     explorerUrl: string;

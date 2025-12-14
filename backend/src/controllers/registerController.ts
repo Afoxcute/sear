@@ -7,41 +7,92 @@ import { convertBigIntsToStrings } from '../utils/bigIntSerializer';
 const handleRegistration = async (req: Request, res: Response) => {
   console.log("🔥 Entered handleRegistration");
   try {
-    const { ipHash, metadata, isEncrypted, modredIpContractAddress } = req.body;
+    const { ipHash, metadata, isEncrypted, searContractAddress, modredIpContractAddress, skipContractCall } = req.body;
+    // Support both new (searContractAddress) and legacy (modredIpContractAddress) parameter names
+    const contractAddress = searContractAddress || modredIpContractAddress;
     console.log("📦 Received body:", req.body);
 
     // Validate required parameters
-    if (!ipHash || !metadata || isEncrypted === undefined || !modredIpContractAddress) {
+    if (!ipHash || !metadata || isEncrypted === undefined) {
       return res.status(400).json({
-        error: 'Missing required parameters: ipHash, metadata, isEncrypted, modredIpContractAddress'
+        error: 'Missing required parameters: ipHash, metadata, isEncrypted'
       });
     }
 
-    // 1. Register on Mantle using ModredIP contract
-    const {
-      txHash,
-      ipAssetId,
-      blockNumber,
-      explorerUrl
-    } = await registerIpWithMantle(ipHash, metadata, isEncrypted, modredIpContractAddress as Address);
-    console.log("✅ Mantle registration successful:", {
-      txHash,
-      ipAssetId,
-      blockNumber,
-      explorerUrl
-    });
+    // Check if we should skip contract call (for testing when contract doesn't exist)
+    if (skipContractCall || process.env.SKIP_CONTRACT_CALL === 'true') {
+      console.log("⚠️ Skipping contract call (testing mode)");
+      const responseData = {
+        message: 'IP Asset metadata prepared successfully (contract call skipped - testing mode)',
+        mantle: {
+          txHash: null,
+          ipAssetId: null,
+          explorerUrl: null,
+          blockNumber: null,
+          ipHash
+        },
+        yakoa: {
+          alreadyRegistered: false,
+          message: 'Yakoa registration skipped (testing mode)'
+        },
+        testing: true
+      };
+      return res.status(200).json(convertBigIntsToStrings(responseData));
+    }
+
+    // Validate contract address if contract call is required
+    if (!contractAddress) {
+      return res.status(400).json({
+        error: 'Missing required parameter: searContractAddress (or modredIpContractAddress). Set skipContractCall=true to test without contract.'
+      });
+    }
+
+    // 1. Register on Mantle using Sear contract
+    let txHash: string | null = null;
+    let ipAssetId: number | undefined = undefined;
+    let blockNumber: bigint | null = null;
+    let explorerUrl: string | null = null;
+
+    try {
+      const result = await registerIpWithMantle(ipHash, metadata, isEncrypted, contractAddress as Address);
+      txHash = result.txHash;
+      ipAssetId = result.ipAssetId;
+      blockNumber = result.blockNumber;
+      explorerUrl = result.explorerUrl;
+      console.log("✅ Mantle registration successful:", {
+        txHash,
+        ipAssetId,
+        blockNumber,
+        explorerUrl
+      });
+    } catch (contractError: any) {
+      // If contract call fails, check if it's because function doesn't exist
+      const errorMsg = contractError?.message || String(contractError || '');
+      if (errorMsg.includes('returned no data') || errorMsg.includes('does not have the function')) {
+        console.error("❌ Contract function not available. Returning error with suggestion to use testing mode.");
+        return res.status(500).json({
+          error: 'Contract function "registerIP" does not exist on the contract',
+          details: `The contract at ${contractAddress} does not have the registerIP function. ` +
+            `To test without contract registration, add "skipContractCall": true to your request body.`,
+          suggestion: 'Add "skipContractCall": true to test IPFS upload and metadata creation without contract call',
+          contractAddress: contractAddress
+        });
+      }
+      // Re-throw other errors
+      throw contractError;
+    }
 
     // 2. Submit to Yakoa (if ipAssetId is available)
     if (ipAssetId) {
       // Ensure contract address is properly formatted
-      const contractAddress = modredIpContractAddress.toLowerCase();
+      const formattedContractAddress = contractAddress.toLowerCase();
       
       // Format ID as contract address with token ID: 0x[contract_address]:[token_id]
       // Use base ID format for Yakoa API compatibility
-      const Id = `${contractAddress.toLowerCase()}:${ipAssetId}`;
+      const Id = `${formattedContractAddress.toLowerCase()}:${ipAssetId}`;
       console.log("📞 Calling registerToYakoa...");
       console.log("🔍 Yakoa ID format:", Id);
-      console.log("🔍 Contract address:", contractAddress);
+      console.log("🔍 Contract address:", formattedContractAddress);
       console.log("🔍 IP Asset ID:", ipAssetId);
 
       // Parse metadata to get creator and title info
@@ -82,7 +133,7 @@ const handleRegistration = async (req: Request, res: Response) => {
         created_at: parsedMetadata.created_at || new Date().toISOString(),
         ip_hash: extractHash(ipHash), // Use extracted hash
         is_encrypted: isEncrypted,
-        contract_address: contractAddress,
+        contract_address: formattedContractAddress,
         token_id: ipAssetId.toString(),
         // Add additional metadata for better infringement detection
         content_type: parsedMetadata.content_type || 'unknown',
@@ -119,7 +170,7 @@ const handleRegistration = async (req: Request, res: Response) => {
           brand_name: null,
           data: {
             type: 'email' as const,
-            email_address: parsedMetadata.creator_email || 'creator@modredip.com'
+            email_address: parsedMetadata.creator_email || 'creator@sear.com'
           }
         }
       ];
@@ -133,7 +184,7 @@ const yakoaResponse = await registerToYakoa({
         media: yakoaMedia,
         brandId: null,
         brandName: null,
-        emailAddress: parsedMetadata.creator_email || 'creator@modredip.com',
+        emailAddress: parsedMetadata.creator_email || 'creator@sear.com',
         licenseParents: [],
         authorizations: authorizations,
 });
@@ -172,9 +223,20 @@ const yakoaResponse = await registerToYakoa({
     }
   } catch (err) {
     console.error('❌ Registration error:', err);
+    
+    // Ensure error message is properly serialized
+    let errorMessage = 'Registration failed';
+    if (err instanceof Error) {
+      errorMessage = err.message;
+    } else if (typeof err === 'string') {
+      errorMessage = err;
+    } else if (err && typeof err === 'object' && 'message' in err) {
+      errorMessage = String(err.message);
+    }
+    
     return res.status(500).json({
-      error: 'Registration failed',
-      details: err instanceof Error ? err.message : err,
+      error: errorMessage,
+      details: err instanceof Error ? err.message : String(err),
     });
   }
 };

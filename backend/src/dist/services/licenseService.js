@@ -6,7 +6,7 @@ const config_1 = require("../utils/config");
 const bigIntSerializer_1 = require("../utils/bigIntSerializer");
 const mintLicense = async (licenseRequest) => {
     try {
-        const { txHash, blockNumber, explorerUrl } = await (0, storyService_1.mintLicenseOnMantle)(licenseRequest.tokenId, licenseRequest.royaltyPercentage, licenseRequest.duration, licenseRequest.commercialUse, licenseRequest.terms, licenseRequest.modredIpContractAddress);
+        const { txHash, blockNumber, explorerUrl } = await (0, storyService_1.mintLicenseOnMantle)(licenseRequest.tokenId, licenseRequest.royaltyPercentage, licenseRequest.duration, licenseRequest.commercialUse, licenseRequest.terms, licenseRequest.searContractAddress);
         const result = {
             success: true,
             txHash,

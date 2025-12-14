@@ -2,8 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.mintLicenseOnMantle = exports.registerIpWithMantle = void 0;
 const config_1 = require("../utils/config");
-// ModredIP contract ABI (simplified for IP registration)
-const MODRED_IP_ABI = [
+// Sear contract ABI (simplified for IP registration)
+const SEAR_ABI = [
     {
         "inputs": [
             {
@@ -73,15 +73,15 @@ const MODRED_IP_ABI = [
         "type": "function"
     }
 ];
-const registerIpWithMantle = async (ipHash, metadata, isEncrypted, modredIpContractAddress) => {
+const registerIpWithMantle = async (ipHash, metadata, isEncrypted, searContractAddress) => {
     try {
         console.log('ipHash:', ipHash);
         console.log('metadata:', metadata);
         console.log('isEncrypted:', isEncrypted);
-        // Register IP on ModredIP contract
+        // Register IP on Sear contract
         const { request } = await config_1.publicClient.simulateContract({
-            address: modredIpContractAddress,
-            abi: MODRED_IP_ABI,
+            address: searContractAddress,
+            abi: SEAR_ABI,
             functionName: 'registerIP',
             args: [
                 ipHash,
@@ -122,11 +122,11 @@ const registerIpWithMantle = async (ipHash, metadata, isEncrypted, modredIpContr
     }
 };
 exports.registerIpWithMantle = registerIpWithMantle;
-const mintLicenseOnMantle = async (tokenId, royaltyPercentage, duration, commercialUse, terms, modredIpContractAddress) => {
+const mintLicenseOnMantle = async (tokenId, royaltyPercentage, duration, commercialUse, terms, searContractAddress) => {
     try {
         const { request } = await config_1.publicClient.simulateContract({
-            address: modredIpContractAddress,
-            abi: MODRED_IP_ABI,
+            address: searContractAddress,
+            abi: SEAR_ABI,
             functionName: 'mintLicense',
             args: [
                 BigInt(tokenId),

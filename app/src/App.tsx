@@ -138,9 +138,9 @@ const pinFileToIPFS = async (file: File): Promise<{
     // Add metadata
     const metadata = {
       name: file.name,
-      description: `Uploaded via ModredIP frontend`,
+      description: `Uploaded via Sear frontend`,
       attributes: {
-        uploadedBy: 'ModredIP',
+        uploadedBy: 'Sear',
         timestamp: new Date().toISOString(),
         fileType: file.type,
         fileSize: file.size
@@ -273,8 +273,8 @@ const wallets = [
   createWallet("global.safe"),
 ];
 
-// ModredIP Contract ABI (simplified for the functions we need)
-const MODRED_IP_ABI = [
+// Sear Contract ABI (simplified for the functions we need)
+const SEAR_ABI = [
   {
     inputs: [
       { name: "tokenId", type: "uint256" }
@@ -382,6 +382,13 @@ const MODRED_IP_ABI = [
     name: "registerArbitrator",
     outputs: [],
     stateMutability: "payable",
+    type: "function"
+  },
+  {
+    inputs: [],
+    name: "unstake",
+    outputs: [],
+    stateMutability: "nonpayable",
     type: "function"
   },
   {
@@ -762,16 +769,16 @@ export default function App({ thirdwebClient }: AppProps) {
       setBackendStatus(isConnected);
       
       if (!wasConnected && isConnected) {
-        notifySuccess('Backend Connected', 'Successfully connected to the ModredIP backend service');
+        notifySuccess('Backend Connected', 'Successfully connected to the Sear backend service');
       } else if (wasConnected && !isConnected) {
-        notifyError('Backend Disconnected', 'Lost connection to the ModredIP backend service');
+        notifyError('Backend Disconnected', 'Lost connection to the Sear backend service');
       }
     } catch (error) {
       const wasConnected = backendStatus;
       setBackendStatus(false);
       
       if (wasConnected) {
-        notifyError('Backend Error', 'Failed to connect to the ModredIP backend service');
+        notifyError('Backend Error', 'Failed to connect to the Sear backend service');
       }
     }
   };
@@ -898,30 +905,63 @@ export default function App({ thirdwebClient }: AppProps) {
     try {
       setLoading(true);
       const contractAddress = CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"];
-      console.log("📋 Using ModredIP Contract:", contractAddress);
+      console.log("📋 Using Sear Contract:", contractAddress);
       
       const contract = getContract({
-        abi: MODRED_IP_ABI,
+        abi: SEAR_ABI,
           client: thirdwebClient,
           chain: defineChain(mantleTestnet.id),
         address: contractAddress,
       });
 
-      // Get next token ID
-      const nextId = await readContract({
-        contract,
-        method: "nextTokenId",
-        params: [],
-      });
-      const nextTokenIdNum = Number(nextId);
+      // Get next token ID with error handling
+      let nextTokenIdNum = 1;
+      try {
+        const nextId = await readContract({
+          contract,
+          method: "nextTokenId",
+          params: [],
+        });
+        nextTokenIdNum = Number(nextId);
+        console.log("✅ Loaded nextTokenId:", nextTokenIdNum);
+      } catch (error: any) {
+        console.warn("⚠️ Error loading nextTokenId:", error?.message || error);
+        // If it's a zero data error, the contract might not be fully deployed
+        if (error?.message?.includes("zero data") || error?.message?.includes("Cannot decode")) {
+          console.warn("⚠️ Contract function 'nextTokenId' returned no data. Contract may not be deployed or function not implemented.");
+        }
+        // Use default value of 1 (no tokens registered yet)
+        nextTokenIdNum = 1;
+      }
 
-      // Get next license ID
-      const nextLicenseId = await readContract({
-        contract,
-        method: "nextLicenseId",
-        params: [],
-      });
-      const nextLicenseIdNum = Number(nextLicenseId);
+      // Get next license ID with error handling
+      let nextLicenseIdNum = 1;
+      try {
+        const nextLicenseId = await readContract({
+          contract,
+          method: "nextLicenseId",
+          params: [],
+        });
+        nextLicenseIdNum = Number(nextLicenseId);
+        console.log("✅ Loaded nextLicenseId:", nextLicenseIdNum);
+      } catch (error: any) {
+        // Check if it's a zero data error (expected when function doesn't exist or contract not fully deployed)
+        const errorMessage = error?.message || error?.shortMessage || String(error || '');
+        const isZeroDataError = 
+          errorMessage.includes("zero data") || 
+          errorMessage.includes("Cannot decode") ||
+          errorMessage.includes("AbiDecodingZeroDataError");
+        
+        if (isZeroDataError) {
+          // Silently handle zero data errors - this is expected for new contracts
+          console.log("ℹ️ Contract function 'nextLicenseId' not available (contract may not be fully deployed). Using default value.");
+        } else {
+          // Log other errors as warnings
+          console.warn("⚠️ Error loading nextLicenseId:", errorMessage);
+        }
+        // Use default value of 1 (no licenses registered yet)
+        nextLicenseIdNum = 1;
+      }
 
       // Load IP assets
       const newIpAssets = new Map<number, IPAsset>();
@@ -989,9 +1029,20 @@ export default function App({ thirdwebClient }: AppProps) {
       }
       setLicenses(newLicenses);
 
-    } catch (error) {
-      console.error("Error loading contract data:", error);
-      notifyError("Loading Failed", "Failed to load contract data");
+    } catch (error: any) {
+      // Only log and notify for unexpected errors, not zero data errors
+      const errorMessage = error?.message || error?.shortMessage || String(error || '');
+      const isZeroDataError = 
+        errorMessage.includes("zero data") || 
+        errorMessage.includes("Cannot decode") ||
+        errorMessage.includes("AbiDecodingZeroDataError");
+      
+      if (!isZeroDataError) {
+        console.error("Error loading contract data:", error);
+        notifyError("Loading Failed", "Failed to load contract data");
+      } else {
+        console.log("ℹ️ Some contract functions returned zero data (expected for new contracts). Continuing with defaults.");
+      }
     } finally {
       setLoading(false);
     }
@@ -1061,7 +1112,7 @@ export default function App({ thirdwebClient }: AppProps) {
         license_type: 'all_rights_reserved',
         commercial_use: false,
         derivatives_allowed: false,
-        creator_email: 'creator@modredip.com', // Could be enhanced with user input
+        creator_email: 'creator@sear.com', // Could be enhanced with user input
         // File-specific metadata
         file_name: ipFile?.name || 'unknown',
         file_extension: ipFile?.name?.split('.').pop() || 'unknown',
@@ -1099,6 +1150,7 @@ export default function App({ thirdwebClient }: AppProps) {
       // };
 
       // Call backend API
+      // Note: If contract doesn't have registerIP function, set skipContractCall: true to test IPFS upload
       const response = await fetch(`${BACKEND_URL}/api/register`, {
         method: 'POST',
         headers: {
@@ -1108,28 +1160,51 @@ export default function App({ thirdwebClient }: AppProps) {
           ipHash: ipHash,
           metadata: JSON.stringify(ipMetadata),
           isEncrypted: isEncrypted,
-          modredIpContractAddress: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"]
+          searContractAddress: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
+          skipContractCall: false // V2 contract has registerIP function, so this should be false
         })
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to register IP');
+        let errorMessage = 'Failed to register IP';
+        let errorData: any = {};
+        try {
+          errorData = await response.json();
+          errorMessage = errorData.error || errorData.details || errorMessage;
+          console.error('Registration error details:', errorData);
+          
+          // If the error suggests using testing mode, provide helpful message
+          if (errorData.suggestion || errorMessage.includes('does not exist')) {
+            errorMessage = `${errorMessage}\n\n${errorData.suggestion || 'The contract function does not exist. You can test IPFS upload by setting skipContractCall: true in the request.'}`;
+          }
+        } catch (parseError) {
+          // If response is not JSON, try to get text
+          const text = await response.text();
+          errorMessage = text || errorMessage;
+          console.error('Registration error (non-JSON):', text);
+        }
+        throw new Error(errorMessage);
       }
 
       const result = await response.json();
       console.log('IP Registration successful:', result);
 
       // Show success notification
-      notifySuccess('IP Asset Registered', 
-        `Successfully registered IP asset!\nTransaction: ${result.mantle.txHash}\nIP Asset ID: ${result.mantle.ipAssetId}`,
-        {
-          action: {
-            label: 'View Transaction',
-            onClick: () => window.open(`https://explorer.testnet.mantle.xyz/tx/${result.mantle.txHash}`, '_blank')
+      if (result.testing) {
+        notifySuccess('IP Asset Metadata Created (Testing Mode)', 
+          `IPFS upload successful!\nIP Hash: ${result.mantle.ipHash}\n\nNote: Contract registration was skipped (testing mode).`
+        );
+      } else {
+        notifySuccess('IP Asset Registered', 
+          `Successfully registered IP asset!\nTransaction: ${result.mantle.txHash}\nIP Asset ID: ${result.mantle.ipAssetId}`,
+          {
+            action: {
+              label: 'View Transaction',
+              onClick: () => window.open(`https://explorer.testnet.mantle.xyz/tx/${result.mantle.txHash}`, '_blank')
+            }
           }
-        }
-      );
+        );
+      }
 
       // Reset form
       setIpFile(null);
@@ -1195,7 +1270,7 @@ export default function App({ thirdwebClient }: AppProps) {
           duration: licenseDuration,
           commercialUse: commercialUse,
           terms: licenseTerms.terms,
-          modredIpContractAddress: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"]
+          searContractAddress: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"]
         })
       });
 
@@ -1258,7 +1333,7 @@ export default function App({ thirdwebClient }: AppProps) {
       notifyInfo('Processing Payment', `Paying ${paymentAmount} MNT in revenue...`);
 
         const contract = getContract({
-        abi: MODRED_IP_ABI,
+        abi: SEAR_ABI,
           client: thirdwebClient,
           chain: defineChain(mantleTestnet.id),
         address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
@@ -1339,7 +1414,7 @@ export default function App({ thirdwebClient }: AppProps) {
       notifyInfo('Claiming Royalties', 'Processing royalty claim...');
 
         const contract = getContract({
-        abi: MODRED_IP_ABI,
+        abi: SEAR_ABI,
           client: thirdwebClient,
           chain: defineChain(mantleTestnet.id),
         address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
@@ -1408,7 +1483,7 @@ export default function App({ thirdwebClient }: AppProps) {
       notifyInfo('Raising Dispute', 'Submitting dispute...');
 
       const contract = getContract({
-        abi: MODRED_IP_ABI,
+        abi: SEAR_ABI,
         client: thirdwebClient,
         chain: defineChain(mantleTestnet.id),
         address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
@@ -1464,7 +1539,7 @@ export default function App({ thirdwebClient }: AppProps) {
       notifyInfo('Registering Arbitrator', `Registering with ${minArbitratorStake} MNT stake...`);
 
       const contract = getContract({
-        abi: MODRED_IP_ABI,
+        abi: SEAR_ABI,
         client: thirdwebClient,
         chain: defineChain(mantleTestnet.id),
         address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
@@ -1498,6 +1573,97 @@ export default function App({ thirdwebClient }: AppProps) {
     }
   };
 
+  const unstakeArbitrator = async () => {
+    if (!account?.address) {
+      notifyError("Wallet Not Connected", "Please connect your wallet");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      
+      // Check arbitrator status before unstaking
+      const contract = getContract({
+        abi: SEAR_ABI,
+        client: thirdwebClient,
+        chain: defineChain(mantleTestnet.id),
+        address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
+      });
+
+      // Get arbitrator details
+      const arbitratorDetails = await readContract({
+        contract,
+        method: "getArbitrator",
+        params: [account.address],
+      });
+
+      const stake = arbitratorDetails[1];
+      const isActive = arbitratorDetails[5];
+
+      if (!isActive || stake === 0n) {
+        notifyError('Not Registered', 'You are not registered as an active arbitrator or have no stake to withdraw.');
+        return;
+      }
+
+      // Check active disputes
+      let activeDisputes = 0;
+      try {
+        const activeDisputesCount = await readContract({
+          contract,
+          method: "getArbitratorActiveDisputes",
+          params: [account.address],
+        });
+        activeDisputes = Number(activeDisputesCount);
+      } catch (e: any) {
+        // If function doesn't exist, calculate manually
+        const arb = arbitratorsMap.get(account.address);
+        activeDisputes = arb?.activeDisputes || 0;
+      }
+
+      if (activeDisputes > 0) {
+        notifyError('Active Disputes', `Cannot unstake while assigned to ${activeDisputes} active dispute(s). Please wait for disputes to be resolved.`);
+        return;
+      }
+
+      notifyInfo('Unstaking Arbitrator', `Withdrawing ${formatEther(stake)} MNT stake...`);
+
+      const preparedCall = await prepareContractCall({
+        contract,
+        method: "unstake",
+        params: [],
+      });
+
+      const transaction = await sendTransaction({
+        transaction: preparedCall,
+        account: account,
+      });
+
+      await waitForReceipt({
+        client: thirdwebClient,
+        chain: defineChain(mantleTestnet.id),
+        transactionHash: transaction.transactionHash,
+      });
+
+      notifySuccess('Stake Withdrawn', `Successfully withdrew ${formatEther(stake)} MNT! You are no longer an active arbitrator.`);
+      await loadArbitrationData();
+    } catch (error: any) {
+      console.error("Error unstaking arbitrator:", error);
+      const errorMessage = error?.message || error?.shortMessage || error?.cause?.message || "Failed to unstake";
+      
+      if (errorMessage.includes("Cannot unstake while assigned to active disputes")) {
+        notifyError('Active Disputes', 'Cannot unstake while assigned to active disputes. Please wait for disputes to be resolved.');
+      } else if (errorMessage.includes("Not registered as arbitrator")) {
+        notifyError('Not Registered', 'You are not registered as an arbitrator.');
+      } else if (errorMessage.includes("No stake to withdraw")) {
+        notifyError('No Stake', 'You have no stake to withdraw.');
+      } else {
+        notifyError('Unstake Failed', errorMessage);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const assignArbitrators = async (disputeId: number, selectedArbitrators: string[]) => {
     if (!account?.address) {
       notifyError("Wallet Not Connected", "Please connect your wallet");
@@ -1519,7 +1685,7 @@ export default function App({ thirdwebClient }: AppProps) {
       notifyInfo('Assigning Arbitrators', `Assigning ${selectedArbitrators.length} arbitrator(s) to dispute...`);
 
       const contract = getContract({
-        abi: MODRED_IP_ABI,
+        abi: SEAR_ABI,
         client: thirdwebClient,
         chain: defineChain(mantleTestnet.id),
         address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
@@ -1576,7 +1742,7 @@ export default function App({ thirdwebClient }: AppProps) {
       notifyInfo('Checking Resolution', 'Checking if dispute can be resolved after 24h wait period...');
 
       const contract = getContract({
-        abi: MODRED_IP_ABI,
+        abi: SEAR_ABI,
         client: thirdwebClient,
         chain: defineChain(mantleTestnet.id),
         address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
@@ -1654,7 +1820,7 @@ export default function App({ thirdwebClient }: AppProps) {
       notifyInfo('Transferring IP', 'Initiating IP asset transfer...');
 
       const contract = getContract({
-        abi: MODRED_IP_ABI,
+        abi: SEAR_ABI,
         client: thirdwebClient,
         chain: defineChain(mantleTestnet.id),
         address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
@@ -1761,7 +1927,7 @@ export default function App({ thirdwebClient }: AppProps) {
       notifyInfo('Resolving Dispute', 'Resolving dispute without arbitrators...');
 
       const contract = getContract({
-        abi: MODRED_IP_ABI,
+        abi: SEAR_ABI,
         client: thirdwebClient,
         chain: defineChain(mantleTestnet.id),
         address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
@@ -1816,7 +1982,7 @@ export default function App({ thirdwebClient }: AppProps) {
       notifyInfo('Submitting Decision', 'Submitting arbitration decision...');
 
       const contract = getContract({
-        abi: MODRED_IP_ABI,
+        abi: SEAR_ABI,
         client: thirdwebClient,
         chain: defineChain(mantleTestnet.id),
         address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
@@ -1856,35 +2022,98 @@ export default function App({ thirdwebClient }: AppProps) {
 
     try {
       const contract = getContract({
-        abi: MODRED_IP_ABI,
+        abi: SEAR_ABI,
         client: thirdwebClient,
         chain: defineChain(mantleTestnet.id),
         address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
       });
 
-      // Load minimum stake
-      const minStake = await readContract({
-        contract,
-        method: "MIN_ARBITRATOR_STAKE",
-        params: [],
-      });
-      setMinArbitratorStake(formatEther(minStake));
+      // Load minimum stake with error handling
+      try {
+        const minStake = await readContract({
+          contract,
+          method: "MIN_ARBITRATOR_STAKE",
+          params: [],
+        });
+        setMinArbitratorStake(formatEther(minStake));
+        console.log("✅ Loaded MIN_ARBITRATOR_STAKE:", formatEther(minStake));
+      } catch (error: any) {
+        // Check if it's a zero data error (expected when function doesn't exist or contract not fully deployed)
+        const errorMessage = error?.message || error?.shortMessage || String(error || '');
+        const isZeroDataError = 
+          errorMessage.includes("zero data") || 
+          errorMessage.includes("Cannot decode") ||
+          errorMessage.includes("AbiDecodingZeroDataError");
+        
+        if (isZeroDataError) {
+          // Silently handle zero data errors - this is expected for new contracts
+          console.log("ℹ️ Contract function 'MIN_ARBITRATOR_STAKE' not available. Using default value.");
+        } else {
+          // Log other errors as warnings
+          console.warn("⚠️ Error loading MIN_ARBITRATOR_STAKE:", errorMessage);
+        }
+        // Set a default minimum stake (e.g., 0.1 ETH)
+        setMinArbitratorStake("0.1");
+      }
 
-      // Load active arbitrator count
-      const activeCount = await readContract({
-        contract,
-        method: "getActiveArbitratorsCount",
-        params: [],
-      });
-      setActiveArbitratorsCount(Number(activeCount));
+      // Load active arbitrator count with error handling
+      try {
+        const activeCount = await readContract({
+          contract,
+          method: "getActiveArbitratorsCount",
+          params: [],
+        });
+        setActiveArbitratorsCount(Number(activeCount));
+        console.log("✅ Loaded active arbitrators count:", Number(activeCount));
+      } catch (error: any) {
+        // Check if it's a zero data error (expected when function doesn't exist or contract not fully deployed)
+        const errorMessage = error?.message || error?.shortMessage || String(error || '');
+        const isZeroDataError = 
+          errorMessage.includes("zero data") || 
+          errorMessage.includes("Cannot decode") ||
+          errorMessage.includes("AbiDecodingZeroDataError");
+        
+        if (isZeroDataError) {
+          // Silently handle zero data errors - this is expected for new contracts
+          console.log("ℹ️ Contract function 'getActiveArbitratorsCount' not available. Using default value.");
+        } else {
+          // Log other errors as warnings
+          console.warn("⚠️ Error loading getActiveArbitratorsCount:", errorMessage);
+        }
+        setActiveArbitratorsCount(0);
+      }
 
-      // Load all arbitrators
-      const arbitratorAddresses = await readContract({
-        contract,
-        method: "getAllArbitrators",
-        params: [],
-      });
-      setAllArbitrators([...arbitratorAddresses]); // Convert readonly array to mutable array
+      // Load all arbitrators with error handling
+      let arbitratorAddresses: readonly `0x${string}`[] = [];
+      try {
+        const result = await readContract({
+          contract,
+          method: "getAllArbitrators",
+          params: [],
+        });
+        // Type assertion: readContract returns address[] which we cast to 0x${string}[]
+        // This is safe because all Ethereum addresses start with 0x
+        arbitratorAddresses = result as readonly `0x${string}`[];
+        // Convert to mutable string array for state (string[] is compatible)
+        setAllArbitrators(Array.from(arbitratorAddresses));
+        console.log("✅ Loaded arbitrators:", arbitratorAddresses.length);
+      } catch (error: any) {
+        // Check if it's a zero data error (expected when function doesn't exist or contract not fully deployed)
+        const errorMessage = error?.message || error?.shortMessage || String(error || '');
+        const isZeroDataError = 
+          errorMessage.includes("zero data") || 
+          errorMessage.includes("Cannot decode") ||
+          errorMessage.includes("AbiDecodingZeroDataError");
+        
+        if (isZeroDataError) {
+          // Silently handle zero data errors - this is expected for new contracts
+          console.log("ℹ️ Contract function 'getAllArbitrators' not available. Using empty array.");
+        } else {
+          // Log other errors as warnings
+          console.warn("⚠️ Error loading getAllArbitrators:", errorMessage);
+        }
+        setAllArbitrators([]);
+      }
 
       // Load arbitrator details
       const arbitratorDetails = new Map<string, any>();
@@ -1895,7 +2124,8 @@ export default function App({ thirdwebClient }: AppProps) {
             method: "getArbitrator",
             params: [addr],
           });
-          // Get active disputes count for this arbitrator
+          
+          // Try to get active disputes count from contract function
           let activeDisputes = 0;
           try {
             const activeDisputesCount = await readContract({
@@ -1904,8 +2134,22 @@ export default function App({ thirdwebClient }: AppProps) {
               params: [addr],
             });
             activeDisputes = Number(activeDisputesCount);
-          } catch (e) {
-            console.error(`Error loading active disputes for ${addr}:`, e);
+          } catch (e: any) {
+            // Function doesn't exist or reverts - we'll calculate it manually below
+            const errorMsg = e?.message || e?.shortMessage || String(e || '');
+            const errorCode = e?.code;
+            const isExpectedError = 
+              errorMsg.includes("zero data") || 
+              errorMsg.includes("Cannot decode") ||
+              errorMsg.includes("AbiDecodingZeroDataError") ||
+              errorMsg.includes("execution reverted") ||
+              errorCode === 3;
+            
+            if (!isExpectedError) {
+              console.warn(`⚠️ Unexpected error loading active disputes for ${addr}:`, errorMsg);
+            }
+            // Will calculate manually below
+            activeDisputes = -1; // Use -1 as marker to calculate manually
           }
           
           arbitratorDetails.set(addr, {
@@ -1916,21 +2160,51 @@ export default function App({ thirdwebClient }: AppProps) {
             successfulCases: details[4],
             isActive: details[5],
             registrationDate: details[6],
-            activeDisputes: activeDisputes,
+            activeDisputes: activeDisputes, // Will be updated below if -1
           });
-        } catch (e) {
-          console.error(`Error loading arbitrator ${addr}:`, e);
+        } catch (e: any) {
+          // Silently handle zero data errors
+          const errorMsg = e?.message || e?.shortMessage || String(e || '');
+          const isZeroDataError = 
+            errorMsg.includes("zero data") || 
+            errorMsg.includes("Cannot decode") ||
+            errorMsg.includes("AbiDecodingZeroDataError");
+          
+          if (!isZeroDataError) {
+            console.error(`Error loading arbitrator ${addr}:`, e);
+          }
         }
       }
       setArbitratorsMap(arbitratorDetails);
 
-      // Load all disputes
-      const nextDisputeId = await readContract({
-        contract,
-        method: "nextDisputeId",
-        params: [],
-      });
-      const nextDisputeIdNum = Number(nextDisputeId);
+      // Load all disputes with error handling
+      let nextDisputeIdNum = 1;
+      try {
+        const nextDisputeId = await readContract({
+          contract,
+          method: "nextDisputeId",
+          params: [],
+        });
+        nextDisputeIdNum = Number(nextDisputeId);
+        console.log("✅ Loaded nextDisputeId:", nextDisputeIdNum);
+      } catch (error: any) {
+        // Check if it's a zero data error (expected when function doesn't exist or contract not fully deployed)
+        const errorMessage = error?.message || error?.shortMessage || String(error || '');
+        const isZeroDataError = 
+          errorMessage.includes("zero data") || 
+          errorMessage.includes("Cannot decode") ||
+          errorMessage.includes("AbiDecodingZeroDataError");
+        
+        if (isZeroDataError) {
+          // Silently handle zero data errors - this is expected for new contracts
+          console.log("ℹ️ Contract function 'nextDisputeId' not available. Using default value.");
+        } else {
+          // Log other errors as warnings
+          console.warn("⚠️ Error loading nextDisputeId:", errorMessage);
+        }
+        // Use default value of 1 (no disputes registered yet)
+        nextDisputeIdNum = 1;
+      }
 
       const disputesData = new Map<number, any>();
       for (let i = 1; i < nextDisputeIdNum; i++) {
@@ -1956,10 +2230,12 @@ export default function App({ thirdwebClient }: AppProps) {
       }
       setDisputesMap(disputesData);
 
-      // Load arbitration details for resolved disputes
+      // Load arbitration details for all disputes (both resolved and unresolved)
+      // We need this to calculate active disputes per arbitrator
       const arbitrationsData = new Map<number, any>();
       for (const [, dispute] of disputesData.entries()) {
-        if (dispute.isResolved) {
+        // Load arbitration if it exists (disputes with assigned arbitrators have arbitrationId > 0)
+        if (dispute.arbitrationId > 0) {
           try {
             const arbitration = await readContract({
               contract,
@@ -1978,13 +2254,41 @@ export default function App({ thirdwebClient }: AppProps) {
               threeUpholdVotesTimestamp: arbitration[8],
             });
           } catch (e) {
-            console.error(`Error loading arbitration ${dispute.arbitrationId}:`, e);
+            // Silently handle errors - arbitration might not exist yet
+            console.log(`ℹ️ Arbitration ${dispute.arbitrationId} not available yet`);
           }
         }
       }
       setArbitrationsMap(arbitrationsData);
 
-      // Load contract owner
+      // Calculate active disputes per arbitrator manually (workaround when getArbitratorActiveDisputes doesn't work)
+      // This counts unresolved disputes where the arbitrator is assigned
+      for (const [addr, arbitratorInfo] of arbitratorDetails.entries()) {
+        if (arbitratorInfo.activeDisputes === -1) {
+          // Calculate manually by counting unresolved disputes where this arbitrator is assigned
+          let count = 0;
+          for (const [, dispute] of disputesData.entries()) {
+            if (!dispute.isResolved && dispute.arbitrationId > 0) {
+              const arbitration = arbitrationsData.get(dispute.arbitrationId);
+              if (arbitration && arbitration.arbitrators) {
+                // Check if this arbitrator is in the arbitrators list
+                const isAssigned = arbitration.arbitrators.some(
+                  (arbAddr: string) => arbAddr.toLowerCase() === addr.toLowerCase()
+                );
+                if (isAssigned && !arbitration.isResolved) {
+                  count++;
+                }
+              }
+            }
+          }
+          arbitratorInfo.activeDisputes = count;
+          if (count > 0) {
+            console.log(`✅ Calculated ${count} active dispute(s) for arbitrator ${addr.substring(0, 10)}...`);
+          }
+        }
+      }
+
+      // Load contract owner with error handling
       try {
         const ownerAddress = await readContract({
           contract,
@@ -1992,11 +2296,38 @@ export default function App({ thirdwebClient }: AppProps) {
           params: [],
         });
         setIsOwner(account?.address?.toLowerCase() === ownerAddress.toLowerCase());
-      } catch (e) {
-        console.error("Error loading contract owner:", e);
+        console.log("✅ Loaded contract owner:", ownerAddress);
+      } catch (e: any) {
+        // Check if it's a zero data error (expected when function doesn't exist or contract not fully deployed)
+        const errorMessage = e?.message || e?.shortMessage || String(e || '');
+        const isZeroDataError = 
+          errorMessage.includes("zero data") || 
+          errorMessage.includes("Cannot decode") ||
+          errorMessage.includes("AbiDecodingZeroDataError");
+        
+        if (isZeroDataError) {
+          // Silently handle zero data errors - this is expected for new contracts
+          console.log("ℹ️ Contract function 'owner' not available. Assuming user is not the owner.");
+          setIsOwner(false); // Default to false if we can't determine
+        } else {
+          // Log other errors as warnings
+          console.warn("⚠️ Error loading contract owner:", errorMessage);
+          setIsOwner(false); // Default to false on error
+        }
       }
-    } catch (error) {
-      console.error("Error loading arbitration data:", error);
+    } catch (error: any) {
+      // Only log unexpected errors, not zero data errors
+      const errorMessage = error?.message || error?.shortMessage || String(error || '');
+      const isZeroDataError = 
+        errorMessage.includes("zero data") || 
+        errorMessage.includes("Cannot decode") ||
+        errorMessage.includes("AbiDecodingZeroDataError");
+      
+      if (!isZeroDataError) {
+        console.error("Error loading arbitration data:", error);
+      } else {
+        console.log("ℹ️ Some arbitration contract functions returned zero data (expected for new contracts). Continuing with defaults.");
+      }
     }
   };
 
@@ -2016,8 +2347,8 @@ export default function App({ thirdwebClient }: AppProps) {
       <header className="header">
         <div className="header-container">
           <div className="header-logo">
-            <img src="/modred.webp" alt="ModredIP" className="logo-image" />
-            <h1>ModredIP</h1>
+            <img src="/modred.webp" alt="Sear" className="logo-image" />
+            <h1>Sear</h1>
           </div>
           <div className="header-actions">
             <div className={`status-indicator ${backendStatus ? 'connected' : 'disconnected'}`}>
@@ -2541,28 +2872,76 @@ export default function App({ thirdwebClient }: AppProps) {
                   </div>
           
                   <div className="form-grid">
-                    <div className="form-group">
-                      <label className="form-label">💰 Minimum Stake (MNT)</label>
-                      <input
-                        type="number"
-                        className="form-input"
-                        value={minArbitratorStake}
-                        onChange={(e) => setMinArbitratorStake(e.target.value)}
-                        min="0.000000001"
-                        step="0.000000001"
-                        placeholder="0.000000001"
-                        readOnly
-                      />
-                      <small className="form-hint">Minimum stake required to become an arbitrator</small>
-                    </div>
-            
-                    <button 
-                      className="btn btn-primary btn-full"
-                      onClick={registerArbitrator} 
-                      disabled={loading || !account?.address}
-                    >
-                      {loading ? '⏳ Registering...' : '⚖️ Register as Arbitrator'}
-                    </button>
+                    {(() => {
+                      const userArbitrator = account?.address ? arbitratorsMap.get(account.address) : null;
+                      const isUserArbitrator = userArbitrator && userArbitrator.arbitrator !== '0x0000000000000000000000000000000000000000';
+                      const userStake = userArbitrator ? userArbitrator.stake : 0n;
+                      const userActiveDisputes = userArbitrator?.activeDisputes || 0;
+                      const userIsActive = userArbitrator?.isActive || false;
+
+                      if (isUserArbitrator && userIsActive && userStake > 0n) {
+                        return (
+                          <>
+                            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                              <div style={{
+                                padding: '1rem',
+                                backgroundColor: 'var(--color-info-bg, #d1ecf1)',
+                                border: '1px solid var(--color-info-border, #0c5460)',
+                                borderRadius: '8px',
+                                marginBottom: '1rem',
+                                color: 'var(--color-info-text, #0c5460)'
+                              }}>
+                                <strong>ℹ️ Your Arbitrator Status:</strong>
+                                <div style={{ marginTop: '0.5rem' }}>
+                                  <div>💰 Stake: {formatEther(userStake)} MNT</div>
+                                  <div>⚖️ Active Disputes: {userActiveDisputes}</div>
+                                  <div>✅ Status: Active</div>
+                                  {userActiveDisputes > 0 && (
+                                    <div style={{ marginTop: '0.5rem', color: 'var(--color-warning, #ffc107)', fontWeight: 'bold' }}>
+                                      ⚠️ You cannot unstake while assigned to active disputes.
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            <button 
+                              className="btn btn-danger btn-full"
+                              onClick={unstakeArbitrator} 
+                              disabled={loading || !account?.address || userActiveDisputes > 0}
+                            >
+                              {loading ? '⏳ Unstaking...' : `💸 Unstake (${formatEther(userStake)} MNT)`}
+                            </button>
+                          </>
+                        );
+                      } else {
+                        return (
+                          <>
+                            <div className="form-group">
+                              <label className="form-label">💰 Minimum Stake (MNT)</label>
+                              <input
+                                type="number"
+                                className="form-input"
+                                value={minArbitratorStake}
+                                onChange={(e) => setMinArbitratorStake(e.target.value)}
+                                min="0.000000001"
+                                step="0.000000001"
+                                placeholder="0.000000001"
+                                readOnly
+                              />
+                              <small className="form-hint">Minimum stake required to become an arbitrator</small>
+                            </div>
+                    
+                            <button 
+                              className="btn btn-primary btn-full"
+                              onClick={registerArbitrator} 
+                              disabled={loading || !account?.address}
+                            >
+                              {loading ? '⏳ Registering...' : '⚖️ Register as Arbitrator'}
+                            </button>
+                          </>
+                        );
+                      }
+                    })()}
                   </div>
                 </section>
 
@@ -2596,7 +2975,8 @@ export default function App({ thirdwebClient }: AppProps) {
                           backgroundColor: 'var(--color-info-bg, #d1ecf1)', 
                           border: '1px solid var(--color-info-border, #0c5460)',
                           borderRadius: '8px',
-                          marginBottom: '1rem'
+                          marginBottom: '1rem',
+                          color: 'var(--color-info-text, #0c5460)'
                         }}>
                           <strong>ℹ️ Info:</strong> Only {activeArbitratorsCount} active arbitrator{activeArbitratorsCount !== 1 ? 's' : ''} available 
                           (recommended: 3). Disputes can still be processed with fewer arbitrators.

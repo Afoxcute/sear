@@ -1,13 +1,16 @@
 # Mantle IP Management Backend
 
-This backend service provides IP (Intellectual Property) management functionality on the Mantle testnet using the ModredIP smart contract.
+This backend service provides IP (Intellectual Property) management functionality on the Mantle testnet using the Sear smart contract.
 
 ## Features
 
-- **IP Registration**: Register IP assets on Mantle testnet using ModredIP contract
+- **IP Registration**: Register IP assets on Mantle testnet using Sear contract
 - **License Minting**: Mint licenses for IP assets with customizable terms
+- **License Validation**: Enforces one license per IP asset (prevents duplicate licenses)
 - **IPFS Integration**: Upload metadata to IPFS for decentralized storage
 - **Yakoa Integration**: Submit registered IPs to Yakoa for monitoring
+- **Nonce Management**: Automatic retry logic with exponential backoff for transaction reliability
+- **Error Handling**: Comprehensive error handling with user-friendly messages
 
 ## Environment Variables
 
@@ -26,38 +29,32 @@ NFT_CONTRACT_ADDRESS=optional_nft_contract_address
 - **Body**:
   ```json
   {
-    "ipMetadata": {
-      "name": "IP Asset Name",
-      "description": "IP Asset Description",
-      "image": "https://ipfs.io/ipfs/...",
-      "creator": "0x...",
-      "created_at": "2024-01-01T00:00:00Z"
-    },
-    "nftMetadata": {
-      "name": "NFT Name",
-      "description": "NFT Description",
-      "image": "https://ipfs.io/ipfs/..."
-    },
-    "modredIpContractAddress": "0xe1D7ecf7b6631D6a3f334e42b57295CC3d954e26"
+    "ipHash": "ipfs://Qm...",
+    "metadata": "{\"name\":\"IP Asset Name\",\"description\":\"...\",...}",
+    "isEncrypted": false,
+    "searContractAddress": "0x2D0456CE5e446ef9C8f513832a0bd361201990Ab",
+    "skipContractCall": false
   }
   ```
+- **Response**: Returns transaction hash, IP asset ID, block number, and explorer URL
+- **Note**: Supports legacy `modredIpContractAddress` parameter for backward compatibility
 
 ### License Minting
 - **POST** `/api/license/mint`
 - **Body**:
   ```json
   {
-    "ipAssetId": 1,
-    "licensee": "0x...",
-    "licenseTerms": {
-      "royaltyPercentage": 10,
-      "duration": 365,
-      "commercialUse": true,
-      "terms": "Commercial license terms..."
-    },
-    "modredIpContractAddress": "0xe1D7ecf7b6631D6a3f334e42b57295CC3d954e26"
+    "tokenId": 1,
+    "royaltyPercentage": 10,
+    "duration": 86400,
+    "commercialUse": true,
+    "terms": "{\"transferable\":true,\"commercialAttribution\":true,...}",
+    "searContractAddress": "0x2D0456CE5e446ef9C8f513832a0bd361201990Ab"
   }
   ```
+- **Validation**: Automatically checks if a license already exists for the IP asset
+- **Error**: Returns error if attempting to mint a second license for the same IP
+- **Response**: Returns transaction hash, block number, and explorer URL
 
 ## Network Configuration
 
@@ -69,7 +66,7 @@ NFT_CONTRACT_ADDRESS=optional_nft_contract_address
 
 ## Smart Contracts
 
-- **ModredIP**: Main contract for IP registration and license management
+- **Sear**: Main contract for IP registration and license management
 - **ERC6551Registry**: Token-bound account registry
 - **ERC6551Account**: Token-bound account implementation
 
@@ -88,9 +85,29 @@ yarn start
 
 The server will start on port 5000 by default.
 
-## Key Changes from Story Protocol
+**Note**: The server uses `ts-node` to run TypeScript directly, so changes to source files are picked up automatically on restart.
 
-1. **Network**: Migrated from Story Protocol networks to Mantle testnet
-2. **Token**: Using native MNT token instead of WIP tokens
-3. **Contracts**: Using ModredIP contract instead of Story Protocol contracts
-4. **API**: Updated endpoints to work with Mantle-specific functionality 
+## Transaction Reliability
+
+The backend includes automatic retry logic for blockchain transactions:
+- **Nonce Management**: Fetches current nonce (including pending transactions) before each transaction
+- **Retry Logic**: Automatically retries up to 3 times on nonce conflicts with exponential backoff
+- **Error Handling**: Provides clear error messages for transaction failures
+- **Race Condition Protection**: Handles concurrent transaction requests gracefully
+
+## Key Features
+
+1. **Network**: Mantle Sepolia Testnet (Chain ID: 5003)
+2. **Token**: Using native MNT token for transactions
+3. **Contracts**: Sear contract for IP management
+4. **License Validation**: Enforces one license per IP asset
+5. **Transaction Reliability**: Automatic retry with nonce management
+6. **Error Handling**: Comprehensive error messages and recovery
+
+## Recent Updates
+
+- ✅ Renamed from "ModredIP" to "Sear" throughout the codebase
+- ✅ Added license validation (one license per IP)
+- ✅ Improved nonce handling with retry logic
+- ✅ Enhanced error messages and user feedback
+- ✅ Updated contract address to V2 (0x2D0456CE5e446ef9C8f513832a0bd361201990Ab) 

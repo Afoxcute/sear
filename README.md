@@ -1,4 +1,4 @@
-# 🚀 ModredIP - Revolutionary IP Management Platform
+# 🚀 Sear - Revolutionary IP Management Platform
 
 > **The Future of Intellectual Property Management on Blockchain**
 
@@ -30,14 +30,14 @@
 To democratize intellectual property management by creating a decentralized, transparent, and automated platform that empowers creators to protect, monetize, and manage their IP assets with unprecedented efficiency.
 
 ### Mission
-ModredIP revolutionizes IP management by combining blockchain technology with AI-powered infringement detection, creating a comprehensive ecosystem where creators can register, license, monetize, and protect their intellectual property with built-in enforcement mechanisms.
+Sear revolutionizes IP management by combining blockchain technology with AI-powered infringement detection, creating a comprehensive ecosystem where creators can register, license, monetize, and protect their intellectual property with built-in enforcement mechanisms.
 
 ---
 
 ## 💼 Business Model
 
 ### Core Value Proposition
-ModredIP addresses critical pain points in the current IP management landscape:
+Sear addresses critical pain points in the current IP management landscape:
 
 1. **Fragmented IP Management**: Centralized platform for all IP lifecycle
 2. **Inefficient Licensing**: Automated, programmable licensing terms
@@ -104,6 +104,7 @@ ModredIP addresses critical pain points in the current IP management landscape:
 - **Royalty Management**: Automatic percentage distribution
 - **Commercial Rights**: Granular usage permissions
 - **Attribution Requirements**: Built-in creator recognition
+- **One License Per IP**: Enforced validation to ensure only one license can be minted per IP asset
 
 ### ✅ Revenue Management
 - **Direct Payments**: Revenue to IP assets
@@ -119,9 +120,12 @@ ModredIP addresses critical pain points in the current IP management landscape:
 
 ### ✅ Dispute Resolution
 - **On-Chain Disputes**: Immutable dispute records
-- **Arbitration Integration**: UMA protocol support
+- **Arbitration System**: Decentralized arbitrator network
 - **Evidence Storage**: Permanent dispute history
 - **Hybrid Enforcement**: Blockchain + traditional legal
+- **Arbitrator Management**: Register, stake, and unstake functionality
+- **Auto-Resolution**: Majority-based automatic dispute resolution
+- **Reputation System**: Rewards for correct arbitration decisions
 
 ---
 
@@ -218,11 +222,14 @@ The founders experienced firsthand the challenges of IP management:
 - [x] Backend API with blockchain integration
 - [x] IPFS integration for media storage
 - [x] Basic IP registration and management
-- [x] License management system
+- [x] License management system with one-license-per-IP validation
 - [x] Revenue distribution mechanisms
 - [x] Yakoa infringement monitoring integration
-- [x] Dispute resolution framework
+- [x] Dispute resolution framework with arbitration system
+- [x] Arbitrator registration and unstake functionality
 - [x] User authentication and wallet integration
+- [x] Improved nonce handling with retry logic
+- [x] Enhanced error handling and user feedback
 
 ### Phase 3: Advanced Features (Q4 2025) 🚧 IN PROGRESS
 - [ ] Advanced licensing templates
@@ -316,10 +323,10 @@ The founders experienced firsthand the challenges of IP management:
 ### Quick Start
 ```bash
 # Clone the repository
-git clone https://github.com/modredip/modredip-platform.git
+git clone https://github.com/sear/sear-platform.git
 
 # Install dependencies
-cd modredip-platform
+cd sear-platform
 npm install
 
 # Start development server
@@ -344,6 +351,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Built with ❤️ by the ModredIP Team**
+**Built with ❤️ by the Sear Team**
 
 *Empowering creators to protect and monetize their intellectual property through blockchain technology.*

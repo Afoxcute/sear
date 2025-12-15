@@ -13,6 +13,17 @@ A React-based frontend for the Sear intellectual property management system on M
 ### 2. Mint License Tokens
 - Create license tokens from registered IP Assets
 - **One License Per IP**: Only one license can be minted per IP asset (enforced validation)
+- **Advanced License Templates**: Choose from 8 predefined templates:
+  - 💼 Commercial License - Full commercial rights with attribution
+  - 🚫 Non-Commercial License - Non-commercial use only
+  - 📝 Creative Commons BY - Attribution required
+  - 🎨 Creative Commons BY-NC - Attribution, non-commercial
+  - 🔗 Creative Commons BY-SA - Attribution-ShareAlike
+  - 🔒 All Rights Reserved - Strict license, no derivatives
+  - 🌍 Public Domain - No restrictions
+  - ⭐ Exclusive Commercial - High royalty, exclusive rights
+  - ⚙️ Custom - Manual configuration
+- Templates auto-fill all license parameters and can be customized
 - Set royalty percentages (1-100%)
 - Define license duration in seconds
 - Specify commercial use permissions
@@ -20,6 +31,8 @@ A React-based frontend for the Sear intellectual property management system on M
 
 ### 3. Pay Revenue
 - Send payments to IP Assets
+- **Automated Royalty Calculation**: Real-time preview of how royalties will be distributed
+- **Royalty Breakdown**: See platform fees, license holder shares, and IP owner share before payment
 - Automatic royalty distribution to license holders
 - Support for both tips and revenue sharing
 
@@ -28,7 +41,16 @@ A React-based frontend for the Sear intellectual property management system on M
 - Automatic calculation based on royalty percentages
 - Direct transfer to wallet addresses
 
-### 5. Arbitration System
+### 5. Infringement Detection
+- **Automated Monitoring**: Periodic scanning for potential IP infringements
+- **Real-time Dashboard**: View infringement status for all your IP assets
+- **Severity Analysis**: Automatic classification of infringement severity
+- **Detailed Reports**: See in-network and external platform infringements
+- **Action Recommendations**: Get AI-suggested steps based on infringement type
+- **Auto-Monitoring**: Enable automatic periodic checks with configurable intervals
+- **Instant Alerts**: Receive notifications when new infringements are detected
+
+### 6. Arbitration System
 - **Register as Arbitrator**: Stake MNT to become an arbitrator
 - **Unstake**: Withdraw stake when no active disputes assigned
 - **Submit Decisions**: Vote on disputes (uphold or reject)
@@ -66,22 +88,55 @@ A React-based frontend for the Sear intellectual property management system on M
 
 ### Creating Licenses
 1. Select an existing IP Asset from the dropdown
-2. Set the royalty percentage (e.g., 10 for 10%)
-3. Choose license duration (minimum 1 hour = 3600 seconds)
-4. Enable/disable commercial use
-5. Upload license terms to IPFS and enter the hash
-6. Click "Mint License" and confirm the transaction
+2. **Choose a License Template** (or select "Custom" for manual configuration):
+   - Select from predefined templates that auto-configure all settings
+   - Templates include Commercial, Non-Commercial, Creative Commons variants, and more
+   - You can customize any template after selection
+   - Use "Reset to Template" to restore original template values
+3. Review and adjust settings as needed:
+   - Royalty percentage (e.g., 10 for 10%)
+   - License duration (minimum 1 hour = 3600 seconds)
+   - Commercial use permissions
+   - Derivatives and attribution settings
+4. Click "Mint License" and confirm the transaction
 
 ### Paying Revenue
 1. Select the target IP Asset
 2. Enter the payment amount in MNT
-3. Click "Pay Revenue" and confirm the transaction
-4. Royalties will be automatically distributed to license holders
+3. **View Royalty Breakdown**: The system automatically calculates and displays:
+   - Platform fee (2.5%)
+   - Each license holder's share based on their royalty percentage
+   - IP owner's remaining share
+4. Review the breakdown and click "Pay Revenue"
+5. Confirm the transaction
+6. Royalties are automatically distributed to license holders on-chain
 
 ### Claiming Royalties
 1. Select the IP Asset you have licenses for
-2. Click "Claim Royalties"
-3. Confirm the transaction to receive your accumulated royalties
+2. **View Accumulated Royalties**: See your total claimable amount for the selected IP
+3. The system displays:
+   - Your accumulated royalties (if any)
+   - Your active licenses and their royalty rates
+   - Claimable amount in MNT
+4. Click "Claim Royalties" (enabled only if you have claimable royalties)
+5. Confirm the transaction to receive your accumulated royalties
+
+### Monitoring Infringements
+1. Navigate to the "Infringement Detection" tab
+2. Select an IP Asset to monitor
+3. **Enable Auto-Monitoring**: Toggle automatic periodic checks (default: every 5 minutes)
+4. **Check Now**: Manually trigger an immediate infringement scan
+5. **View Results**: See detailed infringement reports including:
+   - Severity level (Low, Medium, High, Critical)
+   - In-network infringements (on-chain)
+   - External platform infringements (off-chain)
+   - Similarity scores and detection timestamps
+   - Recommended actions based on infringement type
+6. **Take Action**: Follow recommended steps such as:
+   - Raising disputes through arbitration
+   - Sending DMCA takedown notices
+   - Documenting evidence
+   - Contacting infringing parties
 
 ## Technical Details
 

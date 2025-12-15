@@ -312,6 +312,21 @@ const SEAR_ABI = [
     type: "function"
   },
   {
+    inputs: [
+      { name: "tokenId", type: "uint256" },
+      { name: "claimant", type: "address" }
+    ],
+    name: "getRoyaltyInfo",
+    outputs: [
+      { name: "totalRevenue", type: "uint256" },
+      { name: "claimableAmount", type: "uint256" },
+      { name: "lastClaimed", type: "uint256" },
+      { name: "totalAccumulated", type: "uint256" }
+    ],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
     inputs: [],
     name: "nextTokenId",
     outputs: [{ name: "", type: "uint256" }],
@@ -609,6 +624,212 @@ interface AppProps {
   thirdwebClient: ThirdwebClient;
 }
 
+// License Template Interface
+interface LicenseTemplate {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  royaltyPercentage: number;
+  duration: number; // in seconds
+  commercialUse: boolean;
+  commercialAttribution: boolean;
+  derivativesAllowed: boolean;
+  derivativesAttribution: boolean;
+  derivativesApproval: boolean;
+  derivativesReciprocal: boolean;
+  commercialRevShare: number; // in basis points (100000000 = 100%)
+  commercialRevCeiling: number;
+  derivativeRevCeiling: number;
+  commercializerChecker: string;
+  commercializerCheckerData: string;
+  currency: string;
+}
+
+// Predefined License Templates
+const LICENSE_TEMPLATES: LicenseTemplate[] = [
+  {
+    id: "commercial",
+    name: "Commercial License",
+    description: "Full commercial rights with attribution. Allows commercial use, derivatives, and sharing.",
+    icon: "💼",
+    royaltyPercentage: 15,
+    duration: 31536000, // 1 year
+    commercialUse: true,
+    commercialAttribution: true,
+    derivativesAllowed: true,
+    derivativesAttribution: true,
+    derivativesApproval: false,
+    derivativesReciprocal: false,
+    commercialRevShare: 100000000, // 100%
+    commercialRevCeiling: 0,
+    derivativeRevCeiling: 0,
+    commercializerChecker: "0x0000000000000000000000000000000000000000",
+    commercializerCheckerData: "0000000000000000000000000000000000000000",
+    currency: "0x15140000000000000000000000000000000000000"
+  },
+  {
+    id: "non-commercial",
+    name: "Non-Commercial License",
+    description: "Non-commercial use only. Allows derivatives and sharing, but no commercial use.",
+    icon: "🚫",
+    royaltyPercentage: 10,
+    duration: 31536000, // 1 year
+    commercialUse: false,
+    commercialAttribution: true,
+    derivativesAllowed: true,
+    derivativesAttribution: true,
+    derivativesApproval: false,
+    derivativesReciprocal: true,
+    commercialRevShare: 0,
+    commercialRevCeiling: 0,
+    derivativeRevCeiling: 0,
+    commercializerChecker: "0x0000000000000000000000000000000000000000",
+    commercializerCheckerData: "0000000000000000000000000000000000000000",
+    currency: "0x15140000000000000000000000000000000000000"
+  },
+  {
+    id: "cc-by",
+    name: "Creative Commons BY",
+    description: "Attribution required. Allows commercial use, derivatives, and sharing with credit.",
+    icon: "📝",
+    royaltyPercentage: 5,
+    duration: 31536000, // 1 year
+    commercialUse: true,
+    commercialAttribution: true,
+    derivativesAllowed: true,
+    derivativesAttribution: true,
+    derivativesApproval: false,
+    derivativesReciprocal: false,
+    commercialRevShare: 50000000, // 50%
+    commercialRevCeiling: 0,
+    derivativeRevCeiling: 0,
+    commercializerChecker: "0x0000000000000000000000000000000000000000",
+    commercializerCheckerData: "0000000000000000000000000000000000000000",
+    currency: "0x15140000000000000000000000000000000000000"
+  },
+  {
+    id: "cc-by-nc",
+    name: "Creative Commons BY-NC",
+    description: "Attribution required, non-commercial only. No commercial use, but allows derivatives and sharing.",
+    icon: "🎨",
+    royaltyPercentage: 5,
+    duration: 31536000, // 1 year
+    commercialUse: false,
+    commercialAttribution: true,
+    derivativesAllowed: true,
+    derivativesAttribution: true,
+    derivativesApproval: false,
+    derivativesReciprocal: true,
+    commercialRevShare: 0,
+    commercialRevCeiling: 0,
+    derivativeRevCeiling: 0,
+    commercializerChecker: "0x0000000000000000000000000000000000000000",
+    commercializerCheckerData: "0000000000000000000000000000000000000000",
+    currency: "0x15140000000000000000000000000000000000000"
+  },
+  {
+    id: "cc-by-sa",
+    name: "Creative Commons BY-SA",
+    description: "Attribution-ShareAlike. Allows commercial use and derivatives, but derivatives must use same license.",
+    icon: "🔗",
+    royaltyPercentage: 10,
+    duration: 31536000, // 1 year
+    commercialUse: true,
+    commercialAttribution: true,
+    derivativesAllowed: true,
+    derivativesAttribution: true,
+    derivativesApproval: false,
+    derivativesReciprocal: true,
+    commercialRevShare: 75000000, // 75%
+    commercialRevCeiling: 0,
+    derivativeRevCeiling: 0,
+    commercializerChecker: "0x0000000000000000000000000000000000000000",
+    commercializerCheckerData: "0000000000000000000000000000000000000000",
+    currency: "0x15140000000000000000000000000000000000000"
+  },
+  {
+    id: "all-rights",
+    name: "All Rights Reserved",
+    description: "Strict license. No commercial use, no derivatives. Attribution required for any use.",
+    icon: "🔒",
+    royaltyPercentage: 20,
+    duration: 31536000, // 1 year
+    commercialUse: false,
+    commercialAttribution: true,
+    derivativesAllowed: false,
+    derivativesAttribution: false,
+    derivativesApproval: false,
+    derivativesReciprocal: false,
+    commercialRevShare: 0,
+    commercialRevCeiling: 0,
+    derivativeRevCeiling: 0,
+    commercializerChecker: "0x0000000000000000000000000000000000000000",
+    commercializerCheckerData: "0000000000000000000000000000000000000000",
+    currency: "0x15140000000000000000000000000000000000000"
+  },
+  {
+    id: "public-domain",
+    name: "Public Domain",
+    description: "No restrictions. Free for commercial use, derivatives, and sharing. No attribution required.",
+    icon: "🌍",
+    royaltyPercentage: 0,
+    duration: 31536000, // 1 year
+    commercialUse: true,
+    commercialAttribution: false,
+    derivativesAllowed: true,
+    derivativesAttribution: false,
+    derivativesApproval: false,
+    derivativesReciprocal: false,
+    commercialRevShare: 0,
+    commercialRevCeiling: 0,
+    derivativeRevCeiling: 0,
+    commercializerChecker: "0x0000000000000000000000000000000000000000",
+    commercializerCheckerData: "0000000000000000000000000000000000000000",
+    currency: "0x15140000000000000000000000000000000000000"
+  },
+  {
+    id: "exclusive",
+    name: "Exclusive Commercial",
+    description: "Exclusive commercial license with high royalty. No derivatives, commercial use only with approval.",
+    icon: "⭐",
+    royaltyPercentage: 25,
+    duration: 63072000, // 2 years
+    commercialUse: true,
+    commercialAttribution: true,
+    derivativesAllowed: false,
+    derivativesAttribution: false,
+    derivativesApproval: true,
+    derivativesReciprocal: false,
+    commercialRevShare: 100000000, // 100%
+    commercialRevCeiling: 0,
+    derivativeRevCeiling: 0,
+    commercializerChecker: "0x0000000000000000000000000000000000000000",
+    commercializerCheckerData: "0000000000000000000000000000000000000000",
+    currency: "0x15140000000000000000000000000000000000000"
+  },
+  {
+    id: "custom",
+    name: "Custom License",
+    description: "Manually configure all license parameters to your specific needs.",
+    icon: "⚙️",
+    royaltyPercentage: 10,
+    duration: 86400, // 1 day default
+    commercialUse: true,
+    commercialAttribution: true,
+    derivativesAllowed: true,
+    derivativesAttribution: true,
+    derivativesApproval: false,
+    derivativesReciprocal: true,
+    commercialRevShare: 100000000, // 100%
+    commercialRevCeiling: 0,
+    derivativeRevCeiling: 0,
+    commercializerChecker: "0x0000000000000000000000000000000000000000",
+    commercializerCheckerData: "0000000000000000000000000000000000000000",
+    currency: "0x15140000000000000000000000000000000000000"
+  }
+];
+
 // Enhanced Asset Preview Component
 const EnhancedAssetPreview: React.FC<{
   assetId: number;
@@ -731,12 +952,123 @@ export default function App({ thirdwebClient }: AppProps) {
   const [derivativesReciprocal, setDerivativesReciprocal] = useState<boolean>(true);
   const [derivativeRevCeiling, setDerivativeRevCeiling] = useState<number>(0);
   const [licenseCurrency, setLicenseCurrency] = useState<string>("0x15140000000000000000000000000000000000000");
+  const [selectedLicenseTemplate, setSelectedLicenseTemplate] = useState<string>("custom");
   
   const [paymentAmount, setPaymentAmount] = useState<string>("0.001");
   const [paymentTokenId, setPaymentTokenId] = useState<number>(1);
   
   const [claimTokenId, setClaimTokenId] = useState<number>(1);
 
+  // Royalty calculation states
+  interface RoyaltyBreakdown {
+    totalAmount: number;
+    platformFee: number;
+    remainingAfterFee: number;
+    licenseRoyalties: Array<{
+      licenseId: number;
+      licensee: string;
+      royaltyPercentage: number;
+      amount: number;
+    }>;
+    ipOwnerShare: number;
+  }
+
+  const [royaltyBreakdown, setRoyaltyBreakdown] = useState<RoyaltyBreakdown | null>(null);
+  const [accumulatedRoyalties, setAccumulatedRoyalties] = useState<Map<number, bigint>>(new Map()); // tokenId => claimable amount
+
+  // Constants matching contract
+  const ROYALTY_DECIMALS = 10000; // 10000 = 100%
+  const PLATFORM_FEE_PERCENTAGE = 250; // 2.5% = 250 basis points
+
+  // Calculate royalty breakdown (mirrors contract logic)
+  const calculateRoyaltyBreakdown = (
+    paymentAmount: number,
+    tokenId: number
+  ): RoyaltyBreakdown | null => {
+    if (!paymentAmount || paymentAmount <= 0) return null;
+    if (!ipAssets.has(tokenId)) return null;
+
+    const paymentAmountWei = parseFloat(paymentAmount.toString()) * 1e18; // Convert to wei for calculation
+    const paymentAmountBigInt = BigInt(Math.floor(paymentAmountWei));
+
+    // Calculate platform fee
+    const platformFee = (paymentAmountBigInt * BigInt(PLATFORM_FEE_PERCENTAGE)) / BigInt(ROYALTY_DECIMALS);
+    const remainingAfterFee = paymentAmountBigInt - platformFee;
+
+    // Get active licenses for this token
+    const activeLicenses: Array<{
+      licenseId: number;
+      license: License;
+    }> = [];
+
+    licenses.forEach((license, licenseId) => {
+      if (
+        Number(license.tokenId) === tokenId &&
+        license.isActive &&
+        Date.now() / 1000 < Number(license.startDate) + Number(license.duration)
+      ) {
+        activeLicenses.push({ licenseId, license });
+      }
+    });
+
+    // Calculate license royalties
+    const licenseRoyalties = activeLicenses.map(({ licenseId, license }) => {
+      const royaltyAmount = (remainingAfterFee * license.royaltyPercentage) / BigInt(ROYALTY_DECIMALS);
+      return {
+        licenseId,
+        licensee: license.licensee,
+        royaltyPercentage: Number(license.royaltyPercentage) / 100, // Convert to percentage
+        amount: Number(royaltyAmount) / 1e18, // Convert from wei
+      };
+    });
+
+    const totalLicenseRoyalties = licenseRoyalties.reduce((sum, lr) => sum + lr.amount, 0);
+    const ipOwnerShare = Number(remainingAfterFee) / 1e18 - totalLicenseRoyalties;
+
+    return {
+      totalAmount: paymentAmount,
+      platformFee: Number(platformFee) / 1e18,
+      remainingAfterFee: Number(remainingAfterFee) / 1e18,
+      licenseRoyalties,
+      ipOwnerShare: Math.max(0, ipOwnerShare), // Ensure non-negative
+    };
+  };
+
+  // Load accumulated royalties for a token
+  const loadAccumulatedRoyalties = async (tokenId: number) => {
+    if (!account?.address) return;
+
+    try {
+      const contract = getContract({
+        abi: SEAR_ABI,
+        client: thirdwebClient,
+        chain: defineChain(mantleTestnet.id),
+        address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
+      });
+
+      // Get royalty info for the connected account
+      const royaltyInfo = await readContract({
+        contract,
+        method: "getRoyaltyInfo" as any,
+        params: [BigInt(tokenId), account.address],
+      }) as readonly [bigint, bigint, bigint, bigint];
+
+      const claimableAmount = royaltyInfo[1]; // claimableAmount_
+      setAccumulatedRoyalties((prev) => {
+        const newMap = new Map(prev);
+        newMap.set(tokenId, claimableAmount);
+        return newMap;
+      });
+    } catch (error: any) {
+      // Silently handle errors (e.g., if no royalties exist)
+      console.log('No royalties found or error loading:', error);
+      setAccumulatedRoyalties((prev) => {
+        const newMap = new Map(prev);
+        newMap.set(tokenId, 0n);
+        return newMap;
+      });
+    }
+  };
 
   // Arbitration states
   const [disputesMap, setDisputesMap] = useState<Map<number, any>>(new Map());
@@ -757,7 +1089,148 @@ export default function App({ thirdwebClient }: AppProps) {
   const [isOwner, setIsOwner] = useState<boolean>(false);
 
   const [filePreview, setFilePreview] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'register' | 'license' | 'revenue' | 'arbitration'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'register' | 'license' | 'revenue' | 'arbitration' | 'infringement'>('dashboard');
+
+  // Infringement detection states
+  interface InfringementData {
+    id: string;
+    status: string;
+    result: string;
+    inNetworkInfringements: Array<{
+      id?: string;
+      url?: string;
+      similarity?: number;
+      detected_at?: string;
+      type?: string;
+    }>;
+    externalInfringements: Array<{
+      id?: string;
+      url?: string;
+      similarity?: number;
+      detected_at?: string;
+      type?: string;
+      platform?: string;
+    }>;
+    credits?: {
+      used?: number;
+      remaining?: number;
+    };
+    lastChecked: string | null;
+    totalInfringements: number;
+  }
+
+  const [infringementData, setInfringementData] = useState<Map<number, InfringementData>>(new Map());
+  const [selectedInfringementTokenId, setSelectedInfringementTokenId] = useState<number>(1);
+  const [infringementLoading, setInfringementLoading] = useState<boolean>(false);
+  const [autoMonitoringEnabled, setAutoMonitoringEnabled] = useState<boolean>(true);
+  const [monitoringInterval, setMonitoringInterval] = useState<number>(300000); // 5 minutes default
+
+  // Load infringement status for an IP asset
+  const loadInfringementStatus = async (tokenId: number) => {
+    if (!ipAssets.has(tokenId)) {
+      console.warn(`IP Asset ${tokenId} not found`);
+      return;
+    }
+
+    try {
+      setInfringementLoading(true);
+      const contractAddress = CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"].toLowerCase();
+      const response = await fetch(`${BACKEND_URL}/api/infringement/status/${contractAddress}/${tokenId}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch infringement status: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      const infringementStatus: InfringementData = result.data;
+
+      setInfringementData((prev) => {
+        const newMap = new Map(prev);
+        newMap.set(tokenId, infringementStatus);
+        return newMap;
+      });
+
+      // Show notification if infringements found
+      if (infringementStatus.totalInfringements > 0) {
+        notifyWarning(
+          'Infringements Detected',
+          `Found ${infringementStatus.totalInfringements} potential infringement(s) for IP Asset #${tokenId}`
+        );
+      } else {
+        notifyInfo('No Infringements', `No infringements detected for IP Asset #${tokenId}`);
+      }
+    } catch (error: any) {
+      console.error('Error loading infringement status:', error);
+      // Don't show error for 404s (IP might not be registered in Yakoa yet)
+      if (!error.message?.includes('404')) {
+        notifyError('Infringement Check Failed', error.message || 'Failed to check infringement status');
+      }
+    } finally {
+      setInfringementLoading(false);
+    }
+  };
+
+  // Calculate infringement severity
+  const calculateSeverity = (infringement: InfringementData): 'low' | 'medium' | 'high' | 'critical' => {
+    if (infringement.totalInfringements === 0) return 'low';
+    
+    const hasHighSimilarity = [
+      ...infringement.inNetworkInfringements,
+      ...infringement.externalInfringements
+    ].some(inf => (inf.similarity || 0) > 0.9);
+
+    if (hasHighSimilarity && infringement.totalInfringements > 5) return 'critical';
+    if (hasHighSimilarity || infringement.totalInfringements > 3) return 'high';
+    if (infringement.totalInfringements > 1) return 'medium';
+    return 'low';
+  };
+
+  // Get recommended actions based on infringement
+  const getRecommendedActions = (infringement: InfringementData): string[] => {
+    const actions: string[] = [];
+    const severity = calculateSeverity(infringement);
+
+    if (severity === 'critical' || severity === 'high') {
+      actions.push('Consider raising a dispute through the arbitration system');
+      actions.push('Document all evidence of infringement');
+      actions.push('Contact infringing parties if appropriate');
+    }
+    
+    if (infringement.externalInfringements.length > 0) {
+      actions.push('Review external platform infringements for commercial use');
+      actions.push('Consider sending DMCA takedown notices if applicable');
+    }
+
+    if (infringement.inNetworkInfringements.length > 0) {
+      actions.push('Review on-chain infringements for potential license violations');
+      actions.push('Check if infringing parties have valid licenses');
+    }
+
+    if (actions.length === 0) {
+      actions.push('Continue monitoring for new infringements');
+      actions.push('Ensure your IP is properly registered and licensed');
+    }
+
+    return actions;
+  };
+
+  // Auto-monitoring effect
+  useEffect(() => {
+    if (!autoMonitoringEnabled || !selectedInfringementTokenId || !ipAssets.has(selectedInfringementTokenId)) return;
+
+    // Load immediately
+    loadInfringementStatus(selectedInfringementTokenId);
+
+    // Set up interval
+    const interval = setInterval(() => {
+      if (ipAssets.has(selectedInfringementTokenId)) {
+        loadInfringementStatus(selectedInfringementTokenId);
+      }
+    }, monitoringInterval);
+
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoMonitoringEnabled, selectedInfringementTokenId, monitoringInterval]);
 
   // Check backend status
   const checkBackendStatus = async () => {
@@ -1038,8 +1511,8 @@ export default function App({ thirdwebClient }: AppProps) {
         errorMessage.includes("AbiDecodingZeroDataError");
       
       if (!isZeroDataError) {
-        console.error("Error loading contract data:", error);
-        notifyError("Loading Failed", "Failed to load contract data");
+      console.error("Error loading contract data:", error);
+      notifyError("Loading Failed", "Failed to load contract data");
       } else {
         console.log("ℹ️ Some contract functions returned zero data (expected for new contracts). Continuing with defaults.");
       }
@@ -1195,15 +1668,15 @@ export default function App({ thirdwebClient }: AppProps) {
           `IPFS upload successful!\nIP Hash: ${result.mantle.ipHash}\n\nNote: Contract registration was skipped (testing mode).`
         );
       } else {
-        notifySuccess('IP Asset Registered', 
-          `Successfully registered IP asset!\nTransaction: ${result.mantle.txHash}\nIP Asset ID: ${result.mantle.ipAssetId}`,
-          {
-            action: {
-              label: 'View Transaction',
-              onClick: () => window.open(`https://explorer.testnet.mantle.xyz/tx/${result.mantle.txHash}`, '_blank')
-            }
+      notifySuccess('IP Asset Registered', 
+        `Successfully registered IP asset!\nTransaction: ${result.mantle.txHash}\nIP Asset ID: ${result.mantle.ipAssetId}`,
+        {
+          action: {
+            label: 'View Transaction',
+            onClick: () => window.open(`https://explorer.testnet.mantle.xyz/tx/${result.mantle.txHash}`, '_blank')
           }
-        );
+        }
+      );
       }
 
       // Reset form
@@ -1222,6 +1695,42 @@ export default function App({ thirdwebClient }: AppProps) {
       notifyError('Registration Failed', error instanceof Error ? error.message : "Failed to register IP asset");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Format duration for display
+  const formatDuration = (seconds: number): string => {
+    if (seconds < 60) return `${seconds} seconds`;
+    if (seconds < 3600) return `${Math.floor(seconds / 60)} minutes`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)} hours`;
+    if (seconds < 2592000) return `${Math.floor(seconds / 86400)} days`;
+    if (seconds < 31536000) return `${Math.floor(seconds / 2592000)} months`;
+    return `${Math.floor(seconds / 31536000)} years`;
+  };
+
+  // Apply license template to form
+  const applyLicenseTemplate = (templateId: string) => {
+    const template = LICENSE_TEMPLATES.find(t => t.id === templateId);
+    if (!template) return;
+    
+    setSelectedLicenseTemplate(templateId);
+    setRoyaltyPercentage(template.royaltyPercentage);
+    setLicenseDuration(template.duration);
+    setCommercialUse(template.commercialUse);
+    setCommercialAttribution(template.commercialAttribution);
+    setDerivativesAllowed(template.derivativesAllowed);
+    setDerivativesAttribution(template.derivativesAttribution);
+    setDerivativesApproval(template.derivativesApproval);
+    setDerivativesReciprocal(template.derivativesReciprocal);
+    setCommercialRevShare(template.commercialRevShare);
+    setCommercialRevCeiling(template.commercialRevCeiling);
+    setDerivativeRevCeiling(template.derivativeRevCeiling);
+    setCommercializerChecker(template.commercializerChecker);
+    setCommercializerCheckerData(template.commercializerCheckerData);
+    setLicenseCurrency(template.currency);
+    
+    if (templateId !== "custom") {
+      notifyInfo('Template Applied', `${template.icon} ${template.name} template has been applied. You can still customize the settings.`);
     }
   };
 
@@ -1295,6 +1804,7 @@ export default function App({ thirdwebClient }: AppProps) {
 
       // Reset form
       setSelectedTokenId(1);
+      setSelectedLicenseTemplate("custom");
       setRoyaltyPercentage(10);
       setLicenseDuration(86400);
       setCommercialUse(true);
@@ -1321,6 +1831,23 @@ export default function App({ thirdwebClient }: AppProps) {
     }
   };
 
+  // Calculate and update royalty breakdown when payment amount or token changes
+  useEffect(() => {
+    if (paymentAmount && parseFloat(paymentAmount) > 0 && paymentTokenId) {
+      const breakdown = calculateRoyaltyBreakdown(parseFloat(paymentAmount), paymentTokenId);
+      setRoyaltyBreakdown(breakdown);
+    } else {
+      setRoyaltyBreakdown(null);
+    }
+  }, [paymentAmount, paymentTokenId, licenses, ipAssets]);
+
+  // Load accumulated royalties when claim token changes
+  useEffect(() => {
+    if (claimTokenId && account?.address) {
+      loadAccumulatedRoyalties(claimTokenId);
+    }
+  }, [claimTokenId, account?.address]);
+
   // Pay Revenue
   const payRevenue = async () => {
     if (!account?.address || !paymentAmount || parseFloat(paymentAmount) <= 0) {
@@ -1330,6 +1857,20 @@ export default function App({ thirdwebClient }: AppProps) {
 
     try {
       setLoading(true);
+      
+      // Show breakdown in notification
+      if (royaltyBreakdown) {
+        const breakdownText = [
+          `Total: ${royaltyBreakdown.totalAmount} MNT`,
+          `Platform Fee: ${royaltyBreakdown.platformFee.toFixed(6)} MNT (2.5%)`,
+          ...royaltyBreakdown.licenseRoyalties.map(
+            lr => `License ${lr.licenseId}: ${lr.amount.toFixed(6)} MNT (${lr.royaltyPercentage}%)`
+          ),
+          `IP Owner: ${royaltyBreakdown.ipOwnerShare.toFixed(6)} MNT`,
+        ].join('\n');
+        notifyInfo('Payment Breakdown', breakdownText);
+      }
+      
       notifyInfo('Processing Payment', `Paying ${paymentAmount} MNT in revenue...`);
 
         const contract = getContract({
@@ -1437,11 +1978,24 @@ export default function App({ thirdwebClient }: AppProps) {
         transactionHash: transaction.transactionHash,
       });
 
-            // Show success notification
-      notifySuccess('Royalties Claimed', 'Successfully claimed your royalties!');
+            // Show success notification with amount
+      const claimedAmount = accumulatedRoyalties.get(claimTokenId) || 0n;
+      notifySuccess('Royalties Claimed', `Successfully claimed ${formatEther(claimedAmount)} MNT!`);
+
+      // Update accumulated royalties
+      setAccumulatedRoyalties((prev) => {
+        const newMap = new Map(prev);
+        newMap.set(claimTokenId, 0n);
+        return newMap;
+      });
 
       // Reload data
       await loadContractData();
+      
+      // Reload accumulated royalties
+      if (claimTokenId) {
+        await loadAccumulatedRoyalties(claimTokenId);
+      }
 
     } catch (error: any) {
       // Check for specific error messages in multiple possible locations
@@ -2324,7 +2878,7 @@ export default function App({ thirdwebClient }: AppProps) {
         errorMessage.includes("AbiDecodingZeroDataError");
       
       if (!isZeroDataError) {
-        console.error("Error loading arbitration data:", error);
+      console.error("Error loading arbitration data:", error);
       } else {
         console.log("ℹ️ Some arbitration contract functions returned zero data (expected for new contracts). Continuing with defaults.");
       }
@@ -2598,6 +3152,104 @@ export default function App({ thirdwebClient }: AppProps) {
                 })}
             </select>
             </div>
+
+            {/* License Template Selector */}
+            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
+                <label className="form-label" style={{ margin: 0, flex: 1 }}>📋 License Template</label>
+                {selectedLicenseTemplate !== "custom" && (
+                  <button
+                    type="button"
+                    onClick={() => applyLicenseTemplate(selectedLicenseTemplate)}
+                    style={{
+                      padding: '0.5rem 1rem',
+                      fontSize: '0.875rem',
+                      backgroundColor: 'var(--color-secondary, #6c757d)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.2s'
+                    }}
+                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--color-secondary-hover, #5a6268)'}
+                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'var(--color-secondary, #6c757d)'}
+                  >
+                    🔄 Reset to Template
+                  </button>
+                )}
+              </div>
+              <select
+                className="form-select"
+                value={selectedLicenseTemplate}
+                onChange={(e) => applyLicenseTemplate(e.target.value)}
+              >
+                {LICENSE_TEMPLATES.map((template) => (
+                  <option key={template.id} value={template.id}>
+                    {template.icon} {template.name}
+                  </option>
+                ))}
+              </select>
+              {selectedLicenseTemplate !== "custom" && (() => {
+                const template = LICENSE_TEMPLATES.find(t => t.id === selectedLicenseTemplate);
+                if (!template) return null;
+                
+                // Check if form values match template (to show customization indicator)
+                const isCustomized = 
+                  royaltyPercentage !== template.royaltyPercentage ||
+                  licenseDuration !== template.duration ||
+                  commercialUse !== template.commercialUse ||
+                  commercialAttribution !== template.commercialAttribution ||
+                  derivativesAllowed !== template.derivativesAllowed ||
+                  derivativesAttribution !== template.derivativesAttribution ||
+                  derivativesApproval !== template.derivativesApproval ||
+                  derivativesReciprocal !== template.derivativesReciprocal;
+                
+                return (
+                  <div style={{
+                    marginTop: '0.5rem',
+                    padding: '0.75rem',
+                    backgroundColor: isCustomized 
+                      ? 'var(--color-warning-bg, #fff3cd)' 
+                      : 'var(--color-info-bg, #d1ecf1)',
+                    border: `1px solid ${isCustomized 
+                      ? 'var(--color-warning-border, #ffc107)' 
+                      : 'var(--color-info-border, #0c5460)'}`,
+                    borderRadius: '6px',
+                    fontSize: '0.875rem',
+                    color: isCustomized 
+                      ? 'var(--color-warning-text, #856404)' 
+                      : 'var(--color-info-text, #0c5460)'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                      <strong>{template.icon} {template.name}</strong>
+                      {isCustomized && (
+                        <span style={{
+                          fontSize: '0.75rem',
+                          padding: '0.25rem 0.5rem',
+                          backgroundColor: 'var(--color-warning, #ffc107)',
+                          color: '#000',
+                          borderRadius: '4px',
+                          fontWeight: 'bold'
+                        }}>
+                          ✏️ Customized
+                        </span>
+                      )}
+                    </div>
+                    <div>{template.description}</div>
+                    <div style={{ marginTop: '0.5rem', fontSize: '0.8rem', opacity: 0.9 }}>
+                      💰 Royalty: {template.royaltyPercentage}% | 
+                      ⏰ Duration: {formatDuration(template.duration)} | 
+                      {template.commercialUse ? ' 💼 Commercial' : ' 🚫 Non-Commercial'} | 
+                      {template.derivativesAllowed ? ' ✏️ Derivatives Allowed' : ' 🔒 No Derivatives'}
+                    </div>
+                  </div>
+                );
+              })()}
+              <small className="form-hint">
+                Select a predefined template or choose "Custom" to configure manually. Templates can be customized after selection.
+              </small>
+            </div>
+
             <div className="form-group-row">
               <div className="form-group">
                 <label className="form-label">💰 Royalty (%)</label>
@@ -2811,11 +3463,147 @@ export default function App({ thirdwebClient }: AppProps) {
                 placeholder="0.001"
             />
           </div>
+
+          {/* Royalty Calculation Preview */}
+          {royaltyBreakdown && (
+            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+              <div style={{
+                padding: '1rem',
+                backgroundColor: 'var(--color-info-bg, #d1ecf1)',
+                border: '1px solid var(--color-info-border, #0c5460)',
+                borderRadius: '8px',
+                marginTop: '0.5rem'
+              }}>
+                <h3 style={{
+                  margin: '0 0 1rem 0',
+                  fontSize: '1rem',
+                  fontWeight: 600,
+                  color: 'var(--color-info-text, #0c5460)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}>
+                  🧮 Automated Royalty Calculation Preview
+                </h3>
+                
+                <div style={{
+                  display: 'grid',
+                  gap: '0.75rem',
+                  fontSize: '0.875rem'
+                }}>
+                  {/* Total Payment */}
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    padding: '0.5rem',
+                    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                    borderRadius: '4px',
+                    fontWeight: 600
+                  }}>
+                    <span>Total Payment:</span>
+                    <span>{royaltyBreakdown.totalAmount} MNT</span>
+                  </div>
+
+                  {/* Platform Fee */}
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    padding: '0.5rem',
+                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                    borderRadius: '4px'
+                  }}>
+                    <span>🏛️ Platform Fee (2.5%):</span>
+                    <span>{royaltyBreakdown.platformFee.toFixed(6)} MNT</span>
+                  </div>
+
+                  {/* Remaining After Fee */}
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    padding: '0.5rem',
+                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                    borderRadius: '4px',
+                    borderTop: '1px solid rgba(0,0,0,0.1)',
+                    borderBottom: '1px solid rgba(0,0,0,0.1)',
+                    marginTop: '0.25rem',
+                    marginBottom: '0.25rem'
+                  }}>
+                    <span>💰 Available for Distribution:</span>
+                    <span>{royaltyBreakdown.remainingAfterFee.toFixed(6)} MNT</span>
+                  </div>
+
+                  {/* License Royalties */}
+                  {royaltyBreakdown.licenseRoyalties.length > 0 && (
+                    <>
+                      <div style={{
+                        marginTop: '0.5rem',
+                        paddingTop: '0.5rem',
+                        borderTop: '1px solid rgba(0,0,0,0.2)'
+                      }}>
+                        <strong style={{ fontSize: '0.8rem', opacity: 0.9 }}>License Holder Royalties:</strong>
+                      </div>
+                      {royaltyBreakdown.licenseRoyalties.map((lr, idx) => (
+                        <div
+                          key={idx}
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            padding: '0.5rem',
+                            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                            borderRadius: '4px',
+                            fontSize: '0.8rem'
+                          }}
+                        >
+                          <span>
+                            🎫 License #{lr.licenseId} ({lr.royaltyPercentage}%):
+                            <br />
+                            <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>
+                              {lr.licensee.substring(0, 6)}...{lr.licensee.substring(38)}
+                            </span>
+                          </span>
+                          <span style={{ fontWeight: 500 }}>
+                            {lr.amount.toFixed(6)} MNT
+                          </span>
+                        </div>
+                      ))}
+                    </>
+                  )}
+
+                  {/* IP Owner Share */}
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    padding: '0.75rem',
+                    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+                    borderRadius: '4px',
+                    marginTop: '0.5rem',
+                    fontWeight: 600,
+                    borderTop: '2px solid rgba(0,0,0,0.1)'
+                  }}>
+                    <span>👤 IP Owner Share:</span>
+                    <span>{royaltyBreakdown.ipOwnerShare.toFixed(6)} MNT</span>
+                  </div>
+
+                  {/* Summary */}
+                  <div style={{
+                    marginTop: '0.5rem',
+                    padding: '0.5rem',
+                    fontSize: '0.75rem',
+                    opacity: 0.8,
+                    fontStyle: 'italic',
+                    textAlign: 'center'
+                  }}>
+                    💡 Royalties are automatically calculated and distributed on-chain
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
             
             <button 
               className="btn btn-primary btn-full"
               onClick={payRevenue} 
-              disabled={loading || !account?.address}
+              disabled={loading || !account?.address || !paymentAmount || parseFloat(paymentAmount) <= 0}
             >
               {loading ? '⏳ Processing...' : '💳 Pay Revenue'}
             </button>
@@ -2848,14 +3636,483 @@ export default function App({ thirdwebClient }: AppProps) {
                 })}
               </select>
             </div>
+
+            {/* Accumulated Royalties Display */}
+            {account?.address && accumulatedRoyalties.has(claimTokenId) && (
+              <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                <div style={{
+                  padding: '1rem',
+                  backgroundColor: accumulatedRoyalties.get(claimTokenId)! > 0n
+                    ? 'var(--color-success-bg, #d4edda)'
+                    : 'var(--color-info-bg, #d1ecf1)',
+                  border: `1px solid ${accumulatedRoyalties.get(claimTokenId)! > 0n
+                    ? 'var(--color-success-border, #28a745)'
+                    : 'var(--color-info-border, #0c5460)'}`,
+                  borderRadius: '8px',
+                  marginTop: '0.5rem'
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '0.5rem'
+                  }}>
+                    <h3 style={{
+                      margin: 0,
+                      fontSize: '1rem',
+                      fontWeight: 600,
+                      color: accumulatedRoyalties.get(claimTokenId)! > 0n
+                        ? 'var(--color-success-text, #155724)'
+                        : 'var(--color-info-text, #0c5460)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem'
+                    }}>
+                      💰 Accumulated Royalties
+                    </h3>
+                    <span style={{
+                      fontSize: '1.25rem',
+                      fontWeight: 700,
+                      color: accumulatedRoyalties.get(claimTokenId)! > 0n
+                        ? 'var(--color-success-text, #155724)'
+                        : 'var(--color-info-text, #0c5460)'
+                    }}>
+                      {formatEther(accumulatedRoyalties.get(claimTokenId) || 0n)} MNT
+                    </span>
+                  </div>
+                  
+                  {accumulatedRoyalties.get(claimTokenId)! > 0n ? (
+                    <div style={{
+                      fontSize: '0.875rem',
+                      color: 'var(--color-success-text, #155724)',
+                      opacity: 0.9
+                    }}>
+                      ✅ You have claimable royalties for this IP asset. Click "Claim Royalties" to withdraw.
+                    </div>
+                  ) : (
+                    <div style={{
+                      fontSize: '0.875rem',
+                      color: 'var(--color-info-text, #0c5460)',
+                      opacity: 0.9
+                    }}>
+                      ℹ️ No accumulated royalties available for this IP asset. Royalties accumulate when revenue is paid to this IP.
+                    </div>
+                  )}
+
+                  {/* Show license details if user has a license */}
+                  {(() => {
+                    const userLicenses = Array.from(licenses.entries())
+                      .filter(([_, license]) => 
+                        Number(license.tokenId) === claimTokenId &&
+                        license.licensee.toLowerCase() === account?.address.toLowerCase()
+                      );
+                    
+                    if (userLicenses.length > 0) {
+                      return (
+                        <div style={{
+                          marginTop: '0.75rem',
+                          paddingTop: '0.75rem',
+                          borderTop: '1px solid rgba(0,0,0,0.1)'
+                        }}>
+                          <strong style={{ fontSize: '0.8rem' }}>Your Licenses:</strong>
+                          {userLicenses.map(([licenseId, license]) => (
+                            <div key={licenseId} style={{
+                              marginTop: '0.5rem',
+                              padding: '0.5rem',
+                              backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                              borderRadius: '4px',
+                              fontSize: '0.8rem'
+                            }}>
+                              <div>🎫 License #{licenseId}</div>
+                              <div style={{ opacity: 0.8, marginTop: '0.25rem' }}>
+                                Royalty Rate: {Number(license.royaltyPercentage) / 100}% | 
+                                {license.isActive ? ' ✅ Active' : ' ❌ Inactive'}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+                </div>
+              </div>
+            )}
             
             <button 
               className="btn btn-primary btn-full"
               onClick={claimRoyalties} 
-              disabled={loading || !account?.address}
+              disabled={loading || !account?.address || !accumulatedRoyalties.get(claimTokenId) || accumulatedRoyalties.get(claimTokenId)! === 0n}
             >
               {loading ? '⏳ Claiming...' : '🏆 Claim Royalties'}
             </button>
+                </div>
+                </section>
+              </>
+            )}
+
+            {/* Infringement Detection Tab */}
+            {activeTab === 'infringement' && (
+              <>
+                <section className="section">
+                  <div className="section-header">
+                    <span className="section-icon">🔍</span>
+                    <h2 className="section-title">Infringement Detection & Monitoring</h2>
+                  </div>
+
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label className="form-label">🎯 Select IP Asset to Monitor</label>
+                      <select
+                        className="form-select"
+                        value={selectedInfringementTokenId}
+                        onChange={(e) => {
+                          const tokenId = Number(e.target.value);
+                          setSelectedInfringementTokenId(tokenId);
+                          loadInfringementStatus(tokenId);
+                        }}
+                      >
+                        {Array.from(ipAssets.keys()).map((id) => {
+                          const asset = ipAssets.get(id);
+                          const metadata = parsedMetadata.get(id) || { name: "Unknown" };
+                          return (
+                            <option key={id} value={id}>
+                              #{id} - {metadata.name || asset?.ipHash.substring(0, 10) || 'Unknown'}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </div>
+
+                    {/* Auto-Monitoring Controls */}
+                    <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                      <div style={{
+                        padding: '1rem',
+                        backgroundColor: 'var(--color-info-bg, #d1ecf1)',
+                        border: '1px solid var(--color-info-border, #0c5460)',
+                        borderRadius: '8px'
+                      }}>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '1rem',
+                          marginBottom: '0.75rem'
+                        }}>
+                          <div style={{ flex: 1 }}>
+                            <label style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.5rem',
+                              cursor: 'pointer',
+                              fontWeight: 500
+                            }}>
+                              <input
+                                type="checkbox"
+                                checked={autoMonitoringEnabled}
+                                onChange={(e) => setAutoMonitoringEnabled(e.target.checked)}
+                                style={{ cursor: 'pointer' }}
+                              />
+                              <span>🔄 Enable Auto-Monitoring</span>
+                            </label>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => loadInfringementStatus(selectedInfringementTokenId)}
+                            disabled={infringementLoading}
+                            style={{
+                              padding: '0.5rem 1rem',
+                              backgroundColor: 'var(--color-primary, #007bff)',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '6px',
+                              cursor: infringementLoading ? 'not-allowed' : 'pointer',
+                              fontWeight: 500
+                            }}
+                          >
+                            {infringementLoading ? '⏳ Checking...' : '🔍 Check Now'}
+                          </button>
+                        </div>
+                        {autoMonitoringEnabled && (
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            fontSize: '0.875rem',
+                            opacity: 0.8
+                          }}>
+                            <label>Check Interval:</label>
+                            <select
+                              value={monitoringInterval}
+                              onChange={(e) => setMonitoringInterval(Number(e.target.value))}
+                              style={{
+                                padding: '0.25rem 0.5rem',
+                                borderRadius: '4px',
+                                border: '1px solid rgba(0,0,0,0.2)',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              <option value={60000}>Every 1 minute</option>
+                              <option value={300000}>Every 5 minutes</option>
+                              <option value={600000}>Every 10 minutes</option>
+                              <option value={1800000}>Every 30 minutes</option>
+                              <option value={3600000}>Every 1 hour</option>
+                            </select>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Infringement Status Display */}
+                    {infringementData.has(selectedInfringementTokenId) && (() => {
+                      const infringement = infringementData.get(selectedInfringementTokenId)!;
+                      const severity = calculateSeverity(infringement);
+                      const recommendations = getRecommendedActions(infringement);
+                      
+                      const severityColors = {
+                        low: { bg: '#d4edda', border: '#28a745', text: '#155724' },
+                        medium: { bg: '#fff3cd', border: '#ffc107', text: '#856404' },
+                        high: { bg: '#f8d7da', border: '#dc3545', text: '#721c24' },
+                        critical: { bg: '#f5c6cb', border: '#dc3545', text: '#721c24' }
+                      };
+
+                      const severityConfig = severityColors[severity];
+
+                      return (
+                        <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                          {/* Status Summary */}
+                          <div style={{
+                            padding: '1.5rem',
+                            backgroundColor: severityConfig.bg,
+                            border: `2px solid ${severityConfig.border}`,
+                            borderRadius: '8px',
+                            marginBottom: '1rem'
+                          }}>
+                            <div style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              marginBottom: '1rem'
+                            }}>
+                              <div>
+                                <h3 style={{
+                                  margin: 0,
+                                  fontSize: '1.25rem',
+                                  fontWeight: 700,
+                                  color: severityConfig.text,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '0.5rem'
+                                }}>
+                                  {severity === 'critical' ? '🚨' : severity === 'high' ? '⚠️' : severity === 'medium' ? '⚡' : '✅'}
+                                  Infringement Status: {severity.toUpperCase()}
+                                </h3>
+                                <p style={{ margin: '0.5rem 0 0 0', color: severityConfig.text, opacity: 0.9 }}>
+                                  {infringement.totalInfringements === 0 
+                                    ? 'No infringements detected'
+                                    : `${infringement.totalInfringements} potential infringement(s) found`
+                                  }
+                                </p>
+                              </div>
+                              <div style={{
+                                fontSize: '2rem',
+                                fontWeight: 700,
+                                color: severityConfig.text
+                              }}>
+                                {infringement.totalInfringements}
+                              </div>
+                            </div>
+
+                            <div style={{
+                              display: 'grid',
+                              gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                              gap: '1rem',
+                              marginTop: '1rem'
+                            }}>
+                              <div style={{
+                                padding: '0.75rem',
+                                backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                                borderRadius: '6px'
+                              }}>
+                                <div style={{ fontSize: '0.75rem', opacity: 0.8 }}>In-Network</div>
+                                <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>
+                                  {infringement.inNetworkInfringements.length}
+                                </div>
+                              </div>
+                              <div style={{
+                                padding: '0.75rem',
+                                backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                                borderRadius: '6px'
+                              }}>
+                                <div style={{ fontSize: '0.75rem', opacity: 0.8 }}>External</div>
+                                <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>
+                                  {infringement.externalInfringements.length}
+                                </div>
+                              </div>
+                              <div style={{
+                                padding: '0.75rem',
+                                backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                                borderRadius: '6px'
+                              }}>
+                                <div style={{ fontSize: '0.75rem', opacity: 0.8 }}>Last Checked</div>
+                                <div style={{ fontSize: '0.875rem', fontWeight: 500 }}>
+                                  {infringement.lastChecked 
+                                    ? new Date(infringement.lastChecked).toLocaleString()
+                                    : 'Never'
+                                  }
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* In-Network Infringements */}
+                          {infringement.inNetworkInfringements.length > 0 && (
+                            <div style={{
+                              marginBottom: '1rem',
+                              padding: '1rem',
+                              backgroundColor: 'var(--color-warning-bg, #fff3cd)',
+                              border: '1px solid var(--color-warning-border, #ffc107)',
+                              borderRadius: '8px'
+                            }}>
+                              <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '1rem', fontWeight: 600 }}>
+                                🔗 In-Network Infringements ({infringement.inNetworkInfringements.length})
+                              </h4>
+                              {infringement.inNetworkInfringements.map((inf, idx) => (
+                                <div key={idx} style={{
+                                  padding: '0.75rem',
+                                  marginBottom: '0.5rem',
+                                  backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                                  borderRadius: '6px',
+                                  fontSize: '0.875rem'
+                                }}>
+                                  <div style={{ fontWeight: 500, marginBottom: '0.25rem' }}>
+                                    {inf.url ? (
+                                      <a href={inf.url} target="_blank" rel="noopener noreferrer" style={{ color: '#007bff' }}>
+                                        {inf.url}
+                                      </a>
+                                    ) : (
+                                      `Infringement #${idx + 1}`
+                                    )}
+                                  </div>
+                                  {inf.similarity && (
+                                    <div style={{ opacity: 0.8 }}>
+                                      Similarity: {(inf.similarity * 100).toFixed(1)}%
+                                    </div>
+                                  )}
+                                  {inf.detected_at && (
+                                    <div style={{ opacity: 0.8, fontSize: '0.75rem' }}>
+                                      Detected: {new Date(inf.detected_at).toLocaleString()}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* External Infringements */}
+                          {infringement.externalInfringements.length > 0 && (
+                            <div style={{
+                              marginBottom: '1rem',
+                              padding: '1rem',
+                              backgroundColor: 'var(--color-danger-bg, #f8d7da)',
+                              border: '1px solid var(--color-danger-border, #dc3545)',
+                              borderRadius: '8px'
+                            }}>
+                              <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '1rem', fontWeight: 600 }}>
+                                🌐 External Platform Infringements ({infringement.externalInfringements.length})
+                              </h4>
+                              {infringement.externalInfringements.map((inf, idx) => (
+                                <div key={idx} style={{
+                                  padding: '0.75rem',
+                                  marginBottom: '0.5rem',
+                                  backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                                  borderRadius: '6px',
+                                  fontSize: '0.875rem'
+                                }}>
+                                  <div style={{ fontWeight: 500, marginBottom: '0.25rem' }}>
+                                    {inf.url ? (
+                                      <a href={inf.url} target="_blank" rel="noopener noreferrer" style={{ color: '#007bff' }}>
+                                        {inf.url}
+                                      </a>
+                                    ) : (
+                                      `External Infringement #${idx + 1}`
+                                    )}
+                                  </div>
+                                  {inf.platform && (
+                                    <div style={{ opacity: 0.8 }}>
+                                      Platform: {inf.platform}
+                                    </div>
+                                  )}
+                                  {inf.similarity && (
+                                    <div style={{ opacity: 0.8 }}>
+                                      Similarity: {(inf.similarity * 100).toFixed(1)}%
+                                    </div>
+                                  )}
+                                  {inf.detected_at && (
+                                    <div style={{ opacity: 0.8, fontSize: '0.75rem' }}>
+                                      Detected: {new Date(inf.detected_at).toLocaleString()}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Recommended Actions */}
+                          <div style={{
+                            padding: '1rem',
+                            backgroundColor: 'var(--color-info-bg, #d1ecf1)',
+                            border: '1px solid var(--color-info-border, #0c5460)',
+                            borderRadius: '8px'
+                          }}>
+                            <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '1rem', fontWeight: 600 }}>
+                              💡 Recommended Actions
+                            </h4>
+                            <ul style={{ margin: 0, paddingLeft: '1.5rem' }}>
+                              {recommendations.map((action, idx) => (
+                                <li key={idx} style={{ marginBottom: '0.5rem', fontSize: '0.875rem' }}>
+                                  {action}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+
+                          {/* Credits Info */}
+                          {infringement.credits && (
+                            <div style={{
+                              marginTop: '1rem',
+                              padding: '0.75rem',
+                              backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                              borderRadius: '6px',
+                              fontSize: '0.875rem',
+                              opacity: 0.8
+                            }}>
+                              <strong>Yakoa Credits:</strong> {infringement.credits.remaining || 'N/A'} remaining
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+
+                    {/* No Data Message */}
+                    {!infringementData.has(selectedInfringementTokenId) && !infringementLoading && (
+                      <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                        <div style={{
+                          padding: '2rem',
+                          textAlign: 'center',
+                          backgroundColor: 'var(--color-info-bg, #d1ecf1)',
+                          border: '1px solid var(--color-info-border, #0c5460)',
+                          borderRadius: '8px',
+                          color: 'var(--color-info-text, #0c5460)'
+                        }}>
+                          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔍</div>
+                          <h3 style={{ margin: '0 0 0.5rem 0' }}>No Infringement Data</h3>
+                          <p style={{ margin: 0, opacity: 0.8 }}>
+                            Click "Check Now" to scan for potential infringements of this IP asset.
+                            {autoMonitoringEnabled && ' Auto-monitoring is enabled and will check periodically.'}
+                          </p>
+                        </div>
+                      </div>
+                    )}
                 </div>
                 </section>
               </>
@@ -2916,28 +4173,28 @@ export default function App({ thirdwebClient }: AppProps) {
                       } else {
                         return (
                           <>
-                            <div className="form-group">
-                              <label className="form-label">💰 Minimum Stake (MNT)</label>
-                              <input
-                                type="number"
-                                className="form-input"
-                                value={minArbitratorStake}
-                                onChange={(e) => setMinArbitratorStake(e.target.value)}
-                                min="0.000000001"
-                                step="0.000000001"
-                                placeholder="0.000000001"
-                                readOnly
-                              />
-                              <small className="form-hint">Minimum stake required to become an arbitrator</small>
-                            </div>
-                    
-                            <button 
-                              className="btn btn-primary btn-full"
-                              onClick={registerArbitrator} 
-                              disabled={loading || !account?.address}
-                            >
-                              {loading ? '⏳ Registering...' : '⚖️ Register as Arbitrator'}
-                            </button>
+                    <div className="form-group">
+                      <label className="form-label">💰 Minimum Stake (MNT)</label>
+                      <input
+                        type="number"
+                        className="form-input"
+                        value={minArbitratorStake}
+                        onChange={(e) => setMinArbitratorStake(e.target.value)}
+                        min="0.000000001"
+                        step="0.000000001"
+                        placeholder="0.000000001"
+                        readOnly
+                      />
+                      <small className="form-hint">Minimum stake required to become an arbitrator</small>
+                    </div>
+            
+                    <button 
+                      className="btn btn-primary btn-full"
+                      onClick={registerArbitrator} 
+                      disabled={loading || !account?.address}
+                    >
+                      {loading ? '⏳ Registering...' : '⚖️ Register as Arbitrator'}
+                    </button>
                           </>
                         );
                       }
@@ -3526,6 +4783,33 @@ export default function App({ thirdwebClient }: AppProps) {
                     <div className="flex gap-2">
                       {asset.isEncrypted && <span className="badge badge-warning">🔒 Encrypted</span>}
                       {asset.isDisputed && <span className="badge badge-error">⚠️ Disputed</span>}
+                      {infringementData.has(id) && (() => {
+                        const infringement = infringementData.get(id)!;
+                        if (infringement.totalInfringements > 0) {
+                          const severity = calculateSeverity(infringement);
+                          const severityConfig = {
+                            medium: { icon: '⚡', className: 'badge-warning' },
+                            high: { icon: '⚠️', className: 'badge-error' },
+                            critical: { icon: '🚨', className: 'badge-error' },
+                            low: { icon: '✅', className: 'badge-success' }
+                          };
+                          const config = severityConfig[severity] || severityConfig.low;
+                          return (
+                            <span 
+                              className={`badge ${config.className}`}
+                              onClick={() => {
+                                setSelectedInfringementTokenId(id);
+                                setActiveTab('infringement');
+                              }}
+                              style={{ cursor: 'pointer' }}
+                              title={`${infringement.totalInfringements} infringement(s) detected - Click to view details`}
+                            >
+                              {config.icon} {infringement.totalInfringements} Infringement{infringement.totalInfringements !== 1 ? 's' : ''}
+                            </span>
+                          );
+                        }
+                        return null;
+                      })()}
                     </div>
                   </div>
                   
@@ -3561,12 +4845,106 @@ export default function App({ thirdwebClient }: AppProps) {
                     
                     <div className="card-field">
                       <span className="card-field-label">Total Revenue</span>
-                      <span className="card-field-value">💰 {formatEther(asset.totalRevenue)} MNT</span>
+                      <span className="card-field-value" style={{ 
+                        fontSize: '0.85rem',
+                        wordBreak: 'break-word', 
+                        overflowWrap: 'break-word',
+                        maxWidth: '100%',
+                        display: 'inline-block'
+                      }}>
+                        💰 {parseFloat(formatEther(asset.totalRevenue)).toFixed(6)} MNT
+                      </span>
                     </div>
                     
                     <div className="card-field">
                       <span className="card-field-label">Royalty Tokens</span>
                       <span className="card-field-value">🎯 {Number(asset.royaltyTokens) / 100}%</span>
+                    </div>
+
+                    {/* Infringement Status */}
+                    <div className="card-field">
+                      <span className="card-field-label">Infringement Status</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        {infringementData.has(id) ? (() => {
+                          const infringement = infringementData.get(id)!;
+                          const severity = calculateSeverity(infringement);
+                          const hasInfringements = infringement.totalInfringements > 0;
+                          
+                          const severityConfig = {
+                            low: { icon: '✅', color: '#28a745', bg: '#d4edda' },
+                            medium: { icon: '⚡', color: '#ffc107', bg: '#fff3cd' },
+                            high: { icon: '⚠️', color: '#fd7e14', bg: '#ffeaa7' },
+                            critical: { icon: '🚨', color: '#dc3545', bg: '#f8d7da' }
+                          };
+                          
+                          const config = severityConfig[severity];
+                          
+                          return (
+                            <>
+                              <span 
+                                className="card-field-value" 
+                                style={{ 
+                                  fontSize: '0.85rem',
+                                  padding: '0.25rem 0.5rem',
+                                  backgroundColor: config.bg,
+                                  color: config.color,
+                                  borderRadius: '4px',
+                                  fontWeight: 500,
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.25rem'
+                                }}
+                              >
+                                {config.icon} {hasInfringements ? `${infringement.totalInfringements} Found` : 'Clean'}
+                              </span>
+                              <button
+                                onClick={() => {
+                                  setSelectedInfringementTokenId(id);
+                                  setActiveTab('infringement');
+                                  loadInfringementStatus(id);
+                                }}
+                                style={{
+                                  fontSize: '0.75rem',
+                                  padding: '0.25rem 0.5rem',
+                                  backgroundColor: 'var(--color-primary, #007bff)',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                  fontWeight: 500
+                                }}
+                              >
+                                🔍 View Details
+                              </button>
+                            </>
+                          );
+                        })() : (
+                          <>
+                            <span className="card-field-value" style={{ fontSize: '0.85rem', opacity: 0.7 }}>
+                              ⏳ Not Checked
+                            </span>
+                            <button
+                              onClick={() => {
+                                setSelectedInfringementTokenId(id);
+                                setActiveTab('infringement');
+                                loadInfringementStatus(id);
+                              }}
+                              style={{
+                                fontSize: '0.75rem',
+                                padding: '0.25rem 0.5rem',
+                                backgroundColor: 'var(--color-secondary, #6c757d)',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontWeight: 500
+                              }}
+                            >
+                              🔍 Check Now
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -105,18 +105,28 @@ Sear addresses critical pain points in the current IP management landscape:
 - **Commercial Rights**: Granular usage permissions
 - **Attribution Requirements**: Built-in creator recognition
 - **One License Per IP**: Enforced validation to ensure only one license can be minted per IP asset
+- **Advanced Templates**: 8 predefined license templates (Commercial, Non-Commercial, Creative Commons variants, Public Domain, Exclusive, Custom)
+- **Template Customization**: Select a template and customize any parameter to fit specific needs
+- **Smart Defaults**: Templates include optimized settings for common licensing scenarios
 
 ### ✅ Revenue Management
 - **Direct Payments**: Revenue to IP assets
+- **Automated Royalty Calculations**: Real-time preview of royalty distribution before payment
+- **Royalty Breakdown**: Transparent display of platform fees, license holder shares, and IP owner share
 - **Royalty Vaults**: Automated distribution systems
-- **Token Claims**: Royalty token claiming
+- **Token Claims**: Royalty token claiming with accumulated balance display
 - **Transparent Tracking**: All transactions on-chain
 
 ### ✅ Infringement Detection
-- **AI-Powered Monitoring**: Yakoa integration
-- **Real-time Alerts**: Instant violation detection
-- **Metadata Analysis**: Comprehensive IP tracking
-- **Commercial Focus**: Business-oriented monitoring
+- **AI-Powered Monitoring**: Yakoa integration with automated scanning
+- **Real-time Dashboard**: Comprehensive infringement monitoring interface
+- **Automated Monitoring**: Periodic checks with configurable intervals
+- **Severity Analysis**: Automatic classification (Low, Medium, High, Critical)
+- **Detailed Reports**: In-network and external platform infringement tracking
+- **Action Recommendations**: AI-suggested steps based on infringement severity
+- **Real-time Alerts**: Instant notifications when infringements are detected
+- **Metadata Analysis**: Comprehensive IP tracking with similarity scoring
+- **Commercial Focus**: Business-oriented monitoring across multiple platforms
 
 ### ✅ Dispute Resolution
 - **On-Chain Disputes**: Immutable dispute records
@@ -232,9 +242,9 @@ The founders experienced firsthand the challenges of IP management:
 - [x] Enhanced error handling and user feedback
 
 ### Phase 3: Advanced Features (Q4 2025) 🚧 IN PROGRESS
-- [ ] Advanced licensing templates
-- [ ] Automated royalty calculations
-- [ ] Enhanced infringement detection
+- [x] Advanced licensing templates (8 predefined templates with customization)
+- [x] Automated royalty calculations (real-time preview and breakdown)
+- [x] Enhanced infringement detection (dashboard, auto-monitoring, severity analysis, recommendations)
 - [ ] Mobile application development
 - [ ] API for third-party integrations
 

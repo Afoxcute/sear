@@ -90,38 +90,94 @@ export const IPPortfolio: React.FC<IPPortfolioProps> = ({
     asset, 
     metadata 
   }) => {
-    const [imageUrl, setImageUrl] = useState<string | null>(null);
+    const [mediaUrl, setMediaUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(false);
+
+    // Extract IPFS hash from various formats
+    const extractIPFSHash = (input: string): string | null => {
+      if (!input) return null;
+      
+      // Handle ipfs:// protocol
+      if (input.startsWith('ipfs://')) {
+        return input.replace('ipfs://', '').split('/')[0];
+      }
+      
+      // Handle /ipfs/ path
+      if (input.includes('/ipfs/')) {
+        const parts = input.split('/ipfs/');
+        if (parts.length > 1) {
+          return parts[1].split('/')[0];
+        }
+      }
+      
+      // If it's already a gateway URL, extract the hash
+      if (input.includes('gateway.pinata.cloud/ipfs/') || input.includes('ipfs.io/ipfs/')) {
+        const match = input.match(/ipfs\/([^/?]+)/);
+        if (match) return match[1];
+      }
+      
+      // If it looks like a hash (Qm... or bafy...), return as is
+      if (/^[Qmb][a-zA-Z0-9]{40,}$/.test(input)) {
+        return input;
+      }
+      
+      return null;
+    };
+
+    // Convert IPFS hash to gateway URL
+    const hashToGatewayURL = (hash: string): string => {
+      if (!hash) return '';
+      return `https://gateway.pinata.cloud/ipfs/${hash}`;
+    };
 
     useEffect(() => {
-      const fetchImageFromMetadata = async () => {
+      const fetchMediaUrl = async () => {
         try {
           setLoading(true);
+          setError(false);
           
-          // If metadata has image field, use it
-          if (metadata?.image) {
-            let imageSource = metadata.image;
-            
-            // Convert IPFS URLs to gateway URLs
-            if (imageSource.startsWith('ipfs://')) {
-              imageSource = `https://gateway.pinata.cloud/ipfs/${imageSource.replace('ipfs://', '')}`;
+          let finalUrl: string | null = null;
+          
+          // Priority 1: Use asset's ipHash directly (most reliable)
+          if (asset.ipHash) {
+            const hash = extractIPFSHash(asset.ipHash);
+            if (hash) {
+              finalUrl = hashToGatewayURL(hash);
+            } else {
+              // If ipHash is already a URL, use it
+              finalUrl = asset.ipHash;
             }
-            
-            setImageUrl(imageSource);
-          } else {
-            // Fallback to asset's ipHash
-            const gatewayUrl = `https://gateway.pinata.cloud/ipfs/${asset.ipHash.replace('ipfs://', '')}`;
-            setImageUrl(gatewayUrl);
           }
+          
+          // Priority 2: Check metadata.image field
+          if (!finalUrl && metadata?.image) {
+            const hash = extractIPFSHash(metadata.image);
+            if (hash) {
+              finalUrl = hashToGatewayURL(hash);
+            } else if (metadata.image.startsWith('http')) {
+              finalUrl = metadata.image;
+            }
+          }
+          
+          // Priority 3: Check metadata properties for image
+          if (!finalUrl && metadata?.properties?.ipHash) {
+            const hash = extractIPFSHash(metadata.properties.ipHash);
+            if (hash) {
+              finalUrl = hashToGatewayURL(hash);
+            }
+          }
+          
+          setMediaUrl(finalUrl);
         } catch (error) {
-          console.error('Error fetching image from metadata:', error);
-          setImageUrl(null);
+          console.error('Error fetching media URL:', error);
+          setError(true);
         } finally {
           setLoading(false);
         }
       };
 
-      fetchImageFromMetadata();
+      fetchMediaUrl();
     }, [metadata, asset.ipHash]);
 
     return (
@@ -130,17 +186,30 @@ export const IPPortfolio: React.FC<IPPortfolioProps> = ({
           <div className="preview-skeleton">
             <div className="skeleton skeleton-image"></div>
           </div>
-        ) : imageUrl ? (
+        ) : mediaUrl && !error ? (
           <img 
-            src={imageUrl} 
+            src={mediaUrl} 
             alt={metadata?.name || `IP Asset ${assetId}`}
             className="preview-image"
-            onError={() => setImageUrl(null)}
+            onError={() => {
+              setError(true);
+              setMediaUrl(null);
+            }}
           />
         ) : (
           <div className="preview-fallback">
             <span className="preview-icon">📄</span>
             <span className="preview-text">{metadata?.name || 'IP Asset'}</span>
+            {asset.ipHash && (
+              <a 
+                href={hashToGatewayURL(extractIPFSHash(asset.ipHash) || asset.ipHash)} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                style={{ fontSize: '0.75rem', marginTop: '0.5rem' }}
+              >
+                View on IPFS
+              </a>
+            )}
           </div>
         )}
       </div>

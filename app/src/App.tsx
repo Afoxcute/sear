@@ -837,46 +837,164 @@ const EnhancedAssetPreview: React.FC<{
   metadata: any;
   mediaUrl: string;
 }> = ({ assetId, asset, metadata, mediaUrl }) => {
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [mediaUrlState, setMediaUrlState] = useState<string | null>(null);
+  const [mediaType, setMediaType] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  // Extract IPFS hash from various formats
+  const extractIPFSHash = (input: string): string | null => {
+    if (!input) return null;
+    
+    // Handle ipfs:// protocol
+    if (input.startsWith('ipfs://')) {
+      return input.replace('ipfs://', '').split('/')[0];
+    }
+    
+    // Handle /ipfs/ path
+    if (input.includes('/ipfs/')) {
+      const parts = input.split('/ipfs/');
+      if (parts.length > 1) {
+        return parts[1].split('/')[0];
+      }
+    }
+    
+    // If it's already a gateway URL, extract the hash
+    if (input.includes('gateway.pinata.cloud/ipfs/') || input.includes('ipfs.io/ipfs/')) {
+      const match = input.match(/ipfs\/([^/?]+)/);
+      if (match) return match[1];
+    }
+    
+    // If it looks like a hash (Qm... or bafy...), return as is
+    if (/^[Qmb][a-zA-Z0-9]{40,}$/.test(input)) {
+      return input;
+    }
+    
+    return null;
+  };
+
+  // Convert IPFS hash to gateway URL
+  const hashToGatewayURL = (hash: string): string => {
+    if (!hash) return '';
+    return `https://gateway.pinata.cloud/ipfs/${hash}`;
+  };
 
   useEffect(() => {
-    const fetchImageFromMetadata = async () => {
+    const fetchMediaUrl = async () => {
       try {
         setLoading(true);
+        setError(false);
         
-        // Priority 1: Check if metadata has image field
-        if (metadata?.image) {
-          let imageSource = metadata.image;
-          
-          // Convert IPFS URLs to gateway URLs
-          if (imageSource.startsWith('ipfs://')) {
-            imageSource = `https://gateway.pinata.cloud/ipfs/${imageSource.replace('ipfs://', '')}`;
+        let finalUrl: string | null = null;
+        let detectedType: string | null = null;
+        
+        // Priority 1: Use asset's ipHash directly (most reliable)
+        if (asset.ipHash) {
+          const hash = extractIPFSHash(asset.ipHash);
+          if (hash) {
+            finalUrl = hashToGatewayURL(hash);
+          } else {
+            // If ipHash is already a URL, use it
+            finalUrl = asset.ipHash;
           }
-          
-          setImageUrl(imageSource);
-        } 
-        // Priority 2: Try the asset's ipHash directly
-        else if (asset.ipHash) {
-          let gatewayUrl = asset.ipHash;
-          if (gatewayUrl.startsWith('ipfs://')) {
-            gatewayUrl = `https://gateway.pinata.cloud/ipfs/${gatewayUrl.replace('ipfs://', '')}`;
-          }
-          setImageUrl(gatewayUrl);
         }
-        // Priority 3: Use mediaUrl as fallback
-        else {
-          setImageUrl(mediaUrl);
+        
+        // Priority 2: Check metadata.image field
+        if (!finalUrl && metadata?.image) {
+          const hash = extractIPFSHash(metadata.image);
+          if (hash) {
+            finalUrl = hashToGatewayURL(hash);
+          } else if (metadata.image.startsWith('http')) {
+            finalUrl = metadata.image;
+          }
+        }
+        
+        // Priority 3: Use mediaUrl prop
+        if (!finalUrl && mediaUrl) {
+          const hash = extractIPFSHash(mediaUrl);
+          if (hash) {
+            finalUrl = hashToGatewayURL(hash);
+          } else {
+            finalUrl = mediaUrl;
+          }
+        }
+        
+        // Priority 4: Check metadata properties for image
+        if (!finalUrl && metadata?.properties?.ipHash) {
+          const hash = extractIPFSHash(metadata.properties.ipHash);
+          if (hash) {
+            finalUrl = hashToGatewayURL(hash);
+          }
+        }
+        
+        if (finalUrl) {
+          // Try to detect media type from metadata or URL
+          const fileName = metadata?.file_name || metadata?.original_filename || '';
+          const mimeType = metadata?.mime_type || metadata?.content_type || '';
+          const fileExtension = fileName.split('.').pop()?.toLowerCase() || '';
+          
+          // Detect type from mime type
+          if (mimeType) {
+            if (mimeType.startsWith('image/')) {
+              detectedType = 'image';
+            } else if (mimeType.startsWith('video/')) {
+              detectedType = 'video';
+            } else if (mimeType.startsWith('audio/')) {
+              detectedType = 'audio';
+            } else if (mimeType === 'application/pdf') {
+              detectedType = 'pdf';
+            }
+          }
+          
+          // Detect type from file extension if mime type not available
+          if (!detectedType) {
+            if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(fileExtension)) {
+              detectedType = 'image';
+            } else if (['mp4', 'webm', 'ogg'].includes(fileExtension)) {
+              detectedType = 'video';
+            } else if (['mp3', 'wav', 'ogg', 'm4a'].includes(fileExtension)) {
+              detectedType = 'audio';
+            } else if (fileExtension === 'pdf') {
+              detectedType = 'pdf';
+            }
+          }
+          
+          // If still no type detected, try to fetch and check content type
+          if (!detectedType) {
+            try {
+              const response = await fetch(finalUrl, { method: 'HEAD' });
+              const contentType = response.headers.get('content-type');
+              if (contentType) {
+                if (contentType.startsWith('image/')) {
+                  detectedType = 'image';
+                } else if (contentType.startsWith('video/')) {
+                  detectedType = 'video';
+                } else if (contentType.startsWith('audio/')) {
+                  detectedType = 'audio';
+                } else if (contentType === 'application/pdf') {
+                  detectedType = 'pdf';
+                }
+              }
+            } catch (e) {
+              // If HEAD request fails, default to trying as image
+              detectedType = 'image';
+            }
+          }
+          
+          setMediaUrlState(finalUrl);
+          setMediaType(detectedType || 'image'); // Default to image
+        } else {
+          setError(true);
         }
       } catch (error) {
-        console.error('Error fetching image from metadata:', error);
-        setImageUrl(mediaUrl);
+        console.error('Error fetching media URL:', error);
+        setError(true);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchImageFromMetadata();
+    fetchMediaUrl();
   }, [metadata, asset.ipHash, mediaUrl]);
 
   if (loading) {
@@ -887,30 +1005,116 @@ const EnhancedAssetPreview: React.FC<{
     );
   }
 
-  return (
-    <>
-      {imageUrl ? (
+  if (error || !mediaUrlState) {
+    return (
+      <div className="media-fallback">
+        <div className="media-fallback-icon">📄</div>
+        <p>Media Preview Unavailable</p>
+        {asset.ipHash && (
+          <a 
+            href={hashToGatewayURL(extractIPFSHash(asset.ipHash) || asset.ipHash)} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="media-link"
+          >
+            🔗 View on IPFS
+          </a>
+        )}
+      </div>
+    );
+  }
+
+  // Render based on media type
+  switch (mediaType) {
+    case 'image':
+      return (
         <img 
-          src={imageUrl} 
+          src={mediaUrlState} 
           alt={metadata?.name || `IP Asset ${assetId}`}
           className="media-image"
-          onError={(e) => {
-            const imgElement = e.target as HTMLImageElement;
-            imgElement.style.display = 'none';
-            const fallback = imgElement.nextElementSibling as HTMLElement;
-            if (fallback) fallback.style.display = 'flex';
+          onError={() => {
+            setError(true);
           }}
         />
-      ) : null}
-      <div className="media-fallback" style={{ display: imageUrl ? 'none' : 'flex' }}>
-        <div className="media-fallback-icon">📄</div>
-        <p>Media Preview</p>
-        <a href={imageUrl || mediaUrl} target="_blank" rel="noopener noreferrer" className="media-link">
-          🔗 View Media
-        </a>
-      </div>
-    </>
-  );
+      );
+    
+    case 'video':
+      return (
+        <video 
+          src={mediaUrlState}
+          className="media-image"
+          controls
+          preload="metadata"
+          onError={() => {
+            setError(true);
+          }}
+        >
+          Your browser does not support the video tag.
+        </video>
+      );
+    
+    case 'audio':
+      return (
+        <div className="media-container" style={{ padding: '1rem' }}>
+          <div className="media-fallback-icon">🎵</div>
+          <audio 
+            src={mediaUrlState}
+            controls
+            style={{ width: '100%', marginTop: '1rem' }}
+            onError={() => {
+              setError(true);
+            }}
+          >
+            Your browser does not support the audio tag.
+          </audio>
+        </div>
+      );
+    
+    case 'pdf':
+      return (
+        <div className="media-container" style={{ padding: '1rem' }}>
+          <div className="media-fallback-icon">📄</div>
+          <p style={{ margin: '0.5rem 0' }}>PDF Document</p>
+          <a 
+            href={mediaUrlState} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="media-link"
+          >
+            🔗 Open PDF
+          </a>
+        </div>
+      );
+    
+    default:
+      // Try to render as image first, fallback to link
+      return (
+        <>
+          <img 
+            src={mediaUrlState} 
+            alt={metadata?.name || `IP Asset ${assetId}`}
+            className="media-image"
+            onError={() => {
+              setError(true);
+            }}
+          />
+          {error && (
+            <div className="media-fallback">
+              <div className="media-fallback-icon">📄</div>
+              <p>Media Preview</p>
+              <a 
+                href={mediaUrlState} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="media-link"
+              >
+                🔗 View Media
+              </a>
+            </div>
+          )}
+        </>
+      );
+  }
 };
 
 export default function App({ thirdwebClient }: AppProps) {
@@ -1089,7 +1293,7 @@ export default function App({ thirdwebClient }: AppProps) {
   const [isOwner, setIsOwner] = useState<boolean>(false);
 
   const [filePreview, setFilePreview] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'register' | 'license' | 'revenue' | 'arbitration' | 'infringement'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'register' | 'license' | 'revenue' | 'arbitration'>('dashboard');
 
   // Infringement detection states
   interface InfringementData {
@@ -1120,10 +1324,7 @@ export default function App({ thirdwebClient }: AppProps) {
   }
 
   const [infringementData, setInfringementData] = useState<Map<number, InfringementData>>(new Map());
-  const [selectedInfringementTokenId, setSelectedInfringementTokenId] = useState<number>(1);
-  const [infringementLoading, setInfringementLoading] = useState<boolean>(false);
-  const [autoMonitoringEnabled, setAutoMonitoringEnabled] = useState<boolean>(true);
-  const [monitoringInterval, setMonitoringInterval] = useState<number>(300000); // 5 minutes default
+  const [infringementLoading, setInfringementLoading] = useState<Map<number, boolean>>(new Map());
 
   // Load infringement status for an IP asset
   const loadInfringementStatus = async (tokenId: number) => {
@@ -1133,11 +1334,20 @@ export default function App({ thirdwebClient }: AppProps) {
     }
 
     try {
-      setInfringementLoading(true);
+      setInfringementLoading((prev) => {
+        const newMap = new Map(prev);
+        newMap.set(tokenId, true);
+        return newMap;
+      });
+
       const contractAddress = CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"].toLowerCase();
       const response = await fetch(`${BACKEND_URL}/api/infringement/status/${contractAddress}/${tokenId}`);
       
       if (!response.ok) {
+        if (response.status === 404) {
+          // IP might not be registered in Yakoa yet - this is okay
+          return;
+        }
         throw new Error(`Failed to fetch infringement status: ${response.statusText}`);
       }
 
@@ -1149,24 +1359,18 @@ export default function App({ thirdwebClient }: AppProps) {
         newMap.set(tokenId, infringementStatus);
         return newMap;
       });
-
-      // Show notification if infringements found
-      if (infringementStatus.totalInfringements > 0) {
-        notifyWarning(
-          'Infringements Detected',
-          `Found ${infringementStatus.totalInfringements} potential infringement(s) for IP Asset #${tokenId}`
-        );
-      } else {
-        notifyInfo('No Infringements', `No infringements detected for IP Asset #${tokenId}`);
-      }
     } catch (error: any) {
       console.error('Error loading infringement status:', error);
       // Don't show error for 404s (IP might not be registered in Yakoa yet)
       if (!error.message?.includes('404')) {
-        notifyError('Infringement Check Failed', error.message || 'Failed to check infringement status');
+        console.warn('Infringement check failed:', error.message || 'Failed to check infringement status');
       }
     } finally {
-      setInfringementLoading(false);
+      setInfringementLoading((prev) => {
+        const newMap = new Map(prev);
+        newMap.set(tokenId, false);
+        return newMap;
+      });
     }
   };
 
@@ -1185,52 +1389,21 @@ export default function App({ thirdwebClient }: AppProps) {
     return 'low';
   };
 
-  // Get recommended actions based on infringement
-  const getRecommendedActions = (infringement: InfringementData): string[] => {
-    const actions: string[] = [];
-    const severity = calculateSeverity(infringement);
-
-    if (severity === 'critical' || severity === 'high') {
-      actions.push('Consider raising a dispute through the arbitration system');
-      actions.push('Document all evidence of infringement');
-      actions.push('Contact infringing parties if appropriate');
-    }
-    
-    if (infringement.externalInfringements.length > 0) {
-      actions.push('Review external platform infringements for commercial use');
-      actions.push('Consider sending DMCA takedown notices if applicable');
-    }
-
-    if (infringement.inNetworkInfringements.length > 0) {
-      actions.push('Review on-chain infringements for potential license violations');
-      actions.push('Check if infringing parties have valid licenses');
-    }
-
-    if (actions.length === 0) {
-      actions.push('Continue monitoring for new infringements');
-      actions.push('Ensure your IP is properly registered and licensed');
-    }
-
-    return actions;
-  };
-
-  // Auto-monitoring effect
+  // Auto-load infringement status for all IP assets when they're loaded
   useEffect(() => {
-    if (!autoMonitoringEnabled || !selectedInfringementTokenId || !ipAssets.has(selectedInfringementTokenId)) return;
-
-    // Load immediately
-    loadInfringementStatus(selectedInfringementTokenId);
-
-    // Set up interval
-    const interval = setInterval(() => {
-      if (ipAssets.has(selectedInfringementTokenId)) {
-        loadInfringementStatus(selectedInfringementTokenId);
-      }
-    }, monitoringInterval);
-
-    return () => clearInterval(interval);
+    if (ipAssets.size > 0) {
+      // Load infringement status for all IP assets
+      Array.from(ipAssets.keys()).forEach((tokenId) => {
+        // Only load if not already loaded or currently loading
+        const isLoading = infringementLoading.get(tokenId);
+        const hasData = infringementData.has(tokenId);
+        if (!hasData && !isLoading) {
+          loadInfringementStatus(tokenId);
+        }
+      });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoMonitoringEnabled, selectedInfringementTokenId, monitoringInterval]);
+  }, [ipAssets.size]);
 
   // Check backend status
   const checkBackendStatus = async () => {
@@ -3751,372 +3924,6 @@ export default function App({ thirdwebClient }: AppProps) {
               </>
             )}
 
-            {/* Infringement Detection Tab */}
-            {activeTab === 'infringement' && (
-              <>
-                <section className="section">
-                  <div className="section-header">
-                    <span className="section-icon">🔍</span>
-                    <h2 className="section-title">Infringement Detection & Monitoring</h2>
-                  </div>
-
-                  <div className="form-grid">
-                    <div className="form-group">
-                      <label className="form-label">🎯 Select IP Asset to Monitor</label>
-                      <select
-                        className="form-select"
-                        value={selectedInfringementTokenId}
-                        onChange={(e) => {
-                          const tokenId = Number(e.target.value);
-                          setSelectedInfringementTokenId(tokenId);
-                          loadInfringementStatus(tokenId);
-                        }}
-                      >
-                        {Array.from(ipAssets.keys()).map((id) => {
-                          const asset = ipAssets.get(id);
-                          const metadata = parsedMetadata.get(id) || { name: "Unknown" };
-                          return (
-                            <option key={id} value={id}>
-                              #{id} - {metadata.name || asset?.ipHash.substring(0, 10) || 'Unknown'}
-                            </option>
-                          );
-                        })}
-                      </select>
-                    </div>
-
-                    {/* Auto-Monitoring Controls */}
-                    <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                      <div style={{
-                        padding: '1rem',
-                        backgroundColor: 'var(--color-info-bg, #d1ecf1)',
-                        border: '1px solid var(--color-info-border, #0c5460)',
-                        borderRadius: '8px'
-                      }}>
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '1rem',
-                          marginBottom: '0.75rem'
-                        }}>
-                          <div style={{ flex: 1 }}>
-                            <label style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '0.5rem',
-                              cursor: 'pointer',
-                              fontWeight: 500
-                            }}>
-                              <input
-                                type="checkbox"
-                                checked={autoMonitoringEnabled}
-                                onChange={(e) => setAutoMonitoringEnabled(e.target.checked)}
-                                style={{ cursor: 'pointer' }}
-                              />
-                              <span>🔄 Enable Auto-Monitoring</span>
-                            </label>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => loadInfringementStatus(selectedInfringementTokenId)}
-                            disabled={infringementLoading}
-                            style={{
-                              padding: '0.5rem 1rem',
-                              backgroundColor: 'var(--color-primary, #007bff)',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '6px',
-                              cursor: infringementLoading ? 'not-allowed' : 'pointer',
-                              fontWeight: 500
-                            }}
-                          >
-                            {infringementLoading ? '⏳ Checking...' : '🔍 Check Now'}
-                          </button>
-                        </div>
-                        {autoMonitoringEnabled && (
-                          <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            fontSize: '0.875rem',
-                            opacity: 0.8
-                          }}>
-                            <label>Check Interval:</label>
-                            <select
-                              value={monitoringInterval}
-                              onChange={(e) => setMonitoringInterval(Number(e.target.value))}
-                              style={{
-                                padding: '0.25rem 0.5rem',
-                                borderRadius: '4px',
-                                border: '1px solid rgba(0,0,0,0.2)',
-                                cursor: 'pointer'
-                              }}
-                            >
-                              <option value={60000}>Every 1 minute</option>
-                              <option value={300000}>Every 5 minutes</option>
-                              <option value={600000}>Every 10 minutes</option>
-                              <option value={1800000}>Every 30 minutes</option>
-                              <option value={3600000}>Every 1 hour</option>
-                            </select>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Infringement Status Display */}
-                    {infringementData.has(selectedInfringementTokenId) && (() => {
-                      const infringement = infringementData.get(selectedInfringementTokenId)!;
-                      const severity = calculateSeverity(infringement);
-                      const recommendations = getRecommendedActions(infringement);
-                      
-                      const severityColors = {
-                        low: { bg: '#d4edda', border: '#28a745', text: '#155724' },
-                        medium: { bg: '#fff3cd', border: '#ffc107', text: '#856404' },
-                        high: { bg: '#f8d7da', border: '#dc3545', text: '#721c24' },
-                        critical: { bg: '#f5c6cb', border: '#dc3545', text: '#721c24' }
-                      };
-
-                      const severityConfig = severityColors[severity];
-
-                      return (
-                        <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                          {/* Status Summary */}
-                          <div style={{
-                            padding: '1.5rem',
-                            backgroundColor: severityConfig.bg,
-                            border: `2px solid ${severityConfig.border}`,
-                            borderRadius: '8px',
-                            marginBottom: '1rem'
-                          }}>
-                            <div style={{
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                              marginBottom: '1rem'
-                            }}>
-                              <div>
-                                <h3 style={{
-                                  margin: 0,
-                                  fontSize: '1.25rem',
-                                  fontWeight: 700,
-                                  color: severityConfig.text,
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '0.5rem'
-                                }}>
-                                  {severity === 'critical' ? '🚨' : severity === 'high' ? '⚠️' : severity === 'medium' ? '⚡' : '✅'}
-                                  Infringement Status: {severity.toUpperCase()}
-                                </h3>
-                                <p style={{ margin: '0.5rem 0 0 0', color: severityConfig.text, opacity: 0.9 }}>
-                                  {infringement.totalInfringements === 0 
-                                    ? 'No infringements detected'
-                                    : `${infringement.totalInfringements} potential infringement(s) found`
-                                  }
-                                </p>
-                              </div>
-                              <div style={{
-                                fontSize: '2rem',
-                                fontWeight: 700,
-                                color: severityConfig.text
-                              }}>
-                                {infringement.totalInfringements}
-                              </div>
-                            </div>
-
-                            <div style={{
-                              display: 'grid',
-                              gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-                              gap: '1rem',
-                              marginTop: '1rem'
-                            }}>
-                              <div style={{
-                                padding: '0.75rem',
-                                backgroundColor: 'rgba(255, 255, 255, 0.5)',
-                                borderRadius: '6px'
-                              }}>
-                                <div style={{ fontSize: '0.75rem', opacity: 0.8 }}>In-Network</div>
-                                <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>
-                                  {infringement.inNetworkInfringements.length}
-                                </div>
-                              </div>
-                              <div style={{
-                                padding: '0.75rem',
-                                backgroundColor: 'rgba(255, 255, 255, 0.5)',
-                                borderRadius: '6px'
-                              }}>
-                                <div style={{ fontSize: '0.75rem', opacity: 0.8 }}>External</div>
-                                <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>
-                                  {infringement.externalInfringements.length}
-                                </div>
-                              </div>
-                              <div style={{
-                                padding: '0.75rem',
-                                backgroundColor: 'rgba(255, 255, 255, 0.5)',
-                                borderRadius: '6px'
-                              }}>
-                                <div style={{ fontSize: '0.75rem', opacity: 0.8 }}>Last Checked</div>
-                                <div style={{ fontSize: '0.875rem', fontWeight: 500 }}>
-                                  {infringement.lastChecked 
-                                    ? new Date(infringement.lastChecked).toLocaleString()
-                                    : 'Never'
-                                  }
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* In-Network Infringements */}
-                          {infringement.inNetworkInfringements.length > 0 && (
-                            <div style={{
-                              marginBottom: '1rem',
-                              padding: '1rem',
-                              backgroundColor: 'var(--color-warning-bg, #fff3cd)',
-                              border: '1px solid var(--color-warning-border, #ffc107)',
-                              borderRadius: '8px'
-                            }}>
-                              <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '1rem', fontWeight: 600 }}>
-                                🔗 In-Network Infringements ({infringement.inNetworkInfringements.length})
-                              </h4>
-                              {infringement.inNetworkInfringements.map((inf, idx) => (
-                                <div key={idx} style={{
-                                  padding: '0.75rem',
-                                  marginBottom: '0.5rem',
-                                  backgroundColor: 'rgba(255, 255, 255, 0.5)',
-                                  borderRadius: '6px',
-                                  fontSize: '0.875rem'
-                                }}>
-                                  <div style={{ fontWeight: 500, marginBottom: '0.25rem' }}>
-                                    {inf.url ? (
-                                      <a href={inf.url} target="_blank" rel="noopener noreferrer" style={{ color: '#007bff' }}>
-                                        {inf.url}
-                                      </a>
-                                    ) : (
-                                      `Infringement #${idx + 1}`
-                                    )}
-                                  </div>
-                                  {inf.similarity && (
-                                    <div style={{ opacity: 0.8 }}>
-                                      Similarity: {(inf.similarity * 100).toFixed(1)}%
-                                    </div>
-                                  )}
-                                  {inf.detected_at && (
-                                    <div style={{ opacity: 0.8, fontSize: '0.75rem' }}>
-                                      Detected: {new Date(inf.detected_at).toLocaleString()}
-                                    </div>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
-                          {/* External Infringements */}
-                          {infringement.externalInfringements.length > 0 && (
-                            <div style={{
-                              marginBottom: '1rem',
-                              padding: '1rem',
-                              backgroundColor: 'var(--color-danger-bg, #f8d7da)',
-                              border: '1px solid var(--color-danger-border, #dc3545)',
-                              borderRadius: '8px'
-                            }}>
-                              <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '1rem', fontWeight: 600 }}>
-                                🌐 External Platform Infringements ({infringement.externalInfringements.length})
-                              </h4>
-                              {infringement.externalInfringements.map((inf, idx) => (
-                                <div key={idx} style={{
-                                  padding: '0.75rem',
-                                  marginBottom: '0.5rem',
-                                  backgroundColor: 'rgba(255, 255, 255, 0.5)',
-                                  borderRadius: '6px',
-                                  fontSize: '0.875rem'
-                                }}>
-                                  <div style={{ fontWeight: 500, marginBottom: '0.25rem' }}>
-                                    {inf.url ? (
-                                      <a href={inf.url} target="_blank" rel="noopener noreferrer" style={{ color: '#007bff' }}>
-                                        {inf.url}
-                                      </a>
-                                    ) : (
-                                      `External Infringement #${idx + 1}`
-                                    )}
-                                  </div>
-                                  {inf.platform && (
-                                    <div style={{ opacity: 0.8 }}>
-                                      Platform: {inf.platform}
-                                    </div>
-                                  )}
-                                  {inf.similarity && (
-                                    <div style={{ opacity: 0.8 }}>
-                                      Similarity: {(inf.similarity * 100).toFixed(1)}%
-                                    </div>
-                                  )}
-                                  {inf.detected_at && (
-                                    <div style={{ opacity: 0.8, fontSize: '0.75rem' }}>
-                                      Detected: {new Date(inf.detected_at).toLocaleString()}
-                                    </div>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
-                          {/* Recommended Actions */}
-                          <div style={{
-                            padding: '1rem',
-                            backgroundColor: 'var(--color-info-bg, #d1ecf1)',
-                            border: '1px solid var(--color-info-border, #0c5460)',
-                            borderRadius: '8px'
-                          }}>
-                            <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '1rem', fontWeight: 600 }}>
-                              💡 Recommended Actions
-                            </h4>
-                            <ul style={{ margin: 0, paddingLeft: '1.5rem' }}>
-                              {recommendations.map((action, idx) => (
-                                <li key={idx} style={{ marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-                                  {action}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-
-                          {/* Credits Info */}
-                          {infringement.credits && (
-                            <div style={{
-                              marginTop: '1rem',
-                              padding: '0.75rem',
-                              backgroundColor: 'rgba(255, 255, 255, 0.3)',
-                              borderRadius: '6px',
-                              fontSize: '0.875rem',
-                              opacity: 0.8
-                            }}>
-                              <strong>Yakoa Credits:</strong> {infringement.credits.remaining || 'N/A'} remaining
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })()}
-
-                    {/* No Data Message */}
-                    {!infringementData.has(selectedInfringementTokenId) && !infringementLoading && (
-                      <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                        <div style={{
-                          padding: '2rem',
-                          textAlign: 'center',
-                          backgroundColor: 'var(--color-info-bg, #d1ecf1)',
-                          border: '1px solid var(--color-info-border, #0c5460)',
-                          borderRadius: '8px',
-                          color: 'var(--color-info-text, #0c5460)'
-                        }}>
-                          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔍</div>
-                          <h3 style={{ margin: '0 0 0.5rem 0' }}>No Infringement Data</h3>
-                          <p style={{ margin: 0, opacity: 0.8 }}>
-                            Click "Check Now" to scan for potential infringements of this IP asset.
-                            {autoMonitoringEnabled && ' Auto-monitoring is enabled and will check periodically.'}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                </div>
-                </section>
-              </>
-            )}
 
             {/* Arbitration Tab */}
             {activeTab === 'arbitration' && (
@@ -4797,12 +4604,7 @@ export default function App({ thirdwebClient }: AppProps) {
                           return (
                             <span 
                               className={`badge ${config.className}`}
-                              onClick={() => {
-                                setSelectedInfringementTokenId(id);
-                                setActiveTab('infringement');
-                              }}
-                              style={{ cursor: 'pointer' }}
-                              title={`${infringement.totalInfringements} infringement(s) detected - Click to view details`}
+                              title={`${infringement.totalInfringements} infringement(s) detected`}
                             >
                               {config.icon} {infringement.totalInfringements} Infringement{infringement.totalInfringements !== 1 ? 's' : ''}
                             </span>
@@ -4865,7 +4667,11 @@ export default function App({ thirdwebClient }: AppProps) {
                     <div className="card-field">
                       <span className="card-field-label">Infringement Status</span>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                        {infringementData.has(id) ? (() => {
+                        {infringementLoading.get(id) ? (
+                          <span className="card-field-value" style={{ fontSize: '0.85rem', opacity: 0.7 }}>
+                            ⏳ Checking...
+                          </span>
+                        ) : infringementData.has(id) ? (() => {
                           const infringement = infringementData.get(id)!;
                           const severity = calculateSeverity(infringement);
                           const hasInfringements = infringement.totalInfringements > 0;
@@ -4897,25 +4703,11 @@ export default function App({ thirdwebClient }: AppProps) {
                               >
                                 {config.icon} {hasInfringements ? `${infringement.totalInfringements} Found` : 'Clean'}
                               </span>
-                              <button
-                                onClick={() => {
-                                  setSelectedInfringementTokenId(id);
-                                  setActiveTab('infringement');
-                                  loadInfringementStatus(id);
-                                }}
-                                style={{
-                                  fontSize: '0.75rem',
-                                  padding: '0.25rem 0.5rem',
-                                  backgroundColor: 'var(--color-primary, #007bff)',
-                                  color: 'white',
-                                  border: 'none',
-                                  borderRadius: '4px',
-                                  cursor: 'pointer',
-                                  fontWeight: 500
-                                }}
-                              >
-                                🔍 View Details
-                              </button>
+                              {infringement.lastChecked && (
+                                <span className="card-field-value" style={{ fontSize: '0.75rem', opacity: 0.7 }}>
+                                  Last checked: {new Date(infringement.lastChecked).toLocaleDateString()}
+                                </span>
+                              )}
                             </>
                           );
                         })() : (
@@ -4924,11 +4716,8 @@ export default function App({ thirdwebClient }: AppProps) {
                               ⏳ Not Checked
                             </span>
                             <button
-                              onClick={() => {
-                                setSelectedInfringementTokenId(id);
-                                setActiveTab('infringement');
-                                loadInfringementStatus(id);
-                              }}
+                              onClick={() => loadInfringementStatus(id)}
+                              disabled={infringementLoading.get(id)}
                               style={{
                                 fontSize: '0.75rem',
                                 padding: '0.25rem 0.5rem',
@@ -4936,8 +4725,9 @@ export default function App({ thirdwebClient }: AppProps) {
                                 color: 'white',
                                 border: 'none',
                                 borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontWeight: 500
+                                cursor: infringementLoading.get(id) ? 'not-allowed' : 'pointer',
+                                fontWeight: 500,
+                                opacity: infringementLoading.get(id) ? 0.6 : 1
                               }}
                             >
                               🔍 Check Now
@@ -4946,6 +4736,7 @@ export default function App({ thirdwebClient }: AppProps) {
                         )}
                       </div>
                     </div>
+
                   </div>
                 </div>
               );

@@ -1170,7 +1170,7 @@ export default function App({ thirdwebClient }: AppProps) {
     dateTo: '',
     minRevenue: '',
     maxRevenue: '',
-    infringementStatus: 'all' as 'all' | 'none' | 'low' | 'medium' | 'high' | 'critical',
+    infringementStatus: 'all' as 'all' | 'none' | 'any' | 'low' | 'medium' | 'high' | 'critical',
     licenseStatus: 'all' as 'all' | 'licensed' | 'unlicensed',
     ownerFilter: 'all' as 'all' | 'mine' | 'others',
     disputed: 'all' as 'all' | 'disputed' | 'not-disputed',
@@ -1610,6 +1610,10 @@ export default function App({ thirdwebClient }: AppProps) {
         if (assetFilters.infringementStatus === 'none') {
           return infringement.totalInfringements === 0;
         }
+        // For 'any' filter, show all assets with any infringements
+        if (assetFilters.infringementStatus === 'any') {
+          return infringement.totalInfringements > 0;
+        }
         // For 'high' filter, show high and critical
         if (assetFilters.infringementStatus === 'high') {
           const severity = calculateSeverity(infringement);
@@ -1869,7 +1873,7 @@ export default function App({ thirdwebClient }: AppProps) {
     } else if (filter === 'with-infringements') {
       newFilters.ownerFilter = 'all';
       newFilters.licenseStatus = 'all';
-      newFilters.infringementStatus = 'high'; // Shows high and critical severity
+      newFilters.infringementStatus = 'any'; // Shows all assets with any infringements
       newFilters.minRevenue = '';
     } else if (filter === 'high-revenue') {
       newFilters.ownerFilter = 'all';
@@ -5234,7 +5238,7 @@ export default function App({ thirdwebClient }: AppProps) {
                   🎫 Licensed
                 </button>
                 <button
-                  className={`btn ${assetFilters.infringementStatus === 'high' ? 'btn-primary' : 'btn-secondary'}`}
+                  className={`btn ${assetFilters.infringementStatus === 'any' ? 'btn-primary' : 'btn-secondary'}`}
                   onClick={() => applyQuickFilter('with-infringements')}
                   style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
                 >
@@ -5352,6 +5356,7 @@ export default function App({ thirdwebClient }: AppProps) {
                       >
                         <option value="all">All</option>
                         <option value="none">No Infringements</option>
+                        <option value="any">With Infringements</option>
                         <option value="low">Low</option>
                         <option value="medium">Medium</option>
                         <option value="high">High</option>

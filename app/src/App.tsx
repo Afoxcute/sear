@@ -4119,142 +4119,6 @@ export default function App({ thirdwebClient }: AppProps) {
             />
           </div>
 
-          {/* Royalty Calculation Preview */}
-          {royaltyBreakdown && (
-            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-              <div style={{
-                padding: '1rem',
-                backgroundColor: 'var(--color-info-bg, #d1ecf1)',
-                border: '1px solid var(--color-info-border, #0c5460)',
-                borderRadius: '8px',
-                marginTop: '0.5rem'
-              }}>
-                <h3 style={{
-                  margin: '0 0 1rem 0',
-                  fontSize: '1rem',
-                  fontWeight: 600,
-                  color: 'var(--color-info-text, #0c5460)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem'
-                }}>
-                  🧮 Automated Royalty Calculation Preview
-                </h3>
-                
-                <div style={{
-                  display: 'grid',
-                  gap: '0.75rem',
-                  fontSize: '0.875rem'
-                }}>
-                  {/* Total Payment */}
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    padding: '0.5rem',
-                    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-                    borderRadius: '4px',
-                    fontWeight: 600
-                  }}>
-                    <span>Total Payment:</span>
-                    <span>{royaltyBreakdown.totalAmount} MNT</span>
-                  </div>
-
-                  {/* Platform Fee */}
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    padding: '0.5rem',
-                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                    borderRadius: '4px'
-                  }}>
-                    <span>🏛️ Platform Fee (2.5%):</span>
-                    <span>{royaltyBreakdown.platformFee.toFixed(6)} MNT</span>
-                  </div>
-
-                  {/* Remaining After Fee */}
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    padding: '0.5rem',
-                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                    borderRadius: '4px',
-                    borderTop: '1px solid rgba(0,0,0,0.1)',
-                    borderBottom: '1px solid rgba(0,0,0,0.1)',
-                    marginTop: '0.25rem',
-                    marginBottom: '0.25rem'
-                  }}>
-                    <span>💰 Available for Distribution:</span>
-                    <span>{royaltyBreakdown.remainingAfterFee.toFixed(6)} MNT</span>
-                  </div>
-
-                  {/* License Royalties */}
-                  {royaltyBreakdown.licenseRoyalties.length > 0 && (
-                    <>
-                      <div style={{
-                        marginTop: '0.5rem',
-                        paddingTop: '0.5rem',
-                        borderTop: '1px solid rgba(0,0,0,0.2)'
-                      }}>
-                        <strong style={{ fontSize: '0.8rem', opacity: 0.9 }}>License Holder Royalties:</strong>
-                      </div>
-                      {royaltyBreakdown.licenseRoyalties.map((lr, idx) => (
-                        <div
-                          key={idx}
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            padding: '0.5rem',
-                            backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                            borderRadius: '4px',
-                            fontSize: '0.8rem'
-                          }}
-                        >
-                          <span>
-                            🎫 License #{lr.licenseId} ({lr.royaltyPercentage}%):
-                            <br />
-                            <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>
-                              {lr.licensee.substring(0, 6)}...{lr.licensee.substring(38)}
-                            </span>
-                          </span>
-                          <span style={{ fontWeight: 500 }}>
-                            {lr.amount.toFixed(6)} MNT
-                          </span>
-                        </div>
-                      ))}
-                    </>
-                  )}
-
-                  {/* IP Owner Share */}
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    padding: '0.75rem',
-                    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-                    borderRadius: '4px',
-                    marginTop: '0.5rem',
-                    fontWeight: 600,
-                    borderTop: '2px solid rgba(0,0,0,0.1)'
-                  }}>
-                    <span>👤 IP Owner Share:</span>
-                    <span>{royaltyBreakdown.ipOwnerShare.toFixed(6)} MNT</span>
-                  </div>
-
-                  {/* Summary */}
-                  <div style={{
-                    marginTop: '0.5rem',
-                    padding: '0.5rem',
-                    fontSize: '0.75rem',
-                    opacity: 0.8,
-                    fontStyle: 'italic',
-                    textAlign: 'center'
-                  }}>
-                    💡 Royalties are automatically calculated and distributed on-chain
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-            
             <button 
               className="btn btn-primary btn-full"
               onClick={payRevenue} 
@@ -4347,8 +4211,9 @@ export default function App({ thirdwebClient }: AppProps) {
                   ) : (
                     <div style={{
                       fontSize: '0.875rem',
-                      color: 'var(--color-info-text, #0c5460)',
-                      opacity: 0.9
+                      color: '#0c5460',
+                      fontWeight: 500,
+                      opacity: 1
                     }}>
                       ℹ️ No accumulated royalties available for this IP asset. Royalties accumulate when revenue is paid to this IP.
                     </div>
@@ -4369,17 +4234,31 @@ export default function App({ thirdwebClient }: AppProps) {
                           paddingTop: '0.75rem',
                           borderTop: '1px solid rgba(0,0,0,0.1)'
                         }}>
-                          <strong style={{ fontSize: '0.8rem' }}>Your Licenses:</strong>
+                          <strong style={{ 
+                            fontSize: '0.8rem',
+                            color: accumulatedRoyalties.get(claimTokenId)! > 0n
+                              ? 'var(--color-success-text, #155724)'
+                              : 'var(--color-info-text, #0c5460)'
+                          }}>Your Licenses:</strong>
                           {userLicenses.map(([licenseId, license]) => (
                             <div key={licenseId} style={{
                               marginTop: '0.5rem',
                               padding: '0.5rem',
                               backgroundColor: 'rgba(255, 255, 255, 0.3)',
                               borderRadius: '4px',
-                              fontSize: '0.8rem'
+                              fontSize: '0.8rem',
+                              color: accumulatedRoyalties.get(claimTokenId)! > 0n
+                                ? 'var(--color-success-text, #155724)'
+                                : 'var(--color-info-text, #0c5460)'
                             }}>
-                              <div>🎫 License #{licenseId}</div>
-                              <div style={{ opacity: 0.8, marginTop: '0.25rem' }}>
+                              <div style={{ fontWeight: 500 }}>🎫 License #{licenseId}</div>
+                              <div style={{ 
+                                opacity: 0.9, 
+                                marginTop: '0.25rem',
+                                color: accumulatedRoyalties.get(claimTokenId)! > 0n
+                                  ? 'var(--color-success-text, #155724)'
+                                  : 'var(--color-info-text, #0c5460)'
+                              }}>
                                 Royalty Rate: {Number(license.royaltyPercentage) / 100}% | 
                                 {license.isActive ? ' ✅ Active' : ' ❌ Inactive'}
                               </div>
@@ -5098,7 +4977,7 @@ export default function App({ thirdwebClient }: AppProps) {
                       {activityLoading ? '⏳ Loading...' : '🔄 Refresh'}
                     </button>
                   </div>
-                </div>
+          </div>
 
                 {/* Filters */}
                 <div className="form-grid" style={{ marginBottom: '1.5rem', padding: '1rem', backgroundColor: 'var(--color-bg-secondary)', borderRadius: '8px' }}>
@@ -5931,11 +5810,11 @@ export default function App({ thirdwebClient }: AppProps) {
                 );
               } else if (ipAssets.size === 0) {
                 return (
-                  <div className="card" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem' }}>
-                    <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎨</div>
-                    <h3 style={{ marginBottom: '0.5rem', color: 'var(--color-text-secondary)' }}>No IP Assets Yet</h3>
-                    <p style={{ color: 'var(--color-text-tertiary)' }}>Register your first IP asset to get started!</p>
-                  </div>
+              <div className="card" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem' }}>
+                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎨</div>
+                <h3 style={{ marginBottom: '0.5rem', color: 'var(--color-text-secondary)' }}>No IP Assets Yet</h3>
+                <p style={{ color: 'var(--color-text-tertiary)' }}>Register your first IP asset to get started!</p>
+              </div>
                 );
               }
               return null;
@@ -6028,11 +5907,11 @@ export default function App({ thirdwebClient }: AppProps) {
                 );
               } else if (licenses.size === 0) {
                 return (
-                  <div className="card" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem' }}>
-                    <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎫</div>
-                    <h3 style={{ marginBottom: '0.5rem', color: 'var(--color-text-secondary)' }}>No Licenses Yet</h3>
-                    <p style={{ color: 'var(--color-text-tertiary)' }}>Mint your first license to start licensing IP assets!</p>
-                  </div>
+              <div className="card" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem' }}>
+                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎫</div>
+                <h3 style={{ marginBottom: '0.5rem', color: 'var(--color-text-secondary)' }}>No Licenses Yet</h3>
+                <p style={{ color: 'var(--color-text-tertiary)' }}>Mint your first license to start licensing IP assets!</p>
+              </div>
                 );
               }
               return null;

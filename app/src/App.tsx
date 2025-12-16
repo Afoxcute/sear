@@ -1156,7 +1156,7 @@ export default function App({ thirdwebClient }: AppProps) {
   const [isOwner, setIsOwner] = useState<boolean>(false);
 
   const [filePreview, setFilePreview] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'register' | 'license' | 'revenue' | 'arbitration' | 'activity'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'register' | 'license' | 'revenue' | 'arbitration' | 'activity' | 'transfer'>('dashboard');
 
   // Search and Filter States
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -1225,6 +1225,53 @@ export default function App({ thirdwebClient }: AppProps) {
     dateTo: '',
     assetId: '',
     searchQuery: ''
+  });
+
+  // Transfer & Gift States
+  interface TransferRecord {
+    id: string;
+    tokenId: number;
+    from: string;
+    to: string;
+    timestamp: number;
+    txHash: string;
+    blockNumber: bigint;
+    isGift: boolean;
+    giftMessage?: string;
+    assetName?: string;
+  }
+
+  const [transferHistory, setTransferHistory] = useState<TransferRecord[]>([]);
+  const [transferLoading, setTransferLoading] = useState<boolean>(false);
+  const [transferForm, setTransferForm] = useState({
+    tokenId: '',
+    recipient: '',
+    isGift: false,
+    giftMessage: ''
+  });
+  const [transferMode, setTransferMode] = useState<'transfer' | 'gift' | 'history'>('transfer');
+  const [transferFilters, setTransferFilters] = useState({
+    tokenId: '',
+    from: '',
+    to: '',
+    dateFrom: '',
+    dateTo: '',
+    showGiftsOnly: false
+  });
+  // Approval workflow state
+  const [transferApproval, setTransferApproval] = useState<{
+    show: boolean;
+    tokenId: number | null;
+    recipient: string;
+    isGift: boolean;
+    giftMessage: string;
+    assetName?: string;
+  }>({
+    show: false,
+    tokenId: null,
+    recipient: '',
+    isGift: false,
+    giftMessage: ''
   });
 
   // Infringement detection states
@@ -1549,10 +1596,68 @@ export default function App({ thirdwebClient }: AppProps) {
     }, 250);
   };
 
+  // Load transfer history from blockchain events and activity history
+  const loadTransferHistory = async () => {
+    if (!account?.address) return;
+
+    try {
+      setTransferLoading(true);
+      const newTransfers: TransferRecord[] = [];
+
+      // First, get transfers from activity history (these are already recorded)
+      const transferActivities = activities.filter(a => a.type === 'transfer');
+      for (const activity of transferActivities) {
+        if (activity.txHash && activity.assetId) {
+          const metadata = parsedMetadata.get(activity.assetId) || {};
+          const assetName = metadata.name || `IP Asset #${activity.assetId}`;
+          
+          // Try to extract from/to from description or use activity data
+          const fromMatch = activity.description.match(/from\s+([0-9a-fA-Fx]{42})/i);
+          const toMatch = activity.description.match(/to\s+([0-9a-fA-Fx]{42})/i);
+          
+          newTransfers.push({
+            id: `transfer-${activity.assetId}-${activity.timestamp}`,
+            tokenId: activity.assetId,
+            from: activity.actor || (fromMatch ? fromMatch[1] : 'Unknown'),
+            to: (toMatch ? toMatch[1] : 'Unknown'),
+            timestamp: activity.timestamp,
+            txHash: activity.txHash,
+            blockNumber: activity.blockNumber || 0n,
+            isGift: activity.description.toLowerCase().includes('gift'),
+            giftMessage: activity.description.toLowerCase().includes('gift') ? activity.description : undefined,
+            assetName
+          });
+        }
+      }
+
+      // Also try to query blockchain events for IPTransferred
+      // Note: In production, you'd use getLogs to query IPTransferred events directly
+      // For now, we rely on activity history which is populated when transfers occur
+      try {
+        // Future enhancement: Query IPTransferred events from blockchain
+        // const contract = getContract({...});
+        // const logs = await getLogs({...});
+      } catch (e) {
+        console.log("Note: Could not query blockchain events directly. Using activity history.");
+      }
+
+      // Sort by timestamp (newest first)
+      newTransfers.sort((a, b) => b.timestamp - a.timestamp);
+      setTransferHistory(newTransfers);
+    } catch (error) {
+      console.error("Error loading transfer history:", error);
+    } finally {
+      setTransferLoading(false);
+    }
+  };
+
   // Load activities when tab is active or data changes
   useEffect(() => {
     if (activeTab === 'activity' && account?.address) {
       loadActivityHistory();
+    }
+    if (activeTab === 'transfer' && account?.address) {
+      loadTransferHistory();
     }
   }, [activeTab, account?.address, ipAssets.size, licenses.size, disputesMap.size]);
 
@@ -2993,7 +3098,50 @@ export default function App({ thirdwebClient }: AppProps) {
     }
   };
 
-  const transferIP = async (tokenId: number, recipient: string) => {
+  // Gift IP function - kept for potential future use or API compatibility
+  // const giftIP = async (tokenId: number, recipient: string, giftMessage: string) => {
+  //   // Gift is essentially a transfer with a message
+  //   await transferIP(tokenId, recipient, true, giftMessage, false);
+  // };
+
+  // Show transfer approval dialog
+  const showTransferApproval = (tokenId: number, recipient: string, isGift: boolean, giftMessage: string) => {
+    const metadata = parsedMetadata.get(tokenId) || {};
+    const assetName = metadata.name || `IP Asset #${tokenId}`;
+    
+    setTransferApproval({
+      show: true,
+      tokenId,
+      recipient,
+      isGift,
+      giftMessage,
+      assetName
+    });
+  };
+
+  // Confirm and execute transfer
+  const confirmTransfer = async () => {
+    if (transferApproval.tokenId === null) return;
+    
+    await transferIP(
+      transferApproval.tokenId,
+      transferApproval.recipient,
+      transferApproval.isGift,
+      transferApproval.giftMessage,
+      true // confirmed
+    );
+    
+    // Close approval dialog
+    setTransferApproval({
+      show: false,
+      tokenId: null,
+      recipient: '',
+      isGift: false,
+      giftMessage: ''
+    });
+  };
+
+  const transferIP = async (tokenId: number, recipient: string, isGift: boolean = false, giftMessage: string = '', confirmed: boolean = false) => {
     if (!account?.address) {
       notifyError("Wallet Not Connected", "Please connect your wallet");
       return;
@@ -3019,6 +3167,12 @@ export default function App({ thirdwebClient }: AppProps) {
 
     if (asset.owner.toLowerCase() !== account.address.toLowerCase()) {
       notifyError("Not Owner", "You are not the owner of this IP asset");
+      return;
+    }
+
+    // Show approval dialog if not confirmed
+    if (!confirmed) {
+      showTransferApproval(tokenId, recipient, isGift, giftMessage);
       return;
     }
 
@@ -3097,13 +3251,62 @@ export default function App({ thirdwebClient }: AppProps) {
         account: account,
       });
 
-      await waitForReceipt({
+      const receipt = await waitForReceipt({
         client: thirdwebClient,
         chain: defineChain(mantleTestnet.id),
         transactionHash: transaction.transactionHash,
       });
 
-      notifySuccess('Transfer Successful', `IP asset #${tokenId} has been transferred to ${recipient.substring(0, 10)}...${recipient.substring(recipient.length - 8)}`);
+      // Record transfer in history
+      const metadata = parsedMetadata.get(tokenId) || {};
+      const assetName = metadata.name || `IP Asset #${tokenId}`;
+      const transferTimestamp = Date.now();
+      
+      const newTransfer: TransferRecord = {
+        id: `transfer-${tokenId}-${transferTimestamp}`,
+        tokenId,
+        from: account.address,
+        to: recipient,
+        timestamp: transferTimestamp,
+        txHash: transaction.transactionHash,
+        blockNumber: receipt.blockNumber,
+        isGift: isGift,
+        giftMessage: isGift ? giftMessage : undefined,
+        assetName
+      };
+      setTransferHistory(prev => [newTransfer, ...prev]);
+      
+      // Add to activity history
+      const transferDescription = isGift 
+        ? `Gifted "${assetName}" to ${recipient.substring(0, 10)}...${recipient.substring(recipient.length - 8)}${giftMessage ? ` with message: "${giftMessage}"` : ''}`
+        : `Transferred "${assetName}" from ${account.address.substring(0, 10)}...${account.address.substring(account.address.length - 8)} to ${recipient.substring(0, 10)}...${recipient.substring(recipient.length - 8)}`;
+      
+      const newActivity: Activity = {
+        id: `transfer-${tokenId}-${transferTimestamp}`,
+        type: 'transfer',
+        timestamp: transferTimestamp,
+        assetId: tokenId,
+        assetName,
+        description: transferDescription,
+        txHash: transaction.transactionHash,
+        blockNumber: receipt.blockNumber,
+        actor: account.address
+      };
+      setActivities(prev => [newActivity, ...prev]);
+      
+      // Reset form
+      setTransferForm({
+        tokenId: '',
+        recipient: '',
+        isGift: false,
+        giftMessage: ''
+      });
+
+      const successMessage = isGift
+        ? `IP asset #${tokenId} "${assetName}" has been gifted to ${recipient.substring(0, 10)}...${recipient.substring(recipient.length - 8)}`
+        : `IP asset #${tokenId} "${assetName}" has been transferred to ${recipient.substring(0, 10)}...${recipient.substring(recipient.length - 8)}`;
+      
+      notifySuccess('Transfer Successful', successMessage);
       await loadContractData();
     } catch (error: any) {
       console.error("Error transferring IP:", error);
@@ -3621,6 +3824,12 @@ export default function App({ thirdwebClient }: AppProps) {
             >
               📜 Activity History
             </button>
+            <button 
+              className={`nav-tab ${activeTab === 'transfer' ? 'active' : ''}`}
+              onClick={() => setActiveTab('transfer')}
+            >
+              🔄 Transfer & Gift
+            </button>
           </div>
 
           {/* Tab Content */}
@@ -3632,7 +3841,7 @@ export default function App({ thirdwebClient }: AppProps) {
                 licenses={licenses}
                 metadata={parsedMetadata}
                 userAddress={account?.address}
-                onTransferIP={transferIP}
+                onTransferIP={(tokenId, recipient) => transferIP(tokenId, recipient, false, '')}
               />
             )}
 
@@ -4122,7 +4331,7 @@ export default function App({ thirdwebClient }: AppProps) {
                 placeholder="0.001"
             />
           </div>
-
+            
             <button 
               className="btn btn-primary btn-full"
               onClick={payRevenue} 
@@ -5173,6 +5382,412 @@ export default function App({ thirdwebClient }: AppProps) {
                 )}
               </section>
             )}
+
+            {/* Transfer & Gift Tab */}
+            {activeTab === 'transfer' && (
+              <section className="section section-full">
+                <div className="section-header">
+                  <span className="section-icon">🔄</span>
+                  <h2 className="section-title">Transfer & Gift IP Assets</h2>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button
+                      className={`btn ${transferMode === 'transfer' ? 'btn-primary' : 'btn-secondary'}`}
+                      onClick={() => setTransferMode('transfer')}
+                      style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
+                    >
+                      🔄 Transfer
+                    </button>
+                    <button
+                      className={`btn ${transferMode === 'gift' ? 'btn-primary' : 'btn-secondary'}`}
+                      onClick={() => setTransferMode('gift')}
+                      style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
+                    >
+                      🎁 Gift
+                    </button>
+                    <button
+                      className={`btn ${transferMode === 'history' ? 'btn-primary' : 'btn-secondary'}`}
+                      onClick={() => setTransferMode('history')}
+                      style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
+                    >
+                      📜 History
+                    </button>
+                    <button
+                      className="btn btn-secondary"
+                      onClick={loadTransferHistory}
+                      disabled={transferLoading || !account?.address}
+                      style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
+                    >
+                      {transferLoading ? '⏳ Loading...' : '🔄 Refresh'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Transfer Form */}
+                {transferMode === 'transfer' && (
+                  <div className="card" style={{ marginBottom: '2rem' }}>
+                    <h3 style={{ marginBottom: '1rem', color: 'var(--color-text-primary)' }}>Transfer IP Asset</h3>
+                    <p style={{ marginBottom: '1.5rem', color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>
+                      Transfer ownership of an IP asset to another wallet address. The recipient will become the new owner.
+                    </p>
+                    <div className="form-grid">
+                      <div className="form-group">
+                        <label className="form-label">IP Asset ID</label>
+                        <input
+                          type="number"
+                          className="form-input"
+                          placeholder="Enter IP asset token ID..."
+                          value={transferForm.tokenId}
+                          onChange={(e) => setTransferForm({ ...transferForm, tokenId: e.target.value })}
+                        />
+                        {transferForm.tokenId && (() => {
+                          const tokenId = parseInt(transferForm.tokenId);
+                          const asset = ipAssets.get(tokenId);
+                          const metadata = parsedMetadata.get(tokenId);
+                          if (asset) {
+                            const isOwner = asset.owner.toLowerCase() === account?.address?.toLowerCase();
+                            return (
+                              <div style={{ marginTop: '0.5rem', padding: '0.75rem', backgroundColor: 'var(--color-bg-secondary)', borderRadius: '4px' }}>
+                                <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
+                                  {metadata?.name || `IP Asset #${tokenId}`}
+                                </div>
+                                <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
+                                  Owner: {asset.owner.slice(0, 10)}...{asset.owner.slice(-8)}
+                                </div>
+                                {!isOwner && (
+                                  <div style={{ marginTop: '0.5rem', color: 'var(--color-error)', fontSize: '0.85rem' }}>
+                                    ⚠️ You are not the owner of this IP asset
+                                  </div>
+                                )}
+                                {asset.isDisputed && (
+                                  <div style={{ marginTop: '0.5rem', color: 'var(--color-error)', fontSize: '0.85rem' }}>
+                                    ⚠️ This IP asset has active disputes and cannot be transferred
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          }
+                          return null;
+                        })()}
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Recipient Address</label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          placeholder="0x..."
+                          value={transferForm.recipient}
+                          onChange={(e) => setTransferForm({ ...transferForm, recipient: e.target.value })}
+                        />
+                        <small style={{ color: 'var(--color-text-tertiary)', marginTop: '0.25rem', display: 'block' }}>
+                          Enter the Ethereum address of the recipient
+                        </small>
+                      </div>
+                    </div>
+                    <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.5rem' }}>
+                      <button
+                        className="btn btn-primary"
+                        onClick={async () => {
+                          const tokenId = parseInt(transferForm.tokenId);
+                          if (!tokenId || !transferForm.recipient) {
+                            notifyError("Invalid Input", "Please enter both IP asset ID and recipient address");
+                            return;
+                          }
+                          await transferIP(tokenId, transferForm.recipient, false, '', false);
+                        }}
+                        disabled={loading || !account?.address}
+                      >
+                        {loading ? '⏳ Transferring...' : '🔄 Transfer IP Asset'}
+                      </button>
+                      <button
+                        className="btn btn-secondary"
+                        onClick={() => setTransferForm({ tokenId: '', recipient: '', isGift: false, giftMessage: '' })}
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Gift Form */}
+                {transferMode === 'gift' && (
+                  <div className="card" style={{ marginBottom: '2rem' }}>
+                    <h3 style={{ marginBottom: '1rem', color: 'var(--color-text-primary)' }}>🎁 Gift IP Asset</h3>
+                    <p style={{ marginBottom: '1.5rem', color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>
+                      Gift an IP asset to someone with an optional message. This is a transfer with a personal touch!
+                    </p>
+                    <div className="form-grid">
+                      <div className="form-group">
+                        <label className="form-label">IP Asset ID</label>
+                        <input
+                          type="number"
+                          className="form-input"
+                          placeholder="Enter IP asset token ID..."
+                          value={transferForm.tokenId}
+                          onChange={(e) => setTransferForm({ ...transferForm, tokenId: e.target.value })}
+                        />
+                        {transferForm.tokenId && (() => {
+                          const tokenId = parseInt(transferForm.tokenId);
+                          const asset = ipAssets.get(tokenId);
+                          const metadata = parsedMetadata.get(tokenId);
+                          if (asset) {
+                            const isOwner = asset.owner.toLowerCase() === account?.address?.toLowerCase();
+                            return (
+                              <div style={{ marginTop: '0.5rem', padding: '0.75rem', backgroundColor: 'var(--color-bg-secondary)', borderRadius: '4px' }}>
+                                <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
+                                  {metadata?.name || `IP Asset #${tokenId}`}
+                                </div>
+                                <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
+                                  Owner: {asset.owner.slice(0, 10)}...{asset.owner.slice(-8)}
+                                </div>
+                                {!isOwner && (
+                                  <div style={{ marginTop: '0.5rem', color: 'var(--color-error)', fontSize: '0.85rem' }}>
+                                    ⚠️ You are not the owner of this IP asset
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          }
+                          return null;
+                        })()}
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Recipient Address</label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          placeholder="0x..."
+                          value={transferForm.recipient}
+                          onChange={(e) => setTransferForm({ ...transferForm, recipient: e.target.value })}
+                        />
+                      </div>
+                      <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                        <label className="form-label">Gift Message (Optional)</label>
+                        <textarea
+                          className="form-input"
+                          placeholder="Add a personal message for the recipient..."
+                          rows={4}
+                          value={transferForm.giftMessage}
+                          onChange={(e) => setTransferForm({ ...transferForm, giftMessage: e.target.value })}
+                        />
+                        <small style={{ color: 'var(--color-text-tertiary)', marginTop: '0.25rem', display: 'block' }}>
+                          This message will be recorded with the transfer in the history
+                        </small>
+                      </div>
+                    </div>
+                    <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.5rem' }}>
+                      <button
+                        className="btn btn-primary"
+                        onClick={async () => {
+                          const tokenId = parseInt(transferForm.tokenId);
+                          if (!tokenId || !transferForm.recipient) {
+                            notifyError("Invalid Input", "Please enter both IP asset ID and recipient address");
+                            return;
+                          }
+                          await transferIP(tokenId, transferForm.recipient, true, transferForm.giftMessage, false);
+                        }}
+                        disabled={loading || !account?.address}
+                      >
+                        {loading ? '⏳ Gifting...' : '🎁 Gift IP Asset'}
+                      </button>
+                      <button
+                        className="btn btn-secondary"
+                        onClick={() => setTransferForm({ tokenId: '', recipient: '', isGift: false, giftMessage: '' })}
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Transfer History */}
+                {transferMode === 'history' && (
+                  <>
+                    {/* Filters */}
+                    <div className="form-grid" style={{ marginBottom: '1.5rem', padding: '1rem', backgroundColor: 'var(--color-bg-secondary)', borderRadius: '8px' }}>
+                      <div className="form-group">
+                        <label className="form-label">Asset ID</label>
+                        <input
+                          type="number"
+                          className="form-input"
+                          placeholder="Filter by asset ID..."
+                          value={transferFilters.tokenId}
+                          onChange={(e) => setTransferFilters({ ...transferFilters, tokenId: e.target.value })}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">From Address</label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          placeholder="Filter by sender..."
+                          value={transferFilters.from}
+                          onChange={(e) => setTransferFilters({ ...transferFilters, from: e.target.value })}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">To Address</label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          placeholder="Filter by recipient..."
+                          value={transferFilters.to}
+                          onChange={(e) => setTransferFilters({ ...transferFilters, to: e.target.value })}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Date From</label>
+                        <input
+                          type="date"
+                          className="form-input"
+                          value={transferFilters.dateFrom}
+                          onChange={(e) => setTransferFilters({ ...transferFilters, dateFrom: e.target.value })}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Date To</label>
+                        <input
+                          type="date"
+                          className="form-input"
+                          value={transferFilters.dateTo}
+                          onChange={(e) => setTransferFilters({ ...transferFilters, dateTo: e.target.value })}
+                        />
+                      </div>
+                      <div className="form-group" style={{ display: 'flex', alignItems: 'center' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                          <input
+                            type="checkbox"
+                            checked={transferFilters.showGiftsOnly}
+                            onChange={(e) => setTransferFilters({ ...transferFilters, showGiftsOnly: e.target.checked })}
+                          />
+                          Show Gifts Only
+                        </label>
+                      </div>
+                      <div className="form-group" style={{ display: 'flex', alignItems: 'flex-end' }}>
+                        <button
+                          className="btn btn-secondary btn-full"
+                          onClick={() => setTransferFilters({
+                            tokenId: '',
+                            from: '',
+                            to: '',
+                            dateFrom: '',
+                            dateTo: '',
+                            showGiftsOnly: false
+                          })}
+                        >
+                          Clear Filters
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Transfer History List */}
+                    {(() => {
+                      let filtered = transferHistory;
+
+                      // Apply filters
+                      if (transferFilters.tokenId) {
+                        const tokenId = parseInt(transferFilters.tokenId);
+                        filtered = filtered.filter(t => t.tokenId === tokenId);
+                      }
+                      if (transferFilters.from) {
+                        const from = transferFilters.from.toLowerCase();
+                        filtered = filtered.filter(t => t.from.toLowerCase().includes(from));
+                      }
+                      if (transferFilters.to) {
+                        const to = transferFilters.to.toLowerCase();
+                        filtered = filtered.filter(t => t.to.toLowerCase().includes(to));
+                      }
+                      if (transferFilters.dateFrom) {
+                        const fromDate = new Date(transferFilters.dateFrom).getTime();
+                        filtered = filtered.filter(t => t.timestamp >= fromDate);
+                      }
+                      if (transferFilters.dateTo) {
+                        const toDate = new Date(transferFilters.dateTo).getTime() + 86400000; // Add 24 hours
+                        filtered = filtered.filter(t => t.timestamp <= toDate);
+                      }
+                      if (transferFilters.showGiftsOnly) {
+                        filtered = filtered.filter(t => t.isGift);
+                      }
+
+                      return filtered.length > 0 ? (
+                        <div className="grid grid-1">
+                          {filtered.map((transfer) => (
+                            <div key={transfer.id} className="card hover-lift">
+                              <div className="card-header">
+                                <div>
+                                  <h3 className="card-title">
+                                    {transfer.isGift ? '🎁 Gift' : '🔄 Transfer'} - {transfer.assetName || `IP Asset #${transfer.tokenId}`}
+                                  </h3>
+                                  <p className="card-subtitle">Token #{transfer.tokenId}</p>
+                                </div>
+                                <div className="flex gap-2">
+                                  {transfer.isGift && <span className="badge badge-info">🎁 Gift</span>}
+                                </div>
+                              </div>
+                              <div className="card-body">
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
+                                  <div>
+                                    <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '0.25rem' }}>From</div>
+                                    <div style={{ fontFamily: 'monospace', fontSize: '0.9rem' }}>
+                                      {transfer.from.slice(0, 10)}...{transfer.from.slice(-8)}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '0.25rem' }}>To</div>
+                                    <div style={{ fontFamily: 'monospace', fontSize: '0.9rem' }}>
+                                      {transfer.to.slice(0, 10)}...{transfer.to.slice(-8)}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '0.25rem' }}>Date</div>
+                                    <div style={{ fontSize: '0.9rem' }}>
+                                      {new Date(transfer.timestamp).toLocaleString()}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '0.25rem' }}>Block</div>
+                                    <div style={{ fontSize: '0.9rem' }}>
+                                      #{transfer.blockNumber.toString()}
+                                    </div>
+                                  </div>
+                                </div>
+                                {transfer.giftMessage && (
+                                  <div style={{ marginTop: '1rem', padding: '0.75rem', backgroundColor: 'var(--color-bg-secondary)', borderRadius: '4px', borderLeft: '3px solid var(--color-primary)' }}>
+                                    <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '0.25rem' }}>Gift Message</div>
+                                    <div style={{ fontSize: '0.95rem', fontStyle: 'italic' }}>"{transfer.giftMessage}"</div>
+                                  </div>
+                                )}
+                                <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                  <a
+                                    href={`https://explorer.testnet.mantle.xyz/tx/${transfer.txHash}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="btn btn-sm btn-secondary"
+                                  >
+                                    🔗 View Transaction
+                                  </a>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
+                          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔄</div>
+                          <h3 style={{ marginBottom: '0.5rem', color: 'var(--color-text-secondary)' }}>
+                            {transferHistory.length > 0 ? 'No Transfers Match Filters' : 'No Transfer History Yet'}
+                          </h3>
+                          <p style={{ color: 'var(--color-text-tertiary)' }}>
+                            {transferHistory.length > 0 
+                              ? 'Try adjusting your filter criteria.'
+                              : 'Transfer history will appear here once you transfer or gift IP assets.'}
+                          </p>
+                        </div>
+                      );
+                    })()}
+                  </>
+                )}
+              </section>
+            )}
           </div>
 
           {/* Search and Filter Section */}
@@ -5798,6 +6413,44 @@ export default function App({ thirdwebClient }: AppProps) {
                         )}
                       </div>
                     </div>
+                    
+                    {/* Quick Transfer Actions - Only show if user owns the asset */}
+                    {asset.owner.toLowerCase() === account?.address?.toLowerCase() && !asset.isDisputed && (
+                      <div className="card-actions" style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--color-border)' }}>
+                        <button
+                          className="btn btn-secondary"
+                          style={{ fontSize: '0.75rem', padding: '0.5rem 1rem' }}
+                          onClick={() => {
+                            setActiveTab('transfer');
+                            setTransferMode('transfer');
+                            setTransferForm({
+                              tokenId: id.toString(),
+                              recipient: '',
+                              isGift: false,
+                              giftMessage: ''
+                            });
+                          }}
+                        >
+                          🔄 Quick Transfer
+                        </button>
+                        <button
+                          className="btn btn-primary"
+                          style={{ fontSize: '0.75rem', padding: '0.5rem 1rem' }}
+                          onClick={() => {
+                            setActiveTab('transfer');
+                            setTransferMode('gift');
+                            setTransferForm({
+                              tokenId: id.toString(),
+                              recipient: '',
+                              isGift: true,
+                              giftMessage: ''
+                            });
+                          }}
+                        >
+                          🎁 Quick Gift
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -5924,6 +6577,82 @@ export default function App({ thirdwebClient }: AppProps) {
           </div>
         </section>
       </div>
+
+      {/* Transfer Approval Dialog */}
+      {transferApproval.show && (
+        <div className="modal-overlay" onClick={() => setTransferApproval({ ...transferApproval, show: false })}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+            <div className="modal-header">
+              <h2 style={{ margin: 0 }}>
+                {transferApproval.isGift ? '🎁 Confirm Gift' : '🔄 Confirm Transfer'}
+              </h2>
+              <button
+                className="modal-close"
+                onClick={() => setTransferApproval({ ...transferApproval, show: false })}
+                style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--color-text-secondary)' }}
+              >
+                ×
+              </button>
+            </div>
+            <div className="modal-body">
+              <div style={{ marginBottom: '1.5rem' }}>
+                <p style={{ marginBottom: '1rem', color: 'var(--color-text-secondary)' }}>
+                  {transferApproval.isGift 
+                    ? 'You are about to gift this IP asset. This action cannot be undone.'
+                    : 'You are about to transfer this IP asset. This action cannot be undone.'}
+                </p>
+                <div style={{ padding: '1rem', backgroundColor: 'var(--color-bg-secondary)', borderRadius: '8px', marginBottom: '1rem' }}>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '0.5rem' }}>IP Asset</div>
+                  <div style={{ fontWeight: 600, fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+                    {transferApproval.assetName || `IP Asset #${transferApproval.tokenId}`}
+                  </div>
+                  <div style={{ fontSize: '0.9rem', color: 'var(--color-text-tertiary)' }}>
+                    Token ID: #{transferApproval.tokenId}
+                  </div>
+                </div>
+                <div style={{ marginBottom: '1rem' }}>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '0.25rem' }}>From</div>
+                  <div style={{ fontFamily: 'monospace', fontSize: '0.9rem' }}>
+                    {account?.address ? `${account.address.slice(0, 10)}...${account.address.slice(-8)}` : 'Unknown'}
+                  </div>
+                </div>
+                <div style={{ marginBottom: '1rem' }}>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '0.25rem' }}>To</div>
+                  <div style={{ fontFamily: 'monospace', fontSize: '0.9rem' }}>
+                    {transferApproval.recipient.slice(0, 10)}...{transferApproval.recipient.slice(-8)}
+                  </div>
+                </div>
+                {transferApproval.isGift && transferApproval.giftMessage && (
+                  <div style={{ marginBottom: '1rem', padding: '0.75rem', backgroundColor: 'var(--color-bg-secondary)', borderRadius: '4px', borderLeft: '3px solid var(--color-primary)' }}>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '0.25rem' }}>Gift Message</div>
+                    <div style={{ fontSize: '0.95rem', fontStyle: 'italic' }}>"{transferApproval.giftMessage}"</div>
+                  </div>
+                )}
+                <div style={{ padding: '0.75rem', backgroundColor: 'var(--color-warning-bg)', borderRadius: '4px', borderLeft: '3px solid var(--color-warning)' }}>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--color-warning)' }}>
+                    ⚠️ <strong>Warning:</strong> This action is irreversible. Make sure you trust the recipient address.
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer" style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+              <button
+                className="btn btn-secondary"
+                onClick={() => setTransferApproval({ ...transferApproval, show: false })}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={confirmTransfer}
+                disabled={loading}
+              >
+                {loading ? '⏳ Processing...' : (transferApproval.isGift ? '🎁 Confirm Gift' : '🔄 Confirm Transfer')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -17,6 +17,7 @@
     "ethers": "^6.15.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "recharts": "^3.6.0",
     "thirdweb": "^5.73.0",
     "viem": "^2.21.52",
     "vite-plugin-node-polyfills": "^0.24.0"

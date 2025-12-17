@@ -2901,7 +2901,7 @@ export default function App({ thirdwebClient }: AppProps) {
         <header className="header">
           <div className="header-container">
             <div className="header-logo">
-              <img src="/modred.webp" alt="Sear" className="logo-image" />
+              <img src="/sear.png" alt="Sear" className="logo-image" />
               <h1>Sear</h1>
             </div>
             <div className="header-actions">
@@ -3093,7 +3093,7 @@ export default function App({ thirdwebClient }: AppProps) {
       <header className="header">
         <div className="header-container">
           <div className="header-logo">
-            <img src="/modred.webp" alt="Sear" className="logo-image" />
+            <img src="/sear.png" alt="Sear" className="logo-image" />
             <h1>Sear</h1>
           </div>
           <div className="header-actions">

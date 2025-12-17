@@ -2892,6 +2892,120 @@ export default function App({ thirdwebClient }: AppProps) {
     }
   }, [account?.address]);
 
+  // Show landing page until wallet is connected
+  if (!account?.address) {
+    return (
+      <div className="app">
+        <NotificationToasts />
+
+        <header className="header">
+          <div className="header-container">
+            <div className="header-logo">
+              <img src="/modred.webp" alt="Sear" className="logo-image" />
+              <h1>Sear</h1>
+            </div>
+            <div className="header-actions">
+              <div className={`status-indicator ${backendStatus ? 'connected' : 'disconnected'}`}>
+                <span>{backendStatus ? '🟢' : '🔴'}</span>
+                <span>Backend {backendStatus ? 'Connected' : 'Disconnected'}</span>
+                <button onClick={checkBackendStatus} className="refresh-btn">🔄</button>
+              </div>
+              <NotificationButton />
+              <ConnectButton
+                client={thirdwebClient}
+                wallets={wallets}
+                chain={defineChain(mantleTestnet.id)}
+              />
+            </div>
+          </div>
+        </header>
+
+        <main className="landing">
+          <div className="landing-hero">
+            <div className="landing-badge">IP Management • On-Chain</div>
+            <h2 className="landing-title">Secure, license, and monetize your IP with Sear</h2>
+            <p className="landing-subtitle">
+              Sear is your all-in-one workspace to register IP, mint licenses, collect royalties, resolve disputes, and transfer ownership—secured by blockchain.
+            </p>
+            <div className="landing-actions">
+              <ConnectButton
+                client={thirdwebClient}
+                wallets={wallets}
+                chain={defineChain(mantleTestnet.id)}
+              />
+              <button className="btn btn-secondary" onClick={checkBackendStatus}>
+                {backendStatus ? 'Backend Connected' : 'Retry Backend Check'}
+              </button>
+            </div>
+            <div className="landing-highlight-grid">
+              <div className="landing-highlight">
+                <span className="landing-highlight-icon">📝</span>
+                <div>
+                  <div className="landing-highlight-title">Register & Store</div>
+                  <div className="landing-highlight-text">Attach media, metadata, tags, and categories to every IP asset.</div>
+                </div>
+              </div>
+              <div className="landing-highlight">
+                <span className="landing-highlight-icon">🎫</span>
+                <div>
+                  <div className="landing-highlight-title">License & Earn</div>
+                  <div className="landing-highlight-text">Mint licenses, set royalty rates, and track revenue & payouts.</div>
+                </div>
+              </div>
+              <div className="landing-highlight">
+                <span className="landing-highlight-icon">⚖️</span>
+                <div>
+                  <div className="landing-highlight-title">Resolve Disputes</div>
+                  <div className="landing-highlight-text">Arbitration workflows with arbitrator assignment and voting.</div>
+                </div>
+              </div>
+              <div className="landing-highlight">
+                <span className="landing-highlight-icon">🔄</span>
+                <div>
+                  <div className="landing-highlight-title">Transfer & Gift</div>
+                  <div className="landing-highlight-text">Move ownership or gift IP assets with on-chain proofs.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="landing-card">
+            <h3>How it works</h3>
+            <ol className="landing-steps">
+              <li><strong>Connect</strong>: Link your wallet to create and manage IP securely.</li>
+              <li><strong>Register</strong>: Upload your IP media/metadata, choose tags, and set visibility.</li>
+              <li><strong>License</strong>: Issue licenses with royalty terms; track revenue and payouts.</li>
+              <li><strong>Protect</strong>: Monitor infringements, raise disputes, and resolve via arbitration.</li>
+              <li><strong>Transfer</strong>: Hand off or gift ownership with on-chain history.</li>
+            </ol>
+
+            <div className="landing-grid">
+              <div className="landing-tile">
+                <div className="landing-tile-icon">📜</div>
+                <div className="landing-tile-title">Activity & Exports</div>
+                <div className="landing-tile-text">Timeline of registrations, licenses, payments, disputes, and exports to CSV/PDF.</div>
+              </div>
+              <div className="landing-tile">
+                <div className="landing-tile-icon">🔍</div>
+                <div className="landing-tile-title">Search & Filters</div>
+                <div className="landing-tile-text">Global search across IPs, licenses, disputes with quick filters (My Assets, Licensed, Infringements).</div>
+              </div>
+              <div className="landing-tile">
+                <div className="landing-tile-icon">🌐</div>
+                <div className="landing-tile-title">IPFS & On-Chain</div>
+                <div className="landing-tile-text">Media on IPFS, ownership and events on-chain for verifiable provenance.</div>
+              </div>
+            </div>
+
+            <div className="landing-note">
+              Connect your wallet to unlock the full dashboard. All core actions (register, license, dispute, transfer) are available after connection.
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="app">
       {/* Toast Notifications */}

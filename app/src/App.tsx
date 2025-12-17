@@ -840,97 +840,37 @@ const EnhancedAssetPreview: React.FC<{
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Extract IPFS hash from various formats
-  const extractIPFSHash = (input: string): string | null => {
-    if (!input) return null;
-    
-    // Handle ipfs:// protocol
-    if (input.startsWith('ipfs://')) {
-      return input.replace('ipfs://', '').split('/')[0];
-    }
-    
-    // Handle /ipfs/ path
-    if (input.includes('/ipfs/')) {
-      const parts = input.split('/ipfs/');
-      if (parts.length > 1) {
-        return parts[1].split('/')[0];
-      }
-    }
-    
-    // If it's already a gateway URL, extract the hash
-    if (input.includes('gateway.pinata.cloud/ipfs/') || input.includes('ipfs.io/ipfs/')) {
-      const match = input.match(/ipfs\/([^/?]+)/);
-      if (match) return match[1];
-    }
-    
-    // If it looks like a hash (Qm... or bafy...), return as is
-    if (/^[Qmb][a-zA-Z0-9]{40,}$/.test(input)) {
-      return input;
-    }
-    
-    return null;
-  };
-
-  // Convert IPFS hash to gateway URL
-  const hashToGatewayURL = (hash: string): string => {
-    if (!hash) return '';
-    return `https://gateway.pinata.cloud/ipfs/${hash}`;
-  };
-
   useEffect(() => {
     const fetchImageFromMetadata = async () => {
       try {
         setLoading(true);
         
-        let finalUrl: string | null = null;
-        
-        // Priority 1: Use asset's ipHash directly (most reliable)
-        if (asset.ipHash) {
-          const hash = extractIPFSHash(asset.ipHash);
-          if (hash) {
-            finalUrl = hashToGatewayURL(hash);
-          } else {
-            // If ipHash is already a URL, use it
-            finalUrl = asset.ipHash;
+        // Priority 1: Check if metadata has image field
+        if (metadata?.image) {
+          let imageSource = metadata.image;
+          
+          // Convert IPFS URLs to gateway URLs
+          if (imageSource.startsWith('ipfs://')) {
+            imageSource = `https://gateway.pinata.cloud/ipfs/${imageSource.replace('ipfs://', '')}`;
           }
-        }
-        
-        // Priority 2: Check metadata.image field
-        if (!finalUrl && metadata?.image) {
-          const hash = extractIPFSHash(metadata.image);
-          if (hash) {
-            finalUrl = hashToGatewayURL(hash);
-          } else if (metadata.image.startsWith('http')) {
-            finalUrl = metadata.image;
+          
+          setImageUrl(imageSource);
+        } 
+        // Priority 2: Try the asset's ipHash directly
+        else if (asset.ipHash) {
+          let gatewayUrl = asset.ipHash;
+          if (gatewayUrl.startsWith('ipfs://')) {
+            gatewayUrl = `https://gateway.pinata.cloud/ipfs/${gatewayUrl.replace('ipfs://', '')}`;
           }
+          setImageUrl(gatewayUrl);
         }
-        
-        // Priority 3: Use mediaUrl prop
-        if (!finalUrl && mediaUrl) {
-          const hash = extractIPFSHash(mediaUrl);
-          if (hash) {
-            finalUrl = hashToGatewayURL(hash);
-          } else {
-            finalUrl = mediaUrl;
-          }
+        // Priority 3: Use mediaUrl as fallback
+        else {
+          setImageUrl(mediaUrl);
         }
-        
-        // Priority 4: Check metadata properties for ipHash
-        if (!finalUrl && metadata?.properties?.ipHash) {
-          const hash = extractIPFSHash(metadata.properties.ipHash);
-          if (hash) {
-            finalUrl = hashToGatewayURL(hash);
-          }
-        }
-        
-        setImageUrl(finalUrl);
       } catch (error) {
         console.error('Error fetching image from metadata:', error);
-        // Fallback to mediaUrl
-        if (mediaUrl) {
-          const hash = extractIPFSHash(mediaUrl);
-          setImageUrl(hash ? hashToGatewayURL(hash) : mediaUrl);
-        }
+        setImageUrl(mediaUrl);
       } finally {
         setLoading(false);
       }
@@ -965,16 +905,9 @@ const EnhancedAssetPreview: React.FC<{
       <div className="media-fallback" style={{ display: imageUrl ? 'none' : 'flex' }}>
         <div className="media-fallback-icon">📄</div>
         <p>Media Preview</p>
-        {imageUrl && (
-          <a href={imageUrl} target="_blank" rel="noopener noreferrer" className="media-link">
+        <a href={imageUrl || mediaUrl} target="_blank" rel="noopener noreferrer" className="media-link">
           🔗 View Media
         </a>
-        )}
-        {!imageUrl && asset.ipHash && (
-          <a href={hashToGatewayURL(extractIPFSHash(asset.ipHash) || asset.ipHash)} target="_blank" rel="noopener noreferrer" className="media-link">
-            🔗 View on IPFS
-          </a>
-        )}
       </div>
     </>
   );
@@ -1156,123 +1089,7 @@ export default function App({ thirdwebClient }: AppProps) {
   const [isOwner, setIsOwner] = useState<boolean>(false);
 
   const [filePreview, setFilePreview] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'register' | 'license' | 'revenue' | 'arbitration' | 'activity' | 'transfer'>('dashboard');
-
-  // Search and Filter States
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [searchScope, setSearchScope] = useState<'all' | 'assets' | 'licenses' | 'disputes'>('all');
-  const [filterType, setFilterType] = useState<'assets' | 'licenses' | 'disputes'>('assets');
-  
-  // Filters
-  const [assetFilters, setAssetFilters] = useState({
-    name: '',
-    dateFrom: '',
-    dateTo: '',
-    minRevenue: '',
-    maxRevenue: '',
-    infringementStatus: 'all' as 'all' | 'none' | 'any' | 'low' | 'medium' | 'high' | 'critical',
-    licenseStatus: 'all' as 'all' | 'licensed' | 'unlicensed',
-    ownerFilter: 'all' as 'all' | 'mine' | 'others',
-    disputed: 'all' as 'all' | 'disputed' | 'not-disputed',
-    encrypted: 'all' as 'all' | 'encrypted' | 'not-encrypted'
-  });
-
-  const [licenseFilters, setLicenseFilters] = useState({
-    name: '',
-    dateFrom: '',
-    dateTo: '',
-    status: 'all' as 'all' | 'active' | 'inactive',
-    commercialUse: 'all' as 'all' | 'commercial' | 'non-commercial',
-    licenseeFilter: 'all' as 'all' | 'mine' | 'others'
-  });
-
-  const [disputeFilters, setDisputeFilters] = useState({
-    name: '',
-    dateFrom: '',
-    dateTo: '',
-    status: 'all' as 'all' | 'resolved' | 'pending',
-    disputerFilter: 'all' as 'all' | 'mine' | 'others'
-  });
-
-  // Sort options
-  const [assetSortBy, setAssetSortBy] = useState<'date' | 'revenue' | 'name' | 'infringements'>('date');
-  const [assetSortOrder, setAssetSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [licenseSortBy, setLicenseSortBy] = useState<'date' | 'royalty' | 'name'>('date');
-  const [licenseSortOrder, setLicenseSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [disputeSortBy, setDisputeSortBy] = useState<'date' | 'id'>('date');
-  const [disputeSortOrder, setDisputeSortOrder] = useState<'asc' | 'desc'>('desc');
-
-  // Activity History States
-  interface Activity {
-    id: string;
-    type: 'registration' | 'license' | 'payment' | 'dispute' | 'transfer' | 'royalty' | 'arbitration';
-    timestamp: number;
-    assetId?: number;
-    assetName?: string;
-    description: string;
-    txHash?: string;
-    blockNumber?: bigint;
-    actor?: string;
-    amount?: bigint;
-    status?: string;
-  }
-
-  const [activities, setActivities] = useState<Activity[]>([]);
-  const [activityLoading, setActivityLoading] = useState<boolean>(false);
-  const [activityFilters, setActivityFilters] = useState({
-    type: 'all' as 'all' | 'registration' | 'license' | 'payment' | 'dispute' | 'transfer' | 'royalty' | 'arbitration',
-    dateFrom: '',
-    dateTo: '',
-    assetId: '',
-    searchQuery: ''
-  });
-
-  // Transfer & Gift States
-  interface TransferRecord {
-    id: string;
-    tokenId: number;
-    from: string;
-    to: string;
-    timestamp: number;
-    txHash: string;
-    blockNumber: bigint;
-    isGift: boolean;
-    giftMessage?: string;
-    assetName?: string;
-  }
-
-  const [transferHistory, setTransferHistory] = useState<TransferRecord[]>([]);
-  const [transferLoading, setTransferLoading] = useState<boolean>(false);
-  const [transferForm, setTransferForm] = useState({
-    tokenId: '',
-    recipient: '',
-    isGift: false,
-    giftMessage: ''
-  });
-  const [transferMode, setTransferMode] = useState<'transfer' | 'gift' | 'history'>('transfer');
-  const [transferFilters, setTransferFilters] = useState({
-    tokenId: '',
-    from: '',
-    to: '',
-    dateFrom: '',
-    dateTo: '',
-    showGiftsOnly: false
-  });
-  // Approval workflow state
-  const [transferApproval, setTransferApproval] = useState<{
-    show: boolean;
-    tokenId: number | null;
-    recipient: string;
-    isGift: boolean;
-    giftMessage: string;
-    assetName?: string;
-  }>({
-    show: false,
-    tokenId: null,
-    recipient: '',
-    isGift: false,
-    giftMessage: ''
-  });
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'register' | 'license' | 'revenue' | 'arbitration' | 'infringement'>('dashboard');
 
   // Infringement detection states
   interface InfringementData {
@@ -1303,7 +1120,10 @@ export default function App({ thirdwebClient }: AppProps) {
   }
 
   const [infringementData, setInfringementData] = useState<Map<number, InfringementData>>(new Map());
-  const [infringementLoading, setInfringementLoading] = useState<Map<number, boolean>>(new Map());
+  const [selectedInfringementTokenId, setSelectedInfringementTokenId] = useState<number>(1);
+  const [infringementLoading, setInfringementLoading] = useState<boolean>(false);
+  const [autoMonitoringEnabled, setAutoMonitoringEnabled] = useState<boolean>(true);
+  const [monitoringInterval, setMonitoringInterval] = useState<number>(300000); // 5 minutes default
 
   // Load infringement status for an IP asset
   const loadInfringementStatus = async (tokenId: number) => {
@@ -1313,11 +1133,7 @@ export default function App({ thirdwebClient }: AppProps) {
     }
 
     try {
-      setInfringementLoading((prev) => {
-        const newMap = new Map(prev);
-        newMap.set(tokenId, true);
-        return newMap;
-      });
+      setInfringementLoading(true);
       const contractAddress = CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"].toLowerCase();
       const response = await fetch(`${BACKEND_URL}/api/infringement/status/${contractAddress}/${tokenId}`);
       
@@ -1334,18 +1150,23 @@ export default function App({ thirdwebClient }: AppProps) {
         return newMap;
       });
 
+      // Show notification if infringements found
+      if (infringementStatus.totalInfringements > 0) {
+        notifyWarning(
+          'Infringements Detected',
+          `Found ${infringementStatus.totalInfringements} potential infringement(s) for IP Asset #${tokenId}`
+        );
+      } else {
+        notifyInfo('No Infringements', `No infringements detected for IP Asset #${tokenId}`);
+      }
     } catch (error: any) {
       console.error('Error loading infringement status:', error);
       // Don't show error for 404s (IP might not be registered in Yakoa yet)
       if (!error.message?.includes('404')) {
-        console.warn('Infringement check failed:', error.message || 'Failed to check infringement status');
+        notifyError('Infringement Check Failed', error.message || 'Failed to check infringement status');
       }
     } finally {
-      setInfringementLoading((prev) => {
-        const newMap = new Map(prev);
-        newMap.set(tokenId, false);
-        return newMap;
-      });
+      setInfringementLoading(false);
     }
   };
 
@@ -1364,631 +1185,52 @@ export default function App({ thirdwebClient }: AppProps) {
     return 'low';
   };
 
-  // Load Activity History
-  const loadActivityHistory = async () => {
-    if (!account?.address) return;
+  // Get recommended actions based on infringement
+  const getRecommendedActions = (infringement: InfringementData): string[] => {
+    const actions: string[] = [];
+    const severity = calculateSeverity(infringement);
 
-    try {
-      setActivityLoading(true);
-      const newActivities: Activity[] = [];
-
-      // Add IP Registration activities
-      for (const [tokenId, asset] of ipAssets.entries()) {
-        const metadata = parsedMetadata.get(tokenId) || {};
-        const assetName = metadata.name || `IP Asset #${tokenId}`;
-        const timestamp = Number(asset.registrationDate) * 1000;
-        
-        newActivities.push({
-          id: `reg-${tokenId}`,
-          type: 'registration',
-          timestamp,
-          assetId: tokenId,
-          assetName,
-          description: `IP Asset "${assetName}" registered`,
-          actor: asset.owner,
-        });
-      }
-
-      // Add License activities
-      for (const [licenseId, license] of licenses.entries()) {
-        const metadata = parsedMetadata.get(Number(license.tokenId)) || {};
-        const assetName = metadata.name || `IP Asset #${license.tokenId}`;
-        const timestamp = Number(license.startDate) * 1000;
-        
-        newActivities.push({
-          id: `license-${licenseId}`,
-          type: 'license',
-          timestamp,
-          assetId: Number(license.tokenId),
-          assetName,
-          description: `License #${licenseId} minted for "${assetName}" by ${license.licensee.slice(0, 6)}...${license.licensee.slice(-4)}`,
-          actor: license.licensee,
-        });
-      }
-
-      // Add Revenue Payment activities (from totalRevenue)
-      for (const [tokenId, asset] of ipAssets.entries()) {
-        if (asset.totalRevenue > 0n) {
-          const metadata = parsedMetadata.get(tokenId) || {};
-          const assetName = metadata.name || `IP Asset #${tokenId}`;
-          
-          newActivities.push({
-            id: `revenue-${tokenId}-${Date.now()}`,
-            type: 'payment',
-            timestamp: Date.now() - Math.random() * 86400000, // Random time in last 24h
-            assetId: tokenId,
-            assetName,
-            description: `Revenue payment of ${formatEther(asset.totalRevenue)} MNT for "${assetName}"`,
-            amount: asset.totalRevenue,
-          });
-        }
-      }
-
-      // Add Dispute activities
-      for (const [disputeId, dispute] of disputesMap.entries()) {
-        const metadata = parsedMetadata.get(Number(dispute.tokenId)) || {};
-        const assetName = metadata.name || `IP Asset #${dispute.tokenId}`;
-        const timestamp = Number(dispute.timestamp) * 1000;
-        
-        newActivities.push({
-          id: `dispute-${disputeId}`,
-          type: 'dispute',
-          timestamp,
-          assetId: Number(dispute.tokenId),
-          assetName,
-          description: `Dispute #${disputeId} raised for "${assetName}": ${dispute.reason}`,
-          actor: dispute.disputer,
-          status: dispute.isResolved ? 'Resolved' : 'Pending',
-        });
-      }
-
-      // Sort by timestamp (newest first)
-      newActivities.sort((a, b) => b.timestamp - a.timestamp);
-
-      setActivities(newActivities);
-    } catch (error) {
-      console.error('Error loading activity history:', error);
-      notifyError('Activity History Error', 'Failed to load activity history');
-    } finally {
-      setActivityLoading(false);
+    if (severity === 'critical' || severity === 'high') {
+      actions.push('Consider raising a dispute through the arbitration system');
+      actions.push('Document all evidence of infringement');
+      actions.push('Contact infringing parties if appropriate');
     }
+    
+    if (infringement.externalInfringements.length > 0) {
+      actions.push('Review external platform infringements for commercial use');
+      actions.push('Consider sending DMCA takedown notices if applicable');
+    }
+
+    if (infringement.inNetworkInfringements.length > 0) {
+      actions.push('Review on-chain infringements for potential license violations');
+      actions.push('Check if infringing parties have valid licenses');
+    }
+
+    if (actions.length === 0) {
+      actions.push('Continue monitoring for new infringements');
+      actions.push('Ensure your IP is properly registered and licensed');
+    }
+
+    return actions;
   };
 
-  // Filter activities
-  const filterActivities = (activitiesList: Activity[]) => {
-    let filtered = [...activitiesList];
-
-    // Filter by type
-    if (activityFilters.type !== 'all') {
-      filtered = filtered.filter(a => a.type === activityFilters.type);
-    }
-
-    // Filter by date range
-    if (activityFilters.dateFrom) {
-      const fromDate = new Date(activityFilters.dateFrom).getTime();
-      filtered = filtered.filter(a => a.timestamp >= fromDate);
-    }
-    if (activityFilters.dateTo) {
-      const toDate = new Date(activityFilters.dateTo).getTime() + 86400000; // Add 1 day to include the end date
-      filtered = filtered.filter(a => a.timestamp <= toDate);
-    }
-
-    // Filter by asset ID
-    if (activityFilters.assetId) {
-      const assetIdNum = parseInt(activityFilters.assetId);
-      if (!isNaN(assetIdNum)) {
-        filtered = filtered.filter(a => a.assetId === assetIdNum);
-      }
-    }
-
-    // Filter by search query
-    if (activityFilters.searchQuery.trim()) {
-      const query = activityFilters.searchQuery.toLowerCase();
-      filtered = filtered.filter(a => 
-        a.description.toLowerCase().includes(query) ||
-        a.assetName?.toLowerCase().includes(query) ||
-        a.actor?.toLowerCase().includes(query) ||
-        a.assetId?.toString().includes(query)
-      );
-    }
-
-    return filtered;
-  };
-
-  // Export to CSV
-  const exportToCSV = () => {
-    const filtered = filterActivities(activities);
-    const headers = ['Type', 'Date', 'Asset ID', 'Asset Name', 'Description', 'Actor', 'Amount (MNT)', 'Status', 'Transaction Hash'];
-    const rows = filtered.map(activity => [
-      activity.type,
-      new Date(activity.timestamp).toLocaleString(),
-      activity.assetId?.toString() || '',
-      activity.assetName || '',
-      activity.description,
-      activity.actor || '',
-      activity.amount ? formatEther(activity.amount) : '',
-      activity.status || '',
-      activity.txHash || ''
-    ]);
-
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `activity-history-${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  // Export to PDF (using browser print)
-  const exportToPDF = () => {
-    const filtered = filterActivities(activities);
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
-
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Activity History Report</title>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 20px; }
-            h1 { color: #333; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-            th { background-color: #f2f2f2; }
-            tr:nth-child(even) { background-color: #f9f9f9; }
-            .header { margin-bottom: 20px; }
-            .date { color: #666; font-size: 12px; }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h1>Activity History Report</h1>
-            <p class="date">Generated: ${new Date().toLocaleString()}</p>
-            <p>Total Activities: ${filtered.length}</p>
-          </div>
-          <table>
-            <thead>
-              <tr>
-                <th>Type</th>
-                <th>Date</th>
-                <th>Asset ID</th>
-                <th>Asset Name</th>
-                <th>Description</th>
-                <th>Actor</th>
-                <th>Amount (MNT)</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${filtered.map(activity => `
-                <tr>
-                  <td>${activity.type}</td>
-                  <td>${new Date(activity.timestamp).toLocaleString()}</td>
-                  <td>${activity.assetId || ''}</td>
-                  <td>${activity.assetName || ''}</td>
-                  <td>${activity.description}</td>
-                  <td>${activity.actor || ''}</td>
-                  <td>${activity.amount ? formatEther(activity.amount) : ''}</td>
-                  <td>${activity.status || ''}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </body>
-      </html>
-    `;
-
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
-    printWindow.focus();
-    setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
-    }, 250);
-  };
-
-  // Load transfer history from blockchain events and activity history
-  const loadTransferHistory = async () => {
-    if (!account?.address) return;
-
-    try {
-      setTransferLoading(true);
-      const newTransfers: TransferRecord[] = [];
-
-      // First, get transfers from activity history (these are already recorded)
-      const transferActivities = activities.filter(a => a.type === 'transfer');
-      for (const activity of transferActivities) {
-        if (activity.txHash && activity.assetId) {
-          const metadata = parsedMetadata.get(activity.assetId) || {};
-          const assetName = metadata.name || `IP Asset #${activity.assetId}`;
-          
-          // Try to extract from/to from description or use activity data
-          const fromMatch = activity.description.match(/from\s+([0-9a-fA-Fx]{42})/i);
-          const toMatch = activity.description.match(/to\s+([0-9a-fA-Fx]{42})/i);
-          
-          newTransfers.push({
-            id: `transfer-${activity.assetId}-${activity.timestamp}`,
-            tokenId: activity.assetId,
-            from: activity.actor || (fromMatch ? fromMatch[1] : 'Unknown'),
-            to: (toMatch ? toMatch[1] : 'Unknown'),
-            timestamp: activity.timestamp,
-            txHash: activity.txHash,
-            blockNumber: activity.blockNumber || 0n,
-            isGift: activity.description.toLowerCase().includes('gift'),
-            giftMessage: activity.description.toLowerCase().includes('gift') ? activity.description : undefined,
-            assetName
-          });
-        }
-      }
-
-      // Also try to query blockchain events for IPTransferred
-      // Note: In production, you'd use getLogs to query IPTransferred events directly
-      // For now, we rely on activity history which is populated when transfers occur
-      try {
-        // Future enhancement: Query IPTransferred events from blockchain
-        // const contract = getContract({...});
-        // const logs = await getLogs({...});
-      } catch (e) {
-        console.log("Note: Could not query blockchain events directly. Using activity history.");
-      }
-
-      // Sort by timestamp (newest first)
-      newTransfers.sort((a, b) => b.timestamp - a.timestamp);
-      setTransferHistory(newTransfers);
-    } catch (error) {
-      console.error("Error loading transfer history:", error);
-    } finally {
-      setTransferLoading(false);
-    }
-  };
-
-  // Load activities when tab is active or data changes
+  // Auto-monitoring effect
   useEffect(() => {
-    if (activeTab === 'activity' && account?.address) {
-      loadActivityHistory();
-    }
-    if (activeTab === 'transfer' && account?.address) {
-      loadTransferHistory();
-    }
-  }, [activeTab, account?.address, ipAssets.size, licenses.size, disputesMap.size]);
+    if (!autoMonitoringEnabled || !selectedInfringementTokenId || !ipAssets.has(selectedInfringementTokenId)) return;
 
-  // Filter and Sort Functions
-  const filterAndSortAssets = (assets: Map<number, IPAsset>) => {
-    let filtered = Array.from(assets.entries());
+    // Load immediately
+    loadInfringementStatus(selectedInfringementTokenId);
 
-    // Apply search query
-    if (searchQuery.trim() && (searchScope === 'all' || searchScope === 'assets')) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(([id, asset]) => {
-        const metadata = parsedMetadata.get(id) || {};
-        const name = (metadata.name || '').toLowerCase();
-        const description = (metadata.description || '').toLowerCase();
-        const ipHash = asset.ipHash.toLowerCase();
-        return name.includes(query) || description.includes(query) || ipHash.includes(query) || id.toString().includes(query);
-      });
-    }
-
-    // Apply filters
-    if (assetFilters.name) {
-      const nameQuery = assetFilters.name.toLowerCase();
-      filtered = filtered.filter(([id]) => {
-        const metadata = parsedMetadata.get(id) || {};
-        return (metadata.name || '').toLowerCase().includes(nameQuery);
-      });
-    }
-
-    if (assetFilters.dateFrom) {
-      const fromDate = new Date(assetFilters.dateFrom).getTime() / 1000;
-      filtered = filtered.filter(([_, asset]) => Number(asset.registrationDate) >= fromDate);
-    }
-
-    if (assetFilters.dateTo) {
-      const toDate = new Date(assetFilters.dateTo).getTime() / 1000;
-      filtered = filtered.filter(([_, asset]) => Number(asset.registrationDate) <= toDate);
-    }
-
-    if (assetFilters.minRevenue) {
-      const minRev = parseEther(assetFilters.minRevenue);
-      filtered = filtered.filter(([_, asset]) => asset.totalRevenue >= minRev);
-    }
-
-    if (assetFilters.maxRevenue) {
-      const maxRev = parseEther(assetFilters.maxRevenue);
-      filtered = filtered.filter(([_, asset]) => asset.totalRevenue <= maxRev);
-    }
-
-    if (assetFilters.infringementStatus !== 'all') {
-      filtered = filtered.filter(([id, _]) => {
-        if (!infringementData.has(id)) {
-          return assetFilters.infringementStatus === 'none';
-        }
-        const infringement = infringementData.get(id)!;
-        if (assetFilters.infringementStatus === 'none') {
-          return infringement.totalInfringements === 0;
-        }
-        // For 'any' filter, show all assets with any infringements
-        if (assetFilters.infringementStatus === 'any') {
-          return infringement.totalInfringements > 0;
-        }
-        // For 'high' filter, show high and critical
-        if (assetFilters.infringementStatus === 'high') {
-          const severity = calculateSeverity(infringement);
-          return severity === 'high' || severity === 'critical';
-        }
-        const severity = calculateSeverity(infringement);
-        return severity === assetFilters.infringementStatus;
-      });
-    }
-
-    if (assetFilters.licenseStatus !== 'all') {
-      filtered = filtered.filter(([id, _]) => {
-        const hasLicense = Array.from(licenses.values()).some(license => Number(license.tokenId) === id);
-        if (assetFilters.licenseStatus === 'licensed') {
-          return hasLicense;
-        } else {
-          return !hasLicense;
-        }
-      });
-    }
-
-    if (assetFilters.ownerFilter !== 'all' && account?.address) {
-      filtered = filtered.filter(([_, asset]) => {
-        if (assetFilters.ownerFilter === 'mine') {
-          return asset.owner.toLowerCase() === account.address.toLowerCase();
-        } else {
-          return asset.owner.toLowerCase() !== account.address.toLowerCase();
-        }
-      });
-    }
-
-    if (assetFilters.disputed !== 'all') {
-      filtered = filtered.filter(([_, asset]) => {
-        if (assetFilters.disputed === 'disputed') {
-          return asset.isDisputed;
-        } else {
-          return !asset.isDisputed;
-        }
-      });
-    }
-
-    if (assetFilters.encrypted !== 'all') {
-      filtered = filtered.filter(([_, asset]) => {
-        if (assetFilters.encrypted === 'encrypted') {
-          return asset.isEncrypted;
-        } else {
-          return !asset.isEncrypted;
-        }
-      });
-    }
-
-    // Apply sorting
-    filtered.sort(([idA, assetA], [idB, assetB]) => {
-      let comparison = 0;
-      
-      switch (assetSortBy) {
-        case 'date':
-          comparison = Number(assetA.registrationDate) - Number(assetB.registrationDate);
-          break;
-        case 'revenue':
-          comparison = Number(assetA.totalRevenue) - Number(assetB.totalRevenue);
-          break;
-        case 'name':
-          const metadataA = parsedMetadata.get(idA) || { name: '' };
-          const metadataB = parsedMetadata.get(idB) || { name: '' };
-          comparison = (metadataA.name || '').localeCompare(metadataB.name || '');
-          break;
-        case 'infringements':
-          const infA = infringementData.get(idA);
-          const infB = infringementData.get(idB);
-          const countA = infA ? infA.totalInfringements : 0;
-          const countB = infB ? infB.totalInfringements : 0;
-          comparison = countA - countB;
-          break;
+    // Set up interval
+    const interval = setInterval(() => {
+      if (ipAssets.has(selectedInfringementTokenId)) {
+        loadInfringementStatus(selectedInfringementTokenId);
       }
-      
-      return assetSortOrder === 'asc' ? comparison : -comparison;
-    });
+    }, monitoringInterval);
 
-    return filtered;
-  };
-
-  const filterAndSortLicenses = (licensesMap: Map<number, License>) => {
-    let filtered = Array.from(licensesMap.entries());
-
-    // Apply search query
-    if (searchQuery.trim() && (searchScope === 'all' || searchScope === 'licenses')) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(([id, license]) => {
-        const metadata = parsedMetadata.get(Number(license.tokenId)) || {};
-        const name = (metadata.name || '').toLowerCase();
-        const terms = license.terms.toLowerCase();
-        return name.includes(query) || terms.includes(query) || id.toString().includes(query);
-      });
-    }
-
-    // Apply filters
-    if (licenseFilters.name) {
-      const nameQuery = licenseFilters.name.toLowerCase();
-      filtered = filtered.filter(([_, license]) => {
-        const metadata = parsedMetadata.get(Number(license.tokenId)) || {};
-        return (metadata.name || '').toLowerCase().includes(nameQuery);
-      });
-    }
-
-    if (licenseFilters.dateFrom) {
-      const fromDate = new Date(licenseFilters.dateFrom).getTime() / 1000;
-      filtered = filtered.filter(([_, license]) => Number(license.startDate) >= fromDate);
-    }
-
-    if (licenseFilters.dateTo) {
-      const toDate = new Date(licenseFilters.dateTo).getTime() / 1000;
-      filtered = filtered.filter(([_, license]) => Number(license.startDate) <= toDate);
-    }
-
-    if (licenseFilters.status !== 'all') {
-      filtered = filtered.filter(([_, license]) => {
-        if (licenseFilters.status === 'active') {
-          return license.isActive;
-        } else {
-          return !license.isActive;
-        }
-      });
-    }
-
-    if (licenseFilters.commercialUse !== 'all') {
-      filtered = filtered.filter(([_, license]) => {
-        if (licenseFilters.commercialUse === 'commercial') {
-          return license.commercialUse;
-        } else {
-          return !license.commercialUse;
-        }
-      });
-    }
-
-    if (licenseFilters.licenseeFilter !== 'all' && account?.address) {
-      filtered = filtered.filter(([_, license]) => {
-        if (licenseFilters.licenseeFilter === 'mine') {
-          return license.licensee.toLowerCase() === account.address.toLowerCase();
-        } else {
-          return license.licensee.toLowerCase() !== account.address.toLowerCase();
-        }
-      });
-    }
-
-    // Apply sorting
-    filtered.sort(([, licenseA], [, licenseB]) => {
-      let comparison = 0;
-      
-      switch (licenseSortBy) {
-        case 'date':
-          comparison = Number(licenseA.startDate) - Number(licenseB.startDate);
-          break;
-        case 'royalty':
-          comparison = Number(licenseA.royaltyPercentage) - Number(licenseB.royaltyPercentage);
-          break;
-        case 'name':
-          const metadataA = parsedMetadata.get(Number(licenseA.tokenId)) || { name: '' };
-          const metadataB = parsedMetadata.get(Number(licenseB.tokenId)) || { name: '' };
-          comparison = (metadataA.name || '').localeCompare(metadataB.name || '');
-          break;
-      }
-      
-      return licenseSortOrder === 'asc' ? comparison : -comparison;
-    });
-
-    return filtered;
-  };
-
-  const filterAndSortDisputes = (disputesMap: Map<number, any>) => {
-    let filtered = Array.from(disputesMap.entries());
-
-    // Apply search query
-    if (searchQuery.trim() && (searchScope === 'all' || searchScope === 'disputes')) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(([id, dispute]) => {
-        const metadata = parsedMetadata.get(dispute.tokenId) || {};
-        const name = (metadata.name || '').toLowerCase();
-        const reason = dispute.reason.toLowerCase();
-        return name.includes(query) || reason.includes(query) || id.toString().includes(query) || dispute.disputeId.toString().includes(query);
-      });
-    }
-
-    // Apply filters
-    if (disputeFilters.name) {
-      const nameQuery = disputeFilters.name.toLowerCase();
-      filtered = filtered.filter(([_, dispute]) => {
-        const metadata = parsedMetadata.get(dispute.tokenId) || {};
-        return (metadata.name || '').toLowerCase().includes(nameQuery);
-      });
-    }
-
-    if (disputeFilters.dateFrom) {
-      const fromDate = new Date(disputeFilters.dateFrom).getTime() / 1000;
-      filtered = filtered.filter(([_, dispute]) => Number(dispute.timestamp) >= fromDate);
-    }
-
-    if (disputeFilters.dateTo) {
-      const toDate = new Date(disputeFilters.dateTo).getTime() / 1000;
-      filtered = filtered.filter(([_, dispute]) => Number(dispute.timestamp) <= toDate);
-    }
-
-    if (disputeFilters.status !== 'all') {
-      filtered = filtered.filter(([_, dispute]) => {
-        if (disputeFilters.status === 'resolved') {
-          return dispute.isResolved;
-        } else {
-          return !dispute.isResolved;
-        }
-      });
-    }
-
-    if (disputeFilters.disputerFilter !== 'all' && account?.address) {
-      filtered = filtered.filter(([_, dispute]) => {
-        if (disputeFilters.disputerFilter === 'mine') {
-          return dispute.disputer.toLowerCase() === account.address.toLowerCase();
-        } else {
-          return dispute.disputer.toLowerCase() !== account.address.toLowerCase();
-        }
-      });
-    }
-
-    // Apply sorting
-    filtered.sort(([_, disputeA], [__, disputeB]) => {
-      let comparison = 0;
-      
-      switch (disputeSortBy) {
-        case 'date':
-          comparison = Number(disputeA.timestamp) - Number(disputeB.timestamp);
-          break;
-        case 'id':
-          comparison = disputeA.disputeId - disputeB.disputeId;
-          break;
-      }
-      
-      return disputeSortOrder === 'asc' ? comparison : -comparison;
-    });
-
-    return filtered;
-  };
-
-  // Quick filter handlers
-  const applyQuickFilter = (filter: 'my-assets' | 'licensed' | 'with-infringements' | 'high-revenue') => {
-    setFilterType('assets');
-    const newFilters = { ...assetFilters };
-    
-    if (filter === 'my-assets') {
-      newFilters.ownerFilter = 'mine';
-      newFilters.licenseStatus = 'all';
-      newFilters.infringementStatus = 'all';
-      newFilters.minRevenue = '';
-    } else if (filter === 'licensed') {
-      newFilters.ownerFilter = 'all';
-      newFilters.licenseStatus = 'licensed';
-      newFilters.infringementStatus = 'all';
-      newFilters.minRevenue = '';
-    } else if (filter === 'with-infringements') {
-      newFilters.ownerFilter = 'all';
-      newFilters.licenseStatus = 'all';
-      newFilters.infringementStatus = 'any'; // Shows all assets with any infringements
-      newFilters.minRevenue = '';
-    } else if (filter === 'high-revenue') {
-      newFilters.ownerFilter = 'all';
-      newFilters.licenseStatus = 'all';
-      newFilters.infringementStatus = 'all';
-      newFilters.minRevenue = '0.1';
-    }
-    
-    setAssetFilters(newFilters);
-  };
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoMonitoringEnabled, selectedInfringementTokenId, monitoringInterval]);
 
   // Check backend status
   const checkBackendStatus = async () => {
@@ -3098,50 +2340,7 @@ export default function App({ thirdwebClient }: AppProps) {
     }
   };
 
-  // Gift IP function - kept for potential future use or API compatibility
-  // const giftIP = async (tokenId: number, recipient: string, giftMessage: string) => {
-  //   // Gift is essentially a transfer with a message
-  //   await transferIP(tokenId, recipient, true, giftMessage, false);
-  // };
-
-  // Show transfer approval dialog
-  const showTransferApproval = (tokenId: number, recipient: string, isGift: boolean, giftMessage: string) => {
-    const metadata = parsedMetadata.get(tokenId) || {};
-    const assetName = metadata.name || `IP Asset #${tokenId}`;
-    
-    setTransferApproval({
-      show: true,
-      tokenId,
-      recipient,
-      isGift,
-      giftMessage,
-      assetName
-    });
-  };
-
-  // Confirm and execute transfer
-  const confirmTransfer = async () => {
-    if (transferApproval.tokenId === null) return;
-    
-    await transferIP(
-      transferApproval.tokenId,
-      transferApproval.recipient,
-      transferApproval.isGift,
-      transferApproval.giftMessage,
-      true // confirmed
-    );
-    
-    // Close approval dialog
-    setTransferApproval({
-      show: false,
-      tokenId: null,
-      recipient: '',
-      isGift: false,
-      giftMessage: ''
-    });
-  };
-
-  const transferIP = async (tokenId: number, recipient: string, isGift: boolean = false, giftMessage: string = '', confirmed: boolean = false) => {
+  const transferIP = async (tokenId: number, recipient: string) => {
     if (!account?.address) {
       notifyError("Wallet Not Connected", "Please connect your wallet");
       return;
@@ -3167,12 +2366,6 @@ export default function App({ thirdwebClient }: AppProps) {
 
     if (asset.owner.toLowerCase() !== account.address.toLowerCase()) {
       notifyError("Not Owner", "You are not the owner of this IP asset");
-      return;
-    }
-
-    // Show approval dialog if not confirmed
-    if (!confirmed) {
-      showTransferApproval(tokenId, recipient, isGift, giftMessage);
       return;
     }
 
@@ -3251,62 +2444,13 @@ export default function App({ thirdwebClient }: AppProps) {
         account: account,
       });
 
-      const receipt = await waitForReceipt({
+      await waitForReceipt({
         client: thirdwebClient,
         chain: defineChain(mantleTestnet.id),
         transactionHash: transaction.transactionHash,
       });
 
-      // Record transfer in history
-      const metadata = parsedMetadata.get(tokenId) || {};
-      const assetName = metadata.name || `IP Asset #${tokenId}`;
-      const transferTimestamp = Date.now();
-      
-      const newTransfer: TransferRecord = {
-        id: `transfer-${tokenId}-${transferTimestamp}`,
-        tokenId,
-        from: account.address,
-        to: recipient,
-        timestamp: transferTimestamp,
-        txHash: transaction.transactionHash,
-        blockNumber: receipt.blockNumber,
-        isGift: isGift,
-        giftMessage: isGift ? giftMessage : undefined,
-        assetName
-      };
-      setTransferHistory(prev => [newTransfer, ...prev]);
-      
-      // Add to activity history
-      const transferDescription = isGift 
-        ? `Gifted "${assetName}" to ${recipient.substring(0, 10)}...${recipient.substring(recipient.length - 8)}${giftMessage ? ` with message: "${giftMessage}"` : ''}`
-        : `Transferred "${assetName}" from ${account.address.substring(0, 10)}...${account.address.substring(account.address.length - 8)} to ${recipient.substring(0, 10)}...${recipient.substring(recipient.length - 8)}`;
-      
-      const newActivity: Activity = {
-        id: `transfer-${tokenId}-${transferTimestamp}`,
-        type: 'transfer',
-        timestamp: transferTimestamp,
-        assetId: tokenId,
-        assetName,
-        description: transferDescription,
-        txHash: transaction.transactionHash,
-        blockNumber: receipt.blockNumber,
-        actor: account.address
-      };
-      setActivities(prev => [newActivity, ...prev]);
-      
-      // Reset form
-      setTransferForm({
-        tokenId: '',
-        recipient: '',
-        isGift: false,
-        giftMessage: ''
-      });
-
-      const successMessage = isGift
-        ? `IP asset #${tokenId} "${assetName}" has been gifted to ${recipient.substring(0, 10)}...${recipient.substring(recipient.length - 8)}`
-        : `IP asset #${tokenId} "${assetName}" has been transferred to ${recipient.substring(0, 10)}...${recipient.substring(recipient.length - 8)}`;
-      
-      notifySuccess('Transfer Successful', successMessage);
+      notifySuccess('Transfer Successful', `IP asset #${tokenId} has been transferred to ${recipient.substring(0, 10)}...${recipient.substring(recipient.length - 8)}`);
       await loadContractData();
     } catch (error: any) {
       console.error("Error transferring IP:", error);
@@ -3818,18 +2962,6 @@ export default function App({ thirdwebClient }: AppProps) {
             >
               ⚖️ Arbitration
             </button>
-            <button 
-              className={`nav-tab ${activeTab === 'activity' ? 'active' : ''}`}
-              onClick={() => setActiveTab('activity')}
-            >
-              📜 Activity History
-            </button>
-            <button 
-              className={`nav-tab ${activeTab === 'transfer' ? 'active' : ''}`}
-              onClick={() => setActiveTab('transfer')}
-            >
-              🔄 Transfer & Gift
-            </button>
           </div>
 
           {/* Tab Content */}
@@ -3841,7 +2973,7 @@ export default function App({ thirdwebClient }: AppProps) {
                 licenses={licenses}
                 metadata={parsedMetadata}
                 userAddress={account?.address}
-                onTransferIP={(tokenId, recipient) => transferIP(tokenId, recipient, false, '')}
+                onTransferIP={transferIP}
               />
             )}
 
@@ -4331,6 +3463,142 @@ export default function App({ thirdwebClient }: AppProps) {
                 placeholder="0.001"
             />
           </div>
+
+          {/* Royalty Calculation Preview */}
+          {royaltyBreakdown && (
+            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+              <div style={{
+                padding: '1rem',
+                backgroundColor: 'var(--color-info-bg, #d1ecf1)',
+                border: '1px solid var(--color-info-border, #0c5460)',
+                borderRadius: '8px',
+                marginTop: '0.5rem'
+              }}>
+                <h3 style={{
+                  margin: '0 0 1rem 0',
+                  fontSize: '1rem',
+                  fontWeight: 600,
+                  color: 'var(--color-info-text, #0c5460)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}>
+                  🧮 Automated Royalty Calculation Preview
+                </h3>
+                
+                <div style={{
+                  display: 'grid',
+                  gap: '0.75rem',
+                  fontSize: '0.875rem'
+                }}>
+                  {/* Total Payment */}
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    padding: '0.5rem',
+                    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                    borderRadius: '4px',
+                    fontWeight: 600
+                  }}>
+                    <span>Total Payment:</span>
+                    <span>{royaltyBreakdown.totalAmount} MNT</span>
+                  </div>
+
+                  {/* Platform Fee */}
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    padding: '0.5rem',
+                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                    borderRadius: '4px'
+                  }}>
+                    <span>🏛️ Platform Fee (2.5%):</span>
+                    <span>{royaltyBreakdown.platformFee.toFixed(6)} MNT</span>
+                  </div>
+
+                  {/* Remaining After Fee */}
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    padding: '0.5rem',
+                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                    borderRadius: '4px',
+                    borderTop: '1px solid rgba(0,0,0,0.1)',
+                    borderBottom: '1px solid rgba(0,0,0,0.1)',
+                    marginTop: '0.25rem',
+                    marginBottom: '0.25rem'
+                  }}>
+                    <span>💰 Available for Distribution:</span>
+                    <span>{royaltyBreakdown.remainingAfterFee.toFixed(6)} MNT</span>
+                  </div>
+
+                  {/* License Royalties */}
+                  {royaltyBreakdown.licenseRoyalties.length > 0 && (
+                    <>
+                      <div style={{
+                        marginTop: '0.5rem',
+                        paddingTop: '0.5rem',
+                        borderTop: '1px solid rgba(0,0,0,0.2)'
+                      }}>
+                        <strong style={{ fontSize: '0.8rem', opacity: 0.9 }}>License Holder Royalties:</strong>
+                      </div>
+                      {royaltyBreakdown.licenseRoyalties.map((lr, idx) => (
+                        <div
+                          key={idx}
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            padding: '0.5rem',
+                            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                            borderRadius: '4px',
+                            fontSize: '0.8rem'
+                          }}
+                        >
+                          <span>
+                            🎫 License #{lr.licenseId} ({lr.royaltyPercentage}%):
+                            <br />
+                            <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>
+                              {lr.licensee.substring(0, 6)}...{lr.licensee.substring(38)}
+                            </span>
+                          </span>
+                          <span style={{ fontWeight: 500 }}>
+                            {lr.amount.toFixed(6)} MNT
+                          </span>
+                        </div>
+                      ))}
+                    </>
+                  )}
+
+                  {/* IP Owner Share */}
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    padding: '0.75rem',
+                    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+                    borderRadius: '4px',
+                    marginTop: '0.5rem',
+                    fontWeight: 600,
+                    borderTop: '2px solid rgba(0,0,0,0.1)'
+                  }}>
+                    <span>👤 IP Owner Share:</span>
+                    <span>{royaltyBreakdown.ipOwnerShare.toFixed(6)} MNT</span>
+                  </div>
+
+                  {/* Summary */}
+                  <div style={{
+                    marginTop: '0.5rem',
+                    padding: '0.5rem',
+                    fontSize: '0.75rem',
+                    opacity: 0.8,
+                    fontStyle: 'italic',
+                    textAlign: 'center'
+                  }}>
+                    💡 Royalties are automatically calculated and distributed on-chain
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
             
             <button 
               className="btn btn-primary btn-full"
@@ -4424,9 +3692,8 @@ export default function App({ thirdwebClient }: AppProps) {
                   ) : (
                     <div style={{
                       fontSize: '0.875rem',
-                      color: '#0c5460',
-                      fontWeight: 500,
-                      opacity: 1
+                      color: 'var(--color-info-text, #0c5460)',
+                      opacity: 0.9
                     }}>
                       ℹ️ No accumulated royalties available for this IP asset. Royalties accumulate when revenue is paid to this IP.
                     </div>
@@ -4447,31 +3714,17 @@ export default function App({ thirdwebClient }: AppProps) {
                           paddingTop: '0.75rem',
                           borderTop: '1px solid rgba(0,0,0,0.1)'
                         }}>
-                          <strong style={{ 
-                            fontSize: '0.8rem',
-                            color: accumulatedRoyalties.get(claimTokenId)! > 0n
-                              ? 'var(--color-success-text, #155724)'
-                              : 'var(--color-info-text, #0c5460)'
-                          }}>Your Licenses:</strong>
+                          <strong style={{ fontSize: '0.8rem' }}>Your Licenses:</strong>
                           {userLicenses.map(([licenseId, license]) => (
                             <div key={licenseId} style={{
                               marginTop: '0.5rem',
                               padding: '0.5rem',
                               backgroundColor: 'rgba(255, 255, 255, 0.3)',
                               borderRadius: '4px',
-                              fontSize: '0.8rem',
-                              color: accumulatedRoyalties.get(claimTokenId)! > 0n
-                                ? 'var(--color-success-text, #155724)'
-                                : 'var(--color-info-text, #0c5460)'
+                              fontSize: '0.8rem'
                             }}>
-                              <div style={{ fontWeight: 500 }}>🎫 License #{licenseId}</div>
-                              <div style={{ 
-                                opacity: 0.9, 
-                                marginTop: '0.25rem',
-                                color: accumulatedRoyalties.get(claimTokenId)! > 0n
-                                  ? 'var(--color-success-text, #155724)'
-                                  : 'var(--color-info-text, #0c5460)'
-                              }}>
+                              <div>🎫 License #{licenseId}</div>
+                              <div style={{ opacity: 0.8, marginTop: '0.25rem' }}>
                                 Royalty Rate: {Number(license.royaltyPercentage) / 100}% | 
                                 {license.isActive ? ' ✅ Active' : ' ❌ Inactive'}
                               </div>
@@ -4493,6 +3746,373 @@ export default function App({ thirdwebClient }: AppProps) {
             >
               {loading ? '⏳ Claiming...' : '🏆 Claim Royalties'}
             </button>
+                </div>
+                </section>
+              </>
+            )}
+
+            {/* Infringement Detection Tab */}
+            {activeTab === 'infringement' && (
+              <>
+                <section className="section">
+                  <div className="section-header">
+                    <span className="section-icon">🔍</span>
+                    <h2 className="section-title">Infringement Detection & Monitoring</h2>
+                  </div>
+
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label className="form-label">🎯 Select IP Asset to Monitor</label>
+                      <select
+                        className="form-select"
+                        value={selectedInfringementTokenId}
+                        onChange={(e) => {
+                          const tokenId = Number(e.target.value);
+                          setSelectedInfringementTokenId(tokenId);
+                          loadInfringementStatus(tokenId);
+                        }}
+                      >
+                        {Array.from(ipAssets.keys()).map((id) => {
+                          const asset = ipAssets.get(id);
+                          const metadata = parsedMetadata.get(id) || { name: "Unknown" };
+                          return (
+                            <option key={id} value={id}>
+                              #{id} - {metadata.name || asset?.ipHash.substring(0, 10) || 'Unknown'}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </div>
+
+                    {/* Auto-Monitoring Controls */}
+                    <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                      <div style={{
+                        padding: '1rem',
+                        backgroundColor: 'var(--color-info-bg, #d1ecf1)',
+                        border: '1px solid var(--color-info-border, #0c5460)',
+                        borderRadius: '8px'
+                      }}>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '1rem',
+                          marginBottom: '0.75rem'
+                        }}>
+                          <div style={{ flex: 1 }}>
+                            <label style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.5rem',
+                              cursor: 'pointer',
+                              fontWeight: 500
+                            }}>
+                              <input
+                                type="checkbox"
+                                checked={autoMonitoringEnabled}
+                                onChange={(e) => setAutoMonitoringEnabled(e.target.checked)}
+                                style={{ cursor: 'pointer' }}
+                              />
+                              <span>🔄 Enable Auto-Monitoring</span>
+                            </label>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => loadInfringementStatus(selectedInfringementTokenId)}
+                            disabled={infringementLoading}
+                            style={{
+                              padding: '0.5rem 1rem',
+                              backgroundColor: 'var(--color-primary, #007bff)',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '6px',
+                              cursor: infringementLoading ? 'not-allowed' : 'pointer',
+                              fontWeight: 500
+                            }}
+                          >
+                            {infringementLoading ? '⏳ Checking...' : '🔍 Check Now'}
+                          </button>
+                        </div>
+                        {autoMonitoringEnabled && (
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            fontSize: '0.875rem',
+                            opacity: 0.8
+                          }}>
+                            <label>Check Interval:</label>
+                            <select
+                              value={monitoringInterval}
+                              onChange={(e) => setMonitoringInterval(Number(e.target.value))}
+                              style={{
+                                padding: '0.25rem 0.5rem',
+                                borderRadius: '4px',
+                                border: '1px solid rgba(0,0,0,0.2)',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              <option value={60000}>Every 1 minute</option>
+                              <option value={300000}>Every 5 minutes</option>
+                              <option value={600000}>Every 10 minutes</option>
+                              <option value={1800000}>Every 30 minutes</option>
+                              <option value={3600000}>Every 1 hour</option>
+                            </select>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Infringement Status Display */}
+                    {infringementData.has(selectedInfringementTokenId) && (() => {
+                      const infringement = infringementData.get(selectedInfringementTokenId)!;
+                      const severity = calculateSeverity(infringement);
+                      const recommendations = getRecommendedActions(infringement);
+                      
+                      const severityColors = {
+                        low: { bg: '#d4edda', border: '#28a745', text: '#155724' },
+                        medium: { bg: '#fff3cd', border: '#ffc107', text: '#856404' },
+                        high: { bg: '#f8d7da', border: '#dc3545', text: '#721c24' },
+                        critical: { bg: '#f5c6cb', border: '#dc3545', text: '#721c24' }
+                      };
+
+                      const severityConfig = severityColors[severity];
+
+                      return (
+                        <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                          {/* Status Summary */}
+                          <div style={{
+                            padding: '1.5rem',
+                            backgroundColor: severityConfig.bg,
+                            border: `2px solid ${severityConfig.border}`,
+                            borderRadius: '8px',
+                            marginBottom: '1rem'
+                          }}>
+                            <div style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              marginBottom: '1rem'
+                            }}>
+                              <div>
+                                <h3 style={{
+                                  margin: 0,
+                                  fontSize: '1.25rem',
+                                  fontWeight: 700,
+                                  color: severityConfig.text,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '0.5rem'
+                                }}>
+                                  {severity === 'critical' ? '🚨' : severity === 'high' ? '⚠️' : severity === 'medium' ? '⚡' : '✅'}
+                                  Infringement Status: {severity.toUpperCase()}
+                                </h3>
+                                <p style={{ margin: '0.5rem 0 0 0', color: severityConfig.text, opacity: 0.9 }}>
+                                  {infringement.totalInfringements === 0 
+                                    ? 'No infringements detected'
+                                    : `${infringement.totalInfringements} potential infringement(s) found`
+                                  }
+                                </p>
+                              </div>
+                              <div style={{
+                                fontSize: '2rem',
+                                fontWeight: 700,
+                                color: severityConfig.text
+                              }}>
+                                {infringement.totalInfringements}
+                              </div>
+                            </div>
+
+                            <div style={{
+                              display: 'grid',
+                              gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                              gap: '1rem',
+                              marginTop: '1rem'
+                            }}>
+                              <div style={{
+                                padding: '0.75rem',
+                                backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                                borderRadius: '6px'
+                              }}>
+                                <div style={{ fontSize: '0.75rem', opacity: 0.8 }}>In-Network</div>
+                                <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>
+                                  {infringement.inNetworkInfringements.length}
+                                </div>
+                              </div>
+                              <div style={{
+                                padding: '0.75rem',
+                                backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                                borderRadius: '6px'
+                              }}>
+                                <div style={{ fontSize: '0.75rem', opacity: 0.8 }}>External</div>
+                                <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>
+                                  {infringement.externalInfringements.length}
+                                </div>
+                              </div>
+                              <div style={{
+                                padding: '0.75rem',
+                                backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                                borderRadius: '6px'
+                              }}>
+                                <div style={{ fontSize: '0.75rem', opacity: 0.8 }}>Last Checked</div>
+                                <div style={{ fontSize: '0.875rem', fontWeight: 500 }}>
+                                  {infringement.lastChecked 
+                                    ? new Date(infringement.lastChecked).toLocaleString()
+                                    : 'Never'
+                                  }
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* In-Network Infringements */}
+                          {infringement.inNetworkInfringements.length > 0 && (
+                            <div style={{
+                              marginBottom: '1rem',
+                              padding: '1rem',
+                              backgroundColor: 'var(--color-warning-bg, #fff3cd)',
+                              border: '1px solid var(--color-warning-border, #ffc107)',
+                              borderRadius: '8px'
+                            }}>
+                              <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '1rem', fontWeight: 600 }}>
+                                🔗 In-Network Infringements ({infringement.inNetworkInfringements.length})
+                              </h4>
+                              {infringement.inNetworkInfringements.map((inf, idx) => (
+                                <div key={idx} style={{
+                                  padding: '0.75rem',
+                                  marginBottom: '0.5rem',
+                                  backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                                  borderRadius: '6px',
+                                  fontSize: '0.875rem'
+                                }}>
+                                  <div style={{ fontWeight: 500, marginBottom: '0.25rem' }}>
+                                    {inf.url ? (
+                                      <a href={inf.url} target="_blank" rel="noopener noreferrer" style={{ color: '#007bff' }}>
+                                        {inf.url}
+                                      </a>
+                                    ) : (
+                                      `Infringement #${idx + 1}`
+                                    )}
+                                  </div>
+                                  {inf.similarity && (
+                                    <div style={{ opacity: 0.8 }}>
+                                      Similarity: {(inf.similarity * 100).toFixed(1)}%
+                                    </div>
+                                  )}
+                                  {inf.detected_at && (
+                                    <div style={{ opacity: 0.8, fontSize: '0.75rem' }}>
+                                      Detected: {new Date(inf.detected_at).toLocaleString()}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* External Infringements */}
+                          {infringement.externalInfringements.length > 0 && (
+                            <div style={{
+                              marginBottom: '1rem',
+                              padding: '1rem',
+                              backgroundColor: 'var(--color-danger-bg, #f8d7da)',
+                              border: '1px solid var(--color-danger-border, #dc3545)',
+                              borderRadius: '8px'
+                            }}>
+                              <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '1rem', fontWeight: 600 }}>
+                                🌐 External Platform Infringements ({infringement.externalInfringements.length})
+                              </h4>
+                              {infringement.externalInfringements.map((inf, idx) => (
+                                <div key={idx} style={{
+                                  padding: '0.75rem',
+                                  marginBottom: '0.5rem',
+                                  backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                                  borderRadius: '6px',
+                                  fontSize: '0.875rem'
+                                }}>
+                                  <div style={{ fontWeight: 500, marginBottom: '0.25rem' }}>
+                                    {inf.url ? (
+                                      <a href={inf.url} target="_blank" rel="noopener noreferrer" style={{ color: '#007bff' }}>
+                                        {inf.url}
+                                      </a>
+                                    ) : (
+                                      `External Infringement #${idx + 1}`
+                                    )}
+                                  </div>
+                                  {inf.platform && (
+                                    <div style={{ opacity: 0.8 }}>
+                                      Platform: {inf.platform}
+                                    </div>
+                                  )}
+                                  {inf.similarity && (
+                                    <div style={{ opacity: 0.8 }}>
+                                      Similarity: {(inf.similarity * 100).toFixed(1)}%
+                                    </div>
+                                  )}
+                                  {inf.detected_at && (
+                                    <div style={{ opacity: 0.8, fontSize: '0.75rem' }}>
+                                      Detected: {new Date(inf.detected_at).toLocaleString()}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Recommended Actions */}
+                          <div style={{
+                            padding: '1rem',
+                            backgroundColor: 'var(--color-info-bg, #d1ecf1)',
+                            border: '1px solid var(--color-info-border, #0c5460)',
+                            borderRadius: '8px'
+                          }}>
+                            <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '1rem', fontWeight: 600 }}>
+                              💡 Recommended Actions
+                            </h4>
+                            <ul style={{ margin: 0, paddingLeft: '1.5rem' }}>
+                              {recommendations.map((action, idx) => (
+                                <li key={idx} style={{ marginBottom: '0.5rem', fontSize: '0.875rem' }}>
+                                  {action}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+
+                          {/* Credits Info */}
+                          {infringement.credits && (
+                            <div style={{
+                              marginTop: '1rem',
+                              padding: '0.75rem',
+                              backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                              borderRadius: '6px',
+                              fontSize: '0.875rem',
+                              opacity: 0.8
+                            }}>
+                              <strong>Yakoa Credits:</strong> {infringement.credits.remaining || 'N/A'} remaining
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+
+                    {/* No Data Message */}
+                    {!infringementData.has(selectedInfringementTokenId) && !infringementLoading && (
+                      <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                        <div style={{
+                          padding: '2rem',
+                          textAlign: 'center',
+                          backgroundColor: 'var(--color-info-bg, #d1ecf1)',
+                          border: '1px solid var(--color-info-border, #0c5460)',
+                          borderRadius: '8px',
+                          color: 'var(--color-info-text, #0c5460)'
+                        }}>
+                          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔍</div>
+                          <h3 style={{ margin: '0 0 0.5rem 0' }}>No Infringement Data</h3>
+                          <p style={{ margin: 0, opacity: 0.8 }}>
+                            Click "Check Now" to scan for potential infringements of this IP asset.
+                            {autoMonitoringEnabled && ' Auto-monitoring is enabled and will check periodically.'}
+                          </p>
+                        </div>
+                      </div>
+                    )}
                 </div>
                 </section>
               </>
@@ -4942,20 +4562,12 @@ export default function App({ thirdwebClient }: AppProps) {
                 <section className="section">
                   <div className="section-header">
                     <span className="section-icon">📋</span>
-                    <h2 className="section-title">
-                      All Disputes
-                      {(() => {
-                        const filtered = filterAndSortDisputes(disputesMap);
-                        return filtered.length !== disputesMap.size ? ` (${filtered.length} of ${disputesMap.size})` : ` (${disputesMap.size} Total)`;
-                      })()}
-                    </h2>
+                    <h2 className="section-title">All Disputes ({disputesMap.size} Total)</h2>
                   </div>
           
                   <div className="grid grid-2">
-                    {(() => {
-                      const filtered = filterAndSortDisputes(disputesMap);
-                      return filtered.length > 0 ? (
-                      filtered.map(([id, dispute]) => {
+                    {disputesMap.size > 0 ? (
+                      Array.from(disputesMap.entries()).map(([id, dispute]) => {
                         const metadata = parsedMetadata.get(dispute.tokenId) || { name: "Unknown" };
                         const disputeDate = new Date(Number(dispute.timestamp) * 1000).toLocaleDateString();
                         
@@ -5067,17 +4679,10 @@ export default function App({ thirdwebClient }: AppProps) {
                     ) : (
                       <div className="card" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem' }}>
                         <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📋</div>
-                        <h3 style={{ marginBottom: '0.5rem', color: 'var(--color-text-secondary)' }}>
-                          {disputesMap.size > 0 ? 'No Disputes Match Filters' : 'No Disputes Yet'}
-                        </h3>
-                        <p style={{ color: 'var(--color-text-tertiary)' }}>
-                          {disputesMap.size > 0 
-                            ? 'Try adjusting your search or filter criteria.'
-                            : 'No disputes have been raised yet.'}
-                        </p>
+                        <h3 style={{ marginBottom: '0.5rem', color: 'var(--color-text-secondary)' }}>No Disputes Yet</h3>
+                        <p style={{ color: 'var(--color-text-tertiary)' }}>No disputes have been raised yet.</p>
                       </div>
-                    );
-                    })()}
+                    )}
                   </div>
                 </section>
 
@@ -5154,1094 +4759,17 @@ export default function App({ thirdwebClient }: AppProps) {
                 </section>
               </>
             )}
-
-            {/* Activity History Tab */}
-            {activeTab === 'activity' && (
-              <section className="section section-full">
-                <div className="section-header">
-                  <span className="section-icon">📜</span>
-                  <h2 className="section-title">
-                    Activity History & Transaction Log
-                    {(() => {
-                      const filtered = filterActivities(activities);
-                      return filtered.length !== activities.length ? ` (${filtered.length} of ${activities.length})` : ` (${activities.length} Total)`;
-                    })()}
-                  </h2>
-                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
-                    <button
-                      className="btn btn-secondary"
-                      onClick={exportToCSV}
-                      disabled={activities.length === 0}
-                    >
-                      📥 Export CSV
-                    </button>
-                    <button
-                      className="btn btn-secondary"
-                      onClick={exportToPDF}
-                      disabled={activities.length === 0}
-                    >
-                      📄 Export PDF
-                    </button>
-                    <button
-                      className="btn btn-primary"
-                      onClick={loadActivityHistory}
-                      disabled={activityLoading || !account?.address}
-                    >
-                      {activityLoading ? '⏳ Loading...' : '🔄 Refresh'}
-                    </button>
-                  </div>
           </div>
-
-                {/* Filters */}
-                <div className="form-grid" style={{ marginBottom: '1.5rem', padding: '1rem', backgroundColor: 'var(--color-bg-secondary)', borderRadius: '8px' }}>
-                  <div className="form-group">
-                    <label className="form-label">🔍 Search</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder="Search activities..."
-                      value={activityFilters.searchQuery}
-                      onChange={(e) => setActivityFilters({ ...activityFilters, searchQuery: e.target.value })}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Type</label>
-                    <select
-                      className="form-select"
-                      value={activityFilters.type}
-                      onChange={(e) => setActivityFilters({ ...activityFilters, type: e.target.value as any })}
-                    >
-                      <option value="all">All Types</option>
-                      <option value="registration">📝 Registration</option>
-                      <option value="license">🎫 License</option>
-                      <option value="payment">💰 Payment</option>
-                      <option value="dispute">⚠️ Dispute</option>
-                      <option value="transfer">🔄 Transfer</option>
-                      <option value="royalty">💎 Royalty</option>
-                      <option value="arbitration">⚖️ Arbitration</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Asset ID</label>
-                    <input
-                      type="number"
-                      className="form-input"
-                      placeholder="Filter by asset ID..."
-                      value={activityFilters.assetId}
-                      onChange={(e) => setActivityFilters({ ...activityFilters, assetId: e.target.value })}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Date From</label>
-                    <input
-                      type="date"
-                      className="form-input"
-                      value={activityFilters.dateFrom}
-                      onChange={(e) => setActivityFilters({ ...activityFilters, dateFrom: e.target.value })}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Date To</label>
-                    <input
-                      type="date"
-                      className="form-input"
-                      value={activityFilters.dateTo}
-                      onChange={(e) => setActivityFilters({ ...activityFilters, dateTo: e.target.value })}
-                    />
-                  </div>
-                  <div className="form-group" style={{ display: 'flex', alignItems: 'flex-end' }}>
-                    <button
-                      className="btn btn-secondary btn-full"
-                      onClick={() => setActivityFilters({
-                        type: 'all',
-                        dateFrom: '',
-                        dateTo: '',
-                        assetId: '',
-                        searchQuery: ''
-                      })}
-                    >
-                      🗑️ Clear Filters
-                    </button>
-                  </div>
-                </div>
-
-                {/* Activity Timeline */}
-                {activityLoading ? (
-                  <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
-                    <div className="loading-spinner"></div>
-                    <p style={{ marginTop: '1rem' }}>Loading activity history...</p>
-                  </div>
-                ) : filterActivities(activities).length > 0 ? (
-                  <div className="activity-timeline">
-                    {filterActivities(activities).map((activity) => {
-                      const date = new Date(activity.timestamp);
-                      const typeIcons = {
-                        registration: '📝',
-                        license: '🎫',
-                        payment: '💰',
-                        dispute: '⚠️',
-                        transfer: '🔄',
-                        royalty: '💎',
-                        arbitration: '⚖️'
-                      };
-                      const typeColors = {
-                        registration: 'var(--color-primary, #06b6d4)',
-                        license: 'var(--color-success, #10b981)',
-                        payment: 'var(--color-warning, #f59e0b)',
-                        dispute: 'var(--color-error, #ef4444)',
-                        transfer: 'var(--color-info, #3b82f6)',
-                        royalty: 'var(--color-purple, #8b5cf6)',
-                        arbitration: 'var(--color-secondary, #6366f1)'
-                      };
-
-                      return (
-                        <div key={activity.id} className="activity-item" style={{
-                          display: 'flex',
-                          gap: '1rem',
-                          padding: '1rem',
-                          marginBottom: '1rem',
-                          backgroundColor: 'var(--color-bg-secondary)',
-                          borderRadius: '8px',
-                          borderLeft: `4px solid ${typeColors[activity.type]}`,
-                          position: 'relative'
-                        }}>
-                          <div style={{
-                            width: '40px',
-                            height: '40px',
-                            borderRadius: '50%',
-                            backgroundColor: typeColors[activity.type],
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '1.5rem',
-                            flexShrink: 0
-                          }}>
-                            {typeIcons[activity.type]}
-                          </div>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
-                              <div>
-                                <h4 style={{ margin: 0, marginBottom: '0.25rem', fontSize: '1rem', fontWeight: 600 }}>
-                                  {activity.description}
-                                </h4>
-                                {activity.assetName && (
-                                  <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
-                                    Asset: {activity.assetName} {activity.assetId && `(#${activity.assetId})`}
-                                  </p>
-                                )}
-                              </div>
-                              <div style={{ textAlign: 'right', fontSize: '0.875rem', color: 'var(--color-text-tertiary)' }}>
-                                <div>{date.toLocaleDateString()}</div>
-                                <div>{date.toLocaleTimeString()}</div>
-                              </div>
-                            </div>
-                            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', fontSize: '0.875rem' }}>
-                              {activity.actor && (
-                                <span style={{ color: 'var(--color-text-secondary)' }}>
-                                  👤 {activity.actor.slice(0, 10)}...{activity.actor.slice(-8)}
-                                </span>
-                              )}
-                              {activity.amount !== undefined && activity.amount > 0n && (
-                                <span style={{ color: 'var(--color-warning)', fontWeight: 600 }}>
-                                  💰 {formatEther(activity.amount)} MNT
-                                </span>
-                              )}
-                              {activity.status && (
-                                <span className={`badge ${activity.status === 'Resolved' ? 'badge-success' : 'badge-warning'}`}>
-                                  {activity.status}
-                                </span>
-                              )}
-                              {activity.txHash && (
-                                <a
-                                  href={`https://explorer.testnet.mantle.xyz/tx/${activity.txHash}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  style={{ color: 'var(--color-primary)', textDecoration: 'none' }}
-                                >
-                                  🔗 View Transaction
-                                </a>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
-                    <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📜</div>
-                    <h3 style={{ marginBottom: '0.5rem', color: 'var(--color-text-secondary)' }}>
-                      {activities.length > 0 ? 'No Activities Match Filters' : 'No Activity History Yet'}
-                    </h3>
-                    <p style={{ color: 'var(--color-text-tertiary)' }}>
-                      {activities.length > 0 
-                        ? 'Try adjusting your search or filter criteria.'
-                        : 'Activity history will appear here once you register IP assets, mint licenses, or perform other actions.'}
-                    </p>
-                  </div>
-                )}
-              </section>
-            )}
-
-            {/* Transfer & Gift Tab */}
-            {activeTab === 'transfer' && (
-              <section className="section section-full">
-                <div className="section-header">
-                  <span className="section-icon">🔄</span>
-                  <h2 className="section-title">Transfer & Gift IP Assets</h2>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button
-                      className={`btn ${transferMode === 'transfer' ? 'btn-primary' : 'btn-secondary'}`}
-                      onClick={() => setTransferMode('transfer')}
-                      style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
-                    >
-                      🔄 Transfer
-                    </button>
-                    <button
-                      className={`btn ${transferMode === 'gift' ? 'btn-primary' : 'btn-secondary'}`}
-                      onClick={() => setTransferMode('gift')}
-                      style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
-                    >
-                      🎁 Gift
-                    </button>
-                    <button
-                      className={`btn ${transferMode === 'history' ? 'btn-primary' : 'btn-secondary'}`}
-                      onClick={() => setTransferMode('history')}
-                      style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
-                    >
-                      📜 History
-                    </button>
-                    <button
-                      className="btn btn-secondary"
-                      onClick={loadTransferHistory}
-                      disabled={transferLoading || !account?.address}
-                      style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
-                    >
-                      {transferLoading ? '⏳ Loading...' : '🔄 Refresh'}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Transfer Form */}
-                {transferMode === 'transfer' && (
-                  <div className="card" style={{ marginBottom: '2rem' }}>
-                    <h3 style={{ marginBottom: '1rem', color: 'var(--color-text-primary)' }}>Transfer IP Asset</h3>
-                    <p style={{ marginBottom: '1.5rem', color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>
-                      Transfer ownership of an IP asset to another wallet address. The recipient will become the new owner.
-                    </p>
-                    <div className="form-grid">
-                      <div className="form-group">
-                        <label className="form-label">IP Asset ID</label>
-                        <input
-                          type="number"
-                          className="form-input"
-                          placeholder="Enter IP asset token ID..."
-                          value={transferForm.tokenId}
-                          onChange={(e) => setTransferForm({ ...transferForm, tokenId: e.target.value })}
-                        />
-                        {transferForm.tokenId && (() => {
-                          const tokenId = parseInt(transferForm.tokenId);
-                          const asset = ipAssets.get(tokenId);
-                          const metadata = parsedMetadata.get(tokenId);
-                          if (asset) {
-                            const isOwner = asset.owner.toLowerCase() === account?.address?.toLowerCase();
-                            return (
-                              <div style={{ marginTop: '0.5rem', padding: '0.75rem', backgroundColor: 'var(--color-bg-secondary)', borderRadius: '4px' }}>
-                                <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
-                                  {metadata?.name || `IP Asset #${tokenId}`}
-                                </div>
-                                <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
-                                  Owner: {asset.owner.slice(0, 10)}...{asset.owner.slice(-8)}
-                                </div>
-                                {!isOwner && (
-                                  <div style={{ marginTop: '0.5rem', color: 'var(--color-error)', fontSize: '0.85rem' }}>
-                                    ⚠️ You are not the owner of this IP asset
-                                  </div>
-                                )}
-                                {asset.isDisputed && (
-                                  <div style={{ marginTop: '0.5rem', color: 'var(--color-error)', fontSize: '0.85rem' }}>
-                                    ⚠️ This IP asset has active disputes and cannot be transferred
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          }
-                          return null;
-                        })()}
-                      </div>
-                      <div className="form-group">
-                        <label className="form-label">Recipient Address</label>
-                        <input
-                          type="text"
-                          className="form-input"
-                          placeholder="0x..."
-                          value={transferForm.recipient}
-                          onChange={(e) => setTransferForm({ ...transferForm, recipient: e.target.value })}
-                        />
-                        <small style={{ color: 'var(--color-text-tertiary)', marginTop: '0.25rem', display: 'block' }}>
-                          Enter the Ethereum address of the recipient
-                        </small>
-                      </div>
-                    </div>
-                    <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.5rem' }}>
-                      <button
-                        className="btn btn-primary"
-                        onClick={async () => {
-                          const tokenId = parseInt(transferForm.tokenId);
-                          if (!tokenId || !transferForm.recipient) {
-                            notifyError("Invalid Input", "Please enter both IP asset ID and recipient address");
-                            return;
-                          }
-                          await transferIP(tokenId, transferForm.recipient, false, '', false);
-                        }}
-                        disabled={loading || !account?.address}
-                      >
-                        {loading ? '⏳ Transferring...' : '🔄 Transfer IP Asset'}
-                      </button>
-                      <button
-                        className="btn btn-secondary"
-                        onClick={() => setTransferForm({ tokenId: '', recipient: '', isGift: false, giftMessage: '' })}
-                      >
-                        Clear
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Gift Form */}
-                {transferMode === 'gift' && (
-                  <div className="card" style={{ marginBottom: '2rem' }}>
-                    <h3 style={{ marginBottom: '1rem', color: 'var(--color-text-primary)' }}>🎁 Gift IP Asset</h3>
-                    <p style={{ marginBottom: '1.5rem', color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>
-                      Gift an IP asset to someone with an optional message. This is a transfer with a personal touch!
-                    </p>
-                    <div className="form-grid">
-                      <div className="form-group">
-                        <label className="form-label">IP Asset ID</label>
-                        <input
-                          type="number"
-                          className="form-input"
-                          placeholder="Enter IP asset token ID..."
-                          value={transferForm.tokenId}
-                          onChange={(e) => setTransferForm({ ...transferForm, tokenId: e.target.value })}
-                        />
-                        {transferForm.tokenId && (() => {
-                          const tokenId = parseInt(transferForm.tokenId);
-                          const asset = ipAssets.get(tokenId);
-                          const metadata = parsedMetadata.get(tokenId);
-                          if (asset) {
-                            const isOwner = asset.owner.toLowerCase() === account?.address?.toLowerCase();
-                            return (
-                              <div style={{ marginTop: '0.5rem', padding: '0.75rem', backgroundColor: 'var(--color-bg-secondary)', borderRadius: '4px' }}>
-                                <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
-                                  {metadata?.name || `IP Asset #${tokenId}`}
-                                </div>
-                                <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
-                                  Owner: {asset.owner.slice(0, 10)}...{asset.owner.slice(-8)}
-                                </div>
-                                {!isOwner && (
-                                  <div style={{ marginTop: '0.5rem', color: 'var(--color-error)', fontSize: '0.85rem' }}>
-                                    ⚠️ You are not the owner of this IP asset
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          }
-                          return null;
-                        })()}
-                      </div>
-                      <div className="form-group">
-                        <label className="form-label">Recipient Address</label>
-                        <input
-                          type="text"
-                          className="form-input"
-                          placeholder="0x..."
-                          value={transferForm.recipient}
-                          onChange={(e) => setTransferForm({ ...transferForm, recipient: e.target.value })}
-                        />
-                      </div>
-                      <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                        <label className="form-label">Gift Message (Optional)</label>
-                        <textarea
-                          className="form-input"
-                          placeholder="Add a personal message for the recipient..."
-                          rows={4}
-                          value={transferForm.giftMessage}
-                          onChange={(e) => setTransferForm({ ...transferForm, giftMessage: e.target.value })}
-                        />
-                        <small style={{ color: 'var(--color-text-tertiary)', marginTop: '0.25rem', display: 'block' }}>
-                          This message will be recorded with the transfer in the history
-                        </small>
-                      </div>
-                    </div>
-                    <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.5rem' }}>
-                      <button
-                        className="btn btn-primary"
-                        onClick={async () => {
-                          const tokenId = parseInt(transferForm.tokenId);
-                          if (!tokenId || !transferForm.recipient) {
-                            notifyError("Invalid Input", "Please enter both IP asset ID and recipient address");
-                            return;
-                          }
-                          await transferIP(tokenId, transferForm.recipient, true, transferForm.giftMessage, false);
-                        }}
-                        disabled={loading || !account?.address}
-                      >
-                        {loading ? '⏳ Gifting...' : '🎁 Gift IP Asset'}
-                      </button>
-                      <button
-                        className="btn btn-secondary"
-                        onClick={() => setTransferForm({ tokenId: '', recipient: '', isGift: false, giftMessage: '' })}
-                      >
-                        Clear
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Transfer History */}
-                {transferMode === 'history' && (
-                  <>
-                    {/* Filters */}
-                    <div className="form-grid" style={{ marginBottom: '1.5rem', padding: '1rem', backgroundColor: 'var(--color-bg-secondary)', borderRadius: '8px' }}>
-                      <div className="form-group">
-                        <label className="form-label">Asset ID</label>
-                        <input
-                          type="number"
-                          className="form-input"
-                          placeholder="Filter by asset ID..."
-                          value={transferFilters.tokenId}
-                          onChange={(e) => setTransferFilters({ ...transferFilters, tokenId: e.target.value })}
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label className="form-label">From Address</label>
-                        <input
-                          type="text"
-                          className="form-input"
-                          placeholder="Filter by sender..."
-                          value={transferFilters.from}
-                          onChange={(e) => setTransferFilters({ ...transferFilters, from: e.target.value })}
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label className="form-label">To Address</label>
-                        <input
-                          type="text"
-                          className="form-input"
-                          placeholder="Filter by recipient..."
-                          value={transferFilters.to}
-                          onChange={(e) => setTransferFilters({ ...transferFilters, to: e.target.value })}
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label className="form-label">Date From</label>
-                        <input
-                          type="date"
-                          className="form-input"
-                          value={transferFilters.dateFrom}
-                          onChange={(e) => setTransferFilters({ ...transferFilters, dateFrom: e.target.value })}
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label className="form-label">Date To</label>
-                        <input
-                          type="date"
-                          className="form-input"
-                          value={transferFilters.dateTo}
-                          onChange={(e) => setTransferFilters({ ...transferFilters, dateTo: e.target.value })}
-                        />
-                      </div>
-                      <div className="form-group" style={{ display: 'flex', alignItems: 'center' }}>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                          <input
-                            type="checkbox"
-                            checked={transferFilters.showGiftsOnly}
-                            onChange={(e) => setTransferFilters({ ...transferFilters, showGiftsOnly: e.target.checked })}
-                          />
-                          Show Gifts Only
-                        </label>
-                      </div>
-                      <div className="form-group" style={{ display: 'flex', alignItems: 'flex-end' }}>
-                        <button
-                          className="btn btn-secondary btn-full"
-                          onClick={() => setTransferFilters({
-                            tokenId: '',
-                            from: '',
-                            to: '',
-                            dateFrom: '',
-                            dateTo: '',
-                            showGiftsOnly: false
-                          })}
-                        >
-                          Clear Filters
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Transfer History List */}
-                    {(() => {
-                      let filtered = transferHistory;
-
-                      // Apply filters
-                      if (transferFilters.tokenId) {
-                        const tokenId = parseInt(transferFilters.tokenId);
-                        filtered = filtered.filter(t => t.tokenId === tokenId);
-                      }
-                      if (transferFilters.from) {
-                        const from = transferFilters.from.toLowerCase();
-                        filtered = filtered.filter(t => t.from.toLowerCase().includes(from));
-                      }
-                      if (transferFilters.to) {
-                        const to = transferFilters.to.toLowerCase();
-                        filtered = filtered.filter(t => t.to.toLowerCase().includes(to));
-                      }
-                      if (transferFilters.dateFrom) {
-                        const fromDate = new Date(transferFilters.dateFrom).getTime();
-                        filtered = filtered.filter(t => t.timestamp >= fromDate);
-                      }
-                      if (transferFilters.dateTo) {
-                        const toDate = new Date(transferFilters.dateTo).getTime() + 86400000; // Add 24 hours
-                        filtered = filtered.filter(t => t.timestamp <= toDate);
-                      }
-                      if (transferFilters.showGiftsOnly) {
-                        filtered = filtered.filter(t => t.isGift);
-                      }
-
-                      return filtered.length > 0 ? (
-                        <div className="grid grid-1">
-                          {filtered.map((transfer) => (
-                            <div key={transfer.id} className="card hover-lift">
-                              <div className="card-header">
-                                <div>
-                                  <h3 className="card-title">
-                                    {transfer.isGift ? '🎁 Gift' : '🔄 Transfer'} - {transfer.assetName || `IP Asset #${transfer.tokenId}`}
-                                  </h3>
-                                  <p className="card-subtitle">Token #{transfer.tokenId}</p>
-                                </div>
-                                <div className="flex gap-2">
-                                  {transfer.isGift && <span className="badge badge-info">🎁 Gift</span>}
-                                </div>
-                              </div>
-                              <div className="card-body">
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
-                                  <div>
-                                    <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '0.25rem' }}>From</div>
-                                    <div style={{ fontFamily: 'monospace', fontSize: '0.9rem' }}>
-                                      {transfer.from.slice(0, 10)}...{transfer.from.slice(-8)}
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '0.25rem' }}>To</div>
-                                    <div style={{ fontFamily: 'monospace', fontSize: '0.9rem' }}>
-                                      {transfer.to.slice(0, 10)}...{transfer.to.slice(-8)}
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '0.25rem' }}>Date</div>
-                                    <div style={{ fontSize: '0.9rem' }}>
-                                      {new Date(transfer.timestamp).toLocaleString()}
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '0.25rem' }}>Block</div>
-                                    <div style={{ fontSize: '0.9rem' }}>
-                                      #{transfer.blockNumber.toString()}
-                                    </div>
-                                  </div>
-                                </div>
-                                {transfer.giftMessage && (
-                                  <div style={{ marginTop: '1rem', padding: '0.75rem', backgroundColor: 'var(--color-bg-secondary)', borderRadius: '4px', borderLeft: '3px solid var(--color-primary)' }}>
-                                    <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '0.25rem' }}>Gift Message</div>
-                                    <div style={{ fontSize: '0.95rem', fontStyle: 'italic' }}>"{transfer.giftMessage}"</div>
-                                  </div>
-                                )}
-                                <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                  <a
-                                    href={`https://explorer.testnet.mantle.xyz/tx/${transfer.txHash}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="btn btn-sm btn-secondary"
-                                  >
-                                    🔗 View Transaction
-                                  </a>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
-                          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔄</div>
-                          <h3 style={{ marginBottom: '0.5rem', color: 'var(--color-text-secondary)' }}>
-                            {transferHistory.length > 0 ? 'No Transfers Match Filters' : 'No Transfer History Yet'}
-                          </h3>
-                          <p style={{ color: 'var(--color-text-tertiary)' }}>
-                            {transferHistory.length > 0 
-                              ? 'Try adjusting your filter criteria.'
-                              : 'Transfer history will appear here once you transfer or gift IP assets.'}
-                          </p>
-                        </div>
-                      );
-                    })()}
-                  </>
-                )}
-              </section>
-            )}
-          </div>
-
-          {/* Search and Filter Section */}
-          <section className="section section-full">
-            <div className="section-header">
-              <span className="section-icon">🔍</span>
-              <h2 className="section-title">Search & Filter</h2>
-            </div>
-
-            {/* Global Search */}
-            <div className="form-grid" style={{ marginBottom: '1.5rem' }}>
-              <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                <label className="form-label">🔍 Global Search</label>
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="Search IP assets, licenses, disputes..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    style={{ flex: 1 }}
-                  />
-                  <select
-                    className="form-select"
-                    value={searchScope}
-                    onChange={(e) => setSearchScope(e.target.value as any)}
-                    style={{ width: '150px' }}
-                  >
-                    <option value="all">All</option>
-                    <option value="assets">IP Assets</option>
-                    <option value="licenses">Licenses</option>
-                    <option value="disputes">Disputes</option>
-                  </select>
-                  {searchQuery && (
-                    <button
-                      className="btn btn-secondary"
-                      onClick={() => setSearchQuery('')}
-                      style={{ padding: '0.5rem 1rem' }}
-                    >
-                      ✕ Clear
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Quick Filters */}
-            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-              <label className="form-label">⚡ Quick Filters</label>
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <button
-                  className={`btn ${assetFilters.ownerFilter === 'mine' ? 'btn-primary' : 'btn-secondary'}`}
-                  onClick={() => applyQuickFilter('my-assets')}
-                  style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
-                >
-                  👤 My Assets
-                </button>
-                <button
-                  className={`btn ${assetFilters.licenseStatus === 'licensed' ? 'btn-primary' : 'btn-secondary'}`}
-                  onClick={() => applyQuickFilter('licensed')}
-                  style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
-                >
-                  🎫 Licensed
-                </button>
-                <button
-                  className={`btn ${assetFilters.infringementStatus === 'any' ? 'btn-primary' : 'btn-secondary'}`}
-                  onClick={() => applyQuickFilter('with-infringements')}
-                  style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
-                >
-                  ⚠️ With Infringements
-                </button>
-                <button
-                  className={`btn ${assetFilters.minRevenue === '0.1' ? 'btn-primary' : 'btn-secondary'}`}
-                  onClick={() => applyQuickFilter('high-revenue')}
-                  style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
-                >
-                  💰 High Revenue
-                </button>
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => {
-                    setSearchQuery('');
-                    setAssetFilters({
-                      name: '',
-                      dateFrom: '',
-                      dateTo: '',
-                      minRevenue: '',
-                      maxRevenue: '',
-                      infringementStatus: 'all',
-                      licenseStatus: 'all',
-                      ownerFilter: 'all',
-                      disputed: 'all',
-                      encrypted: 'all'
-                    });
-                  }}
-                  style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
-                >
-                  🔄 Reset All
-                </button>
-              </div>
-            </div>
-
-            {/* Advanced Filters */}
-            <details className="form-group" style={{ marginBottom: '1.5rem' }}>
-              <summary className="form-label" style={{ cursor: 'pointer', fontWeight: 600 }}>
-                🔧 Advanced Filters
-              </summary>
-              <div className="form-grid" style={{ marginTop: '1rem' }}>
-                {/* Asset Filters */}
-                <div className="form-group">
-                  <label className="form-label">Filter Type</label>
-                  <select
-                    className="form-select"
-                    value={filterType}
-                    onChange={(e) => setFilterType(e.target.value as any)}
-                  >
-                    <option value="assets">IP Assets</option>
-                    <option value="licenses">Licenses</option>
-                    <option value="disputes">Disputes</option>
-                  </select>
-                </div>
-
-                {filterType === 'assets' && (
-                  <>
-                    <div className="form-group">
-                      <label className="form-label">Name</label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        placeholder="Filter by name..."
-                        value={assetFilters.name}
-                        onChange={(e) => setAssetFilters({ ...assetFilters, name: e.target.value })}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Date From</label>
-                      <input
-                        type="date"
-                        className="form-input"
-                        value={assetFilters.dateFrom}
-                        onChange={(e) => setAssetFilters({ ...assetFilters, dateFrom: e.target.value })}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Date To</label>
-                      <input
-                        type="date"
-                        className="form-input"
-                        value={assetFilters.dateTo}
-                        onChange={(e) => setAssetFilters({ ...assetFilters, dateTo: e.target.value })}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Min Revenue (MNT)</label>
-                      <input
-                        type="number"
-                        className="form-input"
-                        placeholder="0"
-                        value={assetFilters.minRevenue}
-                        onChange={(e) => setAssetFilters({ ...assetFilters, minRevenue: e.target.value })}
-                        step="0.001"
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Max Revenue (MNT)</label>
-                      <input
-                        type="number"
-                        className="form-input"
-                        placeholder="∞"
-                        value={assetFilters.maxRevenue}
-                        onChange={(e) => setAssetFilters({ ...assetFilters, maxRevenue: e.target.value })}
-                        step="0.001"
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Infringement Status</label>
-                      <select
-                        className="form-select"
-                        value={assetFilters.infringementStatus}
-                        onChange={(e) => setAssetFilters({ ...assetFilters, infringementStatus: e.target.value as any })}
-                      >
-                        <option value="all">All</option>
-                        <option value="none">No Infringements</option>
-                        <option value="any">With Infringements</option>
-                        <option value="low">Low</option>
-                        <option value="medium">Medium</option>
-                        <option value="high">High</option>
-                        <option value="critical">Critical</option>
-                      </select>
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">License Status</label>
-                      <select
-                        className="form-select"
-                        value={assetFilters.licenseStatus}
-                        onChange={(e) => setAssetFilters({ ...assetFilters, licenseStatus: e.target.value as any })}
-                      >
-                        <option value="all">All</option>
-                        <option value="licensed">Licensed</option>
-                        <option value="unlicensed">Unlicensed</option>
-                      </select>
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Owner</label>
-                      <select
-                        className="form-select"
-                        value={assetFilters.ownerFilter}
-                        onChange={(e) => setAssetFilters({ ...assetFilters, ownerFilter: e.target.value as any })}
-                      >
-                        <option value="all">All</option>
-                        <option value="mine">My Assets</option>
-                        <option value="others">Others' Assets</option>
-                      </select>
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Disputed</label>
-                      <select
-                        className="form-select"
-                        value={assetFilters.disputed}
-                        onChange={(e) => setAssetFilters({ ...assetFilters, disputed: e.target.value as any })}
-                      >
-                        <option value="all">All</option>
-                        <option value="disputed">Disputed</option>
-                        <option value="not-disputed">Not Disputed</option>
-                      </select>
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Encrypted</label>
-                      <select
-                        className="form-select"
-                        value={assetFilters.encrypted}
-                        onChange={(e) => setAssetFilters({ ...assetFilters, encrypted: e.target.value as any })}
-                      >
-                        <option value="all">All</option>
-                        <option value="encrypted">Encrypted</option>
-                        <option value="not-encrypted">Not Encrypted</option>
-                      </select>
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Sort By</label>
-                      <select
-                        className="form-select"
-                        value={assetSortBy}
-                        onChange={(e) => setAssetSortBy(e.target.value as any)}
-                      >
-                        <option value="date">Date</option>
-                        <option value="revenue">Revenue</option>
-                        <option value="name">Name</option>
-                        <option value="infringements">Infringements</option>
-                      </select>
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Sort Order</label>
-                      <select
-                        className="form-select"
-                        value={assetSortOrder}
-                        onChange={(e) => setAssetSortOrder(e.target.value as any)}
-                      >
-                        <option value="desc">Descending</option>
-                        <option value="asc">Ascending</option>
-                      </select>
-                    </div>
-                  </>
-                )}
-
-                {filterType === 'licenses' && (
-                  <>
-                    <div className="form-group">
-                      <label className="form-label">Name</label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        placeholder="Filter by name..."
-                        value={licenseFilters.name}
-                        onChange={(e) => setLicenseFilters({ ...licenseFilters, name: e.target.value })}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Date From</label>
-                      <input
-                        type="date"
-                        className="form-input"
-                        value={licenseFilters.dateFrom}
-                        onChange={(e) => setLicenseFilters({ ...licenseFilters, dateFrom: e.target.value })}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Date To</label>
-                      <input
-                        type="date"
-                        className="form-input"
-                        value={licenseFilters.dateTo}
-                        onChange={(e) => setLicenseFilters({ ...licenseFilters, dateTo: e.target.value })}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Status</label>
-                      <select
-                        className="form-select"
-                        value={licenseFilters.status}
-                        onChange={(e) => setLicenseFilters({ ...licenseFilters, status: e.target.value as any })}
-                      >
-                        <option value="all">All</option>
-                        <option value="active">Active</option>
-                        <option value="inactive">Inactive</option>
-                      </select>
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Commercial Use</label>
-                      <select
-                        className="form-select"
-                        value={licenseFilters.commercialUse}
-                        onChange={(e) => setLicenseFilters({ ...licenseFilters, commercialUse: e.target.value as any })}
-                      >
-                        <option value="all">All</option>
-                        <option value="commercial">Commercial</option>
-                        <option value="non-commercial">Non-Commercial</option>
-                      </select>
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Licensee</label>
-                      <select
-                        className="form-select"
-                        value={licenseFilters.licenseeFilter}
-                        onChange={(e) => setLicenseFilters({ ...licenseFilters, licenseeFilter: e.target.value as any })}
-                      >
-                        <option value="all">All</option>
-                        <option value="mine">My Licenses</option>
-                        <option value="others">Others' Licenses</option>
-                      </select>
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Sort By</label>
-                      <select
-                        className="form-select"
-                        value={licenseSortBy}
-                        onChange={(e) => setLicenseSortBy(e.target.value as any)}
-                      >
-                        <option value="date">Date</option>
-                        <option value="royalty">Royalty</option>
-                        <option value="name">Name</option>
-                      </select>
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Sort Order</label>
-                      <select
-                        className="form-select"
-                        value={licenseSortOrder}
-                        onChange={(e) => setLicenseSortOrder(e.target.value as any)}
-                      >
-                        <option value="desc">Descending</option>
-                        <option value="asc">Ascending</option>
-                      </select>
-                    </div>
-                  </>
-                )}
-
-                {filterType === 'disputes' && (
-                  <>
-                    <div className="form-group">
-                      <label className="form-label">Name</label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        placeholder="Filter by name..."
-                        value={disputeFilters.name}
-                        onChange={(e) => setDisputeFilters({ ...disputeFilters, name: e.target.value })}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Date From</label>
-                      <input
-                        type="date"
-                        className="form-input"
-                        value={disputeFilters.dateFrom}
-                        onChange={(e) => setDisputeFilters({ ...disputeFilters, dateFrom: e.target.value })}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Date To</label>
-                      <input
-                        type="date"
-                        className="form-input"
-                        value={disputeFilters.dateTo}
-                        onChange={(e) => setDisputeFilters({ ...disputeFilters, dateTo: e.target.value })}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Status</label>
-                      <select
-                        className="form-select"
-                        value={disputeFilters.status}
-                        onChange={(e) => setDisputeFilters({ ...disputeFilters, status: e.target.value as any })}
-                      >
-                        <option value="all">All</option>
-                        <option value="resolved">Resolved</option>
-                        <option value="pending">Pending</option>
-                      </select>
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Disputer</label>
-                      <select
-                        className="form-select"
-                        value={disputeFilters.disputerFilter}
-                        onChange={(e) => setDisputeFilters({ ...disputeFilters, disputerFilter: e.target.value as any })}
-                      >
-                        <option value="all">All</option>
-                        <option value="mine">My Disputes</option>
-                        <option value="others">Others' Disputes</option>
-                      </select>
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Sort By</label>
-                      <select
-                        className="form-select"
-                        value={disputeSortBy}
-                        onChange={(e) => setDisputeSortBy(e.target.value as any)}
-                      >
-                        <option value="date">Date</option>
-                        <option value="id">Dispute ID</option>
-                      </select>
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Sort Order</label>
-                      <select
-                        className="form-select"
-                        value={disputeSortOrder}
-                        onChange={(e) => setDisputeSortOrder(e.target.value as any)}
-                      >
-                        <option value="desc">Descending</option>
-                        <option value="asc">Ascending</option>
-                      </select>
-                    </div>
-                  </>
-                )}
-              </div>
-            </details>
-          </section>
 
           {/* IP Assets Display */}
           <section className="section section-full">
           <div className="section-header">
             <span className="section-icon">🎨</span>
-            <h2 className="section-title">
-              Registered IP Assets 
-              {(() => {
-                const filtered = filterAndSortAssets(ipAssets);
-                return filtered.length !== ipAssets.size ? ` (${filtered.length} of ${ipAssets.size})` : ` (${ipAssets.size})`;
-              })()}
-            </h2>
+            <h2 className="section-title">Registered IP Assets</h2>
           </div>
           
           <div className="grid grid-3">
-            {filterAndSortAssets(ipAssets).map(([id, asset]) => {
+            {Array.from(ipAssets.entries()).map(([id, asset]) => {
               const metadata = parsedMetadata.get(id) || { name: "Unknown", description: "No description available" };
               const mediaUrl = getIPFSGatewayURL(asset.ipHash);
               
@@ -6269,7 +4797,12 @@ export default function App({ thirdwebClient }: AppProps) {
                           return (
                             <span 
                               className={`badge ${config.className}`}
-                              title={`${infringement.totalInfringements} infringement(s) detected`}
+                              onClick={() => {
+                                setSelectedInfringementTokenId(id);
+                                setActiveTab('infringement');
+                              }}
+                              style={{ cursor: 'pointer' }}
+                              title={`${infringement.totalInfringements} infringement(s) detected - Click to view details`}
                             >
                               {config.icon} {infringement.totalInfringements} Infringement{infringement.totalInfringements !== 1 ? 's' : ''}
                             </span>
@@ -6332,11 +4865,7 @@ export default function App({ thirdwebClient }: AppProps) {
                     <div className="card-field">
                       <span className="card-field-label">Infringement Status</span>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                        {infringementLoading.get(id) ? (
-                          <span className="card-field-value" style={{ fontSize: '0.85rem', opacity: 0.7 }}>
-                            ⏳ Checking...
-                          </span>
-                        ) : infringementData.has(id) ? (() => {
+                        {infringementData.has(id) ? (() => {
                           const infringement = infringementData.get(id)!;
                           const severity = calculateSeverity(infringement);
                           const hasInfringements = infringement.totalInfringements > 0;
@@ -6369,8 +4898,11 @@ export default function App({ thirdwebClient }: AppProps) {
                                 {config.icon} {hasInfringements ? `${infringement.totalInfringements} Found` : 'Clean'}
                               </span>
                               <button
-                                onClick={() => loadInfringementStatus(id)}
-                                disabled={infringementLoading.get(id)}
+                                onClick={() => {
+                                  setSelectedInfringementTokenId(id);
+                                  setActiveTab('infringement');
+                                  loadInfringementStatus(id);
+                                }}
                                 style={{
                                   fontSize: '0.75rem',
                                   padding: '0.25rem 0.5rem',
@@ -6378,12 +4910,11 @@ export default function App({ thirdwebClient }: AppProps) {
                                   color: 'white',
                                   border: 'none',
                                   borderRadius: '4px',
-                                  cursor: infringementLoading.get(id) ? 'not-allowed' : 'pointer',
-                                  fontWeight: 500,
-                                  opacity: infringementLoading.get(id) ? 0.6 : 1
+                                  cursor: 'pointer',
+                                  fontWeight: 500
                                 }}
                               >
-                                {infringementLoading.get(id) ? '⏳ Checking...' : '🔍 Refresh'}
+                                🔍 View Details
                               </button>
                             </>
                           );
@@ -6393,8 +4924,11 @@ export default function App({ thirdwebClient }: AppProps) {
                               ⏳ Not Checked
                             </span>
                             <button
-                              onClick={() => loadInfringementStatus(id)}
-                              disabled={infringementLoading.get(id)}
+                              onClick={() => {
+                                setSelectedInfringementTokenId(id);
+                                setActiveTab('infringement');
+                                loadInfringementStatus(id);
+                              }}
                               style={{
                                 fontSize: '0.75rem',
                                 padding: '0.25rem 0.5rem',
@@ -6402,81 +4936,28 @@ export default function App({ thirdwebClient }: AppProps) {
                                 color: 'white',
                                 border: 'none',
                                 borderRadius: '4px',
-                                cursor: infringementLoading.get(id) ? 'not-allowed' : 'pointer',
-                                fontWeight: 500,
-                                opacity: infringementLoading.get(id) ? 0.6 : 1
+                                cursor: 'pointer',
+                                fontWeight: 500
                               }}
                             >
-                              {infringementLoading.get(id) ? '⏳ Checking...' : '🔍 Check Now'}
+                              🔍 Check Now
                             </button>
                           </>
                         )}
                       </div>
                     </div>
-                    
-                    {/* Quick Transfer Actions - Only show if user owns the asset */}
-                    {asset.owner.toLowerCase() === account?.address?.toLowerCase() && !asset.isDisputed && (
-                      <div className="card-actions" style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--color-border)' }}>
-                        <button
-                          className="btn btn-secondary"
-                          style={{ fontSize: '0.75rem', padding: '0.5rem 1rem' }}
-                          onClick={() => {
-                            setActiveTab('transfer');
-                            setTransferMode('transfer');
-                            setTransferForm({
-                              tokenId: id.toString(),
-                              recipient: '',
-                              isGift: false,
-                              giftMessage: ''
-                            });
-                          }}
-                        >
-                          🔄 Quick Transfer
-                        </button>
-                        <button
-                          className="btn btn-primary"
-                          style={{ fontSize: '0.75rem', padding: '0.5rem 1rem' }}
-                          onClick={() => {
-                            setActiveTab('transfer');
-                            setTransferMode('gift');
-                            setTransferForm({
-                              tokenId: id.toString(),
-                              recipient: '',
-                              isGift: true,
-                              giftMessage: ''
-                            });
-                          }}
-                        >
-                          🎁 Quick Gift
-                        </button>
-                      </div>
-                    )}
                   </div>
                 </div>
               );
             })}
             
-            {(() => {
-              const filtered = filterAndSortAssets(ipAssets);
-              if (filtered.length === 0 && ipAssets.size > 0) {
-                return (
-                  <div className="card" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem' }}>
-                    <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔍</div>
-                    <h3 style={{ marginBottom: '0.5rem', color: 'var(--color-text-secondary)' }}>No Assets Match Filters</h3>
-                    <p style={{ color: 'var(--color-text-tertiary)' }}>Try adjusting your search or filter criteria.</p>
-                  </div>
-                );
-              } else if (ipAssets.size === 0) {
-                return (
+            {ipAssets.size === 0 && (
               <div className="card" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem' }}>
                 <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎨</div>
                 <h3 style={{ marginBottom: '0.5rem', color: 'var(--color-text-secondary)' }}>No IP Assets Yet</h3>
                 <p style={{ color: 'var(--color-text-tertiary)' }}>Register your first IP asset to get started!</p>
               </div>
-                );
-              }
-              return null;
-            })()}
+            )}
           </div>
         </section>
 
@@ -6484,17 +4965,11 @@ export default function App({ thirdwebClient }: AppProps) {
         <section className="section section-full">
           <div className="section-header">
             <span className="section-icon">🎫</span>
-            <h2 className="section-title">
-              Active Licenses
-              {(() => {
-                const filtered = filterAndSortLicenses(licenses);
-                return filtered.length !== licenses.size ? ` (${filtered.length} of ${licenses.size})` : ` (${licenses.size})`;
-              })()}
-            </h2>
+            <h2 className="section-title">Active Licenses</h2>
           </div>
           
           <div className="grid grid-2">
-            {filterAndSortLicenses(licenses).map(([id, license]) => (
+            {Array.from(licenses.entries()).map(([id, license]) => (
               <div key={id} className="card hover-lift animate-fade-in">
                 <div className="card-header">
                   <div>
@@ -6553,106 +5028,16 @@ export default function App({ thirdwebClient }: AppProps) {
               </div>
             ))}
             
-            {(() => {
-              const filtered = filterAndSortLicenses(licenses);
-              if (filtered.length === 0 && licenses.size > 0) {
-                return (
-                  <div className="card" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem' }}>
-                    <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔍</div>
-                    <h3 style={{ marginBottom: '0.5rem', color: 'var(--color-text-secondary)' }}>No Licenses Match Filters</h3>
-                    <p style={{ color: 'var(--color-text-tertiary)' }}>Try adjusting your search or filter criteria.</p>
-                  </div>
-                );
-              } else if (licenses.size === 0) {
-                return (
+            {licenses.size === 0 && (
               <div className="card" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem' }}>
                 <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎫</div>
                 <h3 style={{ marginBottom: '0.5rem', color: 'var(--color-text-secondary)' }}>No Licenses Yet</h3>
                 <p style={{ color: 'var(--color-text-tertiary)' }}>Mint your first license to start licensing IP assets!</p>
               </div>
-                );
-              }
-              return null;
-            })()}
+            )}
           </div>
         </section>
       </div>
-
-      {/* Transfer Approval Dialog */}
-      {transferApproval.show && (
-        <div className="modal-overlay" onClick={() => setTransferApproval({ ...transferApproval, show: false })}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
-            <div className="modal-header">
-              <h2 style={{ margin: 0 }}>
-                {transferApproval.isGift ? '🎁 Confirm Gift' : '🔄 Confirm Transfer'}
-              </h2>
-              <button
-                className="modal-close"
-                onClick={() => setTransferApproval({ ...transferApproval, show: false })}
-                style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--color-text-secondary)' }}
-              >
-                ×
-              </button>
-            </div>
-            <div className="modal-body">
-              <div style={{ marginBottom: '1.5rem' }}>
-                <p style={{ marginBottom: '1rem', color: 'var(--color-text-secondary)' }}>
-                  {transferApproval.isGift 
-                    ? 'You are about to gift this IP asset. This action cannot be undone.'
-                    : 'You are about to transfer this IP asset. This action cannot be undone.'}
-                </p>
-                <div style={{ padding: '1rem', backgroundColor: 'var(--color-bg-secondary)', borderRadius: '8px', marginBottom: '1rem' }}>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '0.5rem' }}>IP Asset</div>
-                  <div style={{ fontWeight: 600, fontSize: '1.1rem', marginBottom: '0.5rem' }}>
-                    {transferApproval.assetName || `IP Asset #${transferApproval.tokenId}`}
-                  </div>
-                  <div style={{ fontSize: '0.9rem', color: 'var(--color-text-tertiary)' }}>
-                    Token ID: #{transferApproval.tokenId}
-                  </div>
-                </div>
-                <div style={{ marginBottom: '1rem' }}>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '0.25rem' }}>From</div>
-                  <div style={{ fontFamily: 'monospace', fontSize: '0.9rem' }}>
-                    {account?.address ? `${account.address.slice(0, 10)}...${account.address.slice(-8)}` : 'Unknown'}
-                  </div>
-                </div>
-                <div style={{ marginBottom: '1rem' }}>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '0.25rem' }}>To</div>
-                  <div style={{ fontFamily: 'monospace', fontSize: '0.9rem' }}>
-                    {transferApproval.recipient.slice(0, 10)}...{transferApproval.recipient.slice(-8)}
-                  </div>
-                </div>
-                {transferApproval.isGift && transferApproval.giftMessage && (
-                  <div style={{ marginBottom: '1rem', padding: '0.75rem', backgroundColor: 'var(--color-bg-secondary)', borderRadius: '4px', borderLeft: '3px solid var(--color-primary)' }}>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '0.25rem' }}>Gift Message</div>
-                    <div style={{ fontSize: '0.95rem', fontStyle: 'italic' }}>"{transferApproval.giftMessage}"</div>
-                  </div>
-                )}
-                <div style={{ padding: '0.75rem', backgroundColor: 'var(--color-warning-bg)', borderRadius: '4px', borderLeft: '3px solid var(--color-warning)' }}>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--color-warning)' }}>
-                    ⚠️ <strong>Warning:</strong> This action is irreversible. Make sure you trust the recipient address.
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="modal-footer" style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-              <button
-                className="btn btn-secondary"
-                onClick={() => setTransferApproval({ ...transferApproval, show: false })}
-              >
-                Cancel
-              </button>
-              <button
-                className="btn btn-primary"
-                onClick={confirmTransfer}
-                disabled={loading}
-              >
-                {loading ? '⏳ Processing...' : (transferApproval.isGift ? '🎁 Confirm Gift' : '🔄 Confirm Transfer')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

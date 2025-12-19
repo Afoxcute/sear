@@ -49,10 +49,10 @@ jobs:
           script: |
             echo "Deployment started at $(date '+%Y-%m-%d %H:%M:%S UTC')"
             
-            # Ensure the main .env file exists
-            if [ ! -f /home/ubuntu/sear/app/.env ]; then
-              echo "❌ Required .env file not found on server!"
-              echo "Expected: /home/ubuntu/sear/app/.env"
+            # Ensure backend .env exists on server
+            if [ ! -f /home/ubuntu/sear/.env ]; then
+              echo "❌ Backend .env file not found on server!"
+              echo "Expected: /home/ubuntu/sear/.env"
               exit 1
             fi
 
@@ -65,13 +65,13 @@ jobs:
             echo "Pulling latest image..."
             sudo docker pull ${{ env.DOCKER_USERNAME }}/sear:latest
             
-            # Run new container with single .env mount
+            # Run new container with backend .env mounted
             echo "Starting new container..."
             sudo docker run -d \
               --name sear \
               --restart unless-stopped \
               -p 8082:5001 \
-              -v /home/ubuntu/sear/app/.env:/usr/src/app/.env:ro \
+              -v /home/ubuntu/sear/.env:/usr/src/app/.env:ro \
               ${{ env.DOCKER_USERNAME }}/sear:latest
             
             # Verify deployment

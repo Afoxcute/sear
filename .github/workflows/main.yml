@@ -49,9 +49,13 @@ jobs:
           script: |
             echo "Deployment started at $(date '+%Y-%m-%d %H:%M:%S UTC')"
             
-            # Ensure directories exist (good practice)
-            mkdir -p /home/ubuntu/sear/app
-            
+            # Ensure the expected .env paths exist (optional safety check)
+            if [ ! -f /home/ubuntu/sear/app/.env ] || [ ! -f /home/ubuntu/sear/sear/.env ]; then
+              echo "❌ Required .env files not found on server!"
+              echo "Expected: /home/ubuntu/sear/app/.env and /home/ubuntu/sear/sear/.env"
+              exit 1
+            fi
+
             # Stop and remove existing container
             echo "Stopping existing container..."
             sudo docker stop sear || true
@@ -61,14 +65,14 @@ jobs:
             echo "Pulling latest image..."
             sudo docker pull ${{ env.DOCKER_USERNAME }}/sear:latest
             
-            # Run new container with both .env files mounted
+            # Run new container with both .env files from server
             echo "Starting new container with dual .env mounts..."
             sudo docker run -d \
               --name sear \
               --restart unless-stopped \
-              -p 8082:5000 \
-              -v /home/ubuntu/sear/.env:/usr/src/app/.env:ro \
-              -v /home/ubuntu/sear/app/.env:/usr/src/app/app/.env:ro \
+              -p 8082:5001 \
+              -v /home/ubuntu/sear/app/.env:/usr/src/app/.env:ro \
+              -v /home/ubuntu/sear/sear/.env:/usr/src/app/sear/.env:ro \
               ${{ env.DOCKER_USERNAME }}/sear:latest
             
             # Verify deployment
@@ -106,12 +110,12 @@ jobs:
               sudo docker port sear
               
               # Verify both .env files are mounted correctly
-              echo "Checking main backend .env (/usr/src/app/.env):"
-              sudo docker exec sear ls -la /usr/src/app/.env || echo "⚠️ Main .env not found!"
-
-              echo "Checking app/.env (/usr/src/app/app/.env):"
-              sudo docker exec sear ls -la /usr/src/app/app/.env || echo "⚠️ App .env not found!"
+              echo "Checking main app .env:"
+              sudo docker exec sear ls -la /usr/src/app/.env || echo "❌ Main .env not found in container!"
+              
+              echo "Checking sear/.env:"
+              sudo docker exec sear ls -la /usr/src/app/sear/.env || echo "❌ Sear .env not found in container!"
             else
-              echo "Container is not running"
+              echo "❌ Container is not running"
               exit 1
             fi

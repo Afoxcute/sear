@@ -47,7 +47,7 @@ const mantleTestnet = {
 };
 
 // Backend API configuration
-const BACKEND_URL = "https://testnow.eduworld.world";
+const BACKEND_URL = "http://localhost:5000";
 
 // File validation and preview utilities
 const MAX_FILE_SIZE_MB = 50; // Maximum file size in megabytes
@@ -839,11 +839,13 @@ const EnhancedAssetPreview: React.FC<{
 }> = ({ assetId, asset, metadata, mediaUrl }) => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     const fetchImageFromMetadata = async () => {
       try {
         setLoading(true);
+        setImageError(false);
         
         // Priority 1: Check if metadata has image field
         if (metadata?.image) {
@@ -865,12 +867,14 @@ const EnhancedAssetPreview: React.FC<{
           setImageUrl(gatewayUrl);
         }
         // Priority 3: Use mediaUrl as fallback
-        else {
+        else if (mediaUrl) {
           setImageUrl(mediaUrl);
+        } else {
+          setImageUrl(null);
         }
       } catch (error) {
         console.error('Error fetching image from metadata:', error);
-        setImageUrl(mediaUrl);
+        setImageUrl(null);
       } finally {
         setLoading(false);
       }
@@ -879,35 +883,40 @@ const EnhancedAssetPreview: React.FC<{
     fetchImageFromMetadata();
   }, [metadata, asset.ipHash, mediaUrl]);
 
+  const handleImageError = () => {
+    setImageError(true);
+  };
+
   if (loading) {
     return (
-      <div className="preview-skeleton">
-        <div className="skeleton skeleton-image"></div>
+      <div className="preview-skeleton" style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="skeleton skeleton-image" style={{ width: '100%', height: '100%' }}></div>
       </div>
     );
   }
 
+  const showImage = imageUrl && !imageError;
+  const finalMediaUrl = imageUrl || mediaUrl || asset.ipHash || '';
+
   return (
     <>
-      {imageUrl ? (
+      {showImage ? (
         <img 
-          src={imageUrl} 
+          src={imageUrl!} 
           alt={metadata?.name || `IP Asset ${assetId}`}
           className="media-image"
-          onError={(e) => {
-            const imgElement = e.target as HTMLImageElement;
-            imgElement.style.display = 'none';
-            const fallback = imgElement.nextElementSibling as HTMLElement;
-            if (fallback) fallback.style.display = 'flex';
-          }}
+          onError={handleImageError}
+          style={{ display: 'block' }}
         />
       ) : null}
-      <div className="media-fallback" style={{ display: imageUrl ? 'none' : 'flex' }}>
+      <div className="media-fallback" style={{ display: showImage ? 'none' : 'flex' }}>
         <div className="media-fallback-icon">📄</div>
-        <p>Media Preview</p>
-        <a href={imageUrl || mediaUrl} target="_blank" rel="noopener noreferrer" className="media-link">
-          🔗 View Media
-        </a>
+        <p style={{ color: 'var(--color-text-secondary)', margin: 0 }}>Media Preview</p>
+        {finalMediaUrl && (
+          <a href={finalMediaUrl} target="_blank" rel="noopener noreferrer" className="media-link">
+            🔗 View Media
+          </a>
+        )}
       </div>
     </>
   );
@@ -1121,9 +1130,8 @@ export default function App({ thirdwebClient }: AppProps) {
 
   const [infringementData, setInfringementData] = useState<Map<number, InfringementData>>(new Map());
   const [selectedInfringementTokenId, setSelectedInfringementTokenId] = useState<number>(1);
-  const [infringementLoading, setInfringementLoading] = useState<boolean>(false);
-  const [autoMonitoringEnabled, setAutoMonitoringEnabled] = useState<boolean>(true);
-  const [monitoringInterval, setMonitoringInterval] = useState<number>(300000); // 5 minutes default
+  const autoMonitoringEnabled = true; // Auto-monitoring is always enabled
+  const monitoringInterval = 300000; // 5 minutes default
 
   // Load infringement status for an IP asset
   const loadInfringementStatus = async (tokenId: number) => {
@@ -1133,7 +1141,6 @@ export default function App({ thirdwebClient }: AppProps) {
     }
 
     try {
-      setInfringementLoading(true);
       const contractAddress = CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"].toLowerCase();
       const response = await fetch(`${BACKEND_URL}/api/infringement/status/${contractAddress}/${tokenId}`);
       
@@ -1165,8 +1172,6 @@ export default function App({ thirdwebClient }: AppProps) {
       if (!error.message?.includes('404')) {
         notifyError('Infringement Check Failed', error.message || 'Failed to check infringement status');
       }
-    } finally {
-      setInfringementLoading(false);
     }
   };
 
@@ -1183,35 +1188,6 @@ export default function App({ thirdwebClient }: AppProps) {
     if (hasHighSimilarity || infringement.totalInfringements > 3) return 'high';
     if (infringement.totalInfringements > 1) return 'medium';
     return 'low';
-  };
-
-  // Get recommended actions based on infringement
-  const getRecommendedActions = (infringement: InfringementData): string[] => {
-    const actions: string[] = [];
-    const severity = calculateSeverity(infringement);
-
-    if (severity === 'critical' || severity === 'high') {
-      actions.push('Consider raising a dispute through the arbitration system');
-      actions.push('Document all evidence of infringement');
-      actions.push('Contact infringing parties if appropriate');
-    }
-    
-    if (infringement.externalInfringements.length > 0) {
-      actions.push('Review external platform infringements for commercial use');
-      actions.push('Consider sending DMCA takedown notices if applicable');
-    }
-
-    if (infringement.inNetworkInfringements.length > 0) {
-      actions.push('Review on-chain infringements for potential license violations');
-      actions.push('Check if infringing parties have valid licenses');
-    }
-
-    if (actions.length === 0) {
-      actions.push('Continue monitoring for new infringements');
-      actions.push('Ensure your IP is properly registered and licensed');
-    }
-
-    return actions;
   };
 
   // Auto-monitoring effect
@@ -3692,8 +3668,8 @@ export default function App({ thirdwebClient }: AppProps) {
                     borderRadius: '4px',
                     fontWeight: 600
                   }}>
-                    <span>Total Payment:</span>
-                    <span>{royaltyBreakdown.totalAmount} MNT</span>
+                    <span style={{ color: '#1e293b' }}>Total Payment:</span>
+                    <span style={{ color: '#1e293b' }}>{royaltyBreakdown.totalAmount} MNT</span>
                   </div>
 
                   {/* Platform Fee */}
@@ -3704,8 +3680,8 @@ export default function App({ thirdwebClient }: AppProps) {
                     backgroundColor: 'rgba(255, 255, 255, 0.2)',
                     borderRadius: '4px'
                   }}>
-                    <span>🏛️ Platform Fee (2.5%):</span>
-                    <span>{royaltyBreakdown.platformFee.toFixed(6)} MNT</span>
+                    <span style={{ color: '#1e293b' }}>🏛️ Platform Fee (2.5%):</span>
+                    <span style={{ color: '#1e293b' }}>{royaltyBreakdown.platformFee.toFixed(6)} MNT</span>
                   </div>
 
                   {/* Remaining After Fee */}
@@ -3720,8 +3696,8 @@ export default function App({ thirdwebClient }: AppProps) {
                     marginTop: '0.25rem',
                     marginBottom: '0.25rem'
                   }}>
-                    <span>💰 Available for Distribution:</span>
-                    <span>{royaltyBreakdown.remainingAfterFee.toFixed(6)} MNT</span>
+                    <span style={{ color: '#1e293b' }}>💰 Available for Distribution:</span>
+                    <span style={{ color: '#1e293b' }}>{royaltyBreakdown.remainingAfterFee.toFixed(6)} MNT</span>
                   </div>
 
                   {/* License Royalties */}
@@ -3732,7 +3708,7 @@ export default function App({ thirdwebClient }: AppProps) {
                         paddingTop: '0.5rem',
                         borderTop: '1px solid rgba(0,0,0,0.2)'
                       }}>
-                        <strong style={{ fontSize: '0.8rem', opacity: 0.9 }}>License Holder Royalties:</strong>
+                        <strong style={{ fontSize: '0.8rem', opacity: 0.9, color: '#1e293b' }}>License Holder Royalties:</strong>
                       </div>
                       {royaltyBreakdown.licenseRoyalties.map((lr, idx) => (
                         <div
@@ -3746,14 +3722,14 @@ export default function App({ thirdwebClient }: AppProps) {
                             fontSize: '0.8rem'
                           }}
                         >
-                          <span>
+                          <span style={{ color: '#1e293b' }}>
                             🎫 License #{lr.licenseId} ({lr.royaltyPercentage}%):
                             <br />
-                            <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>
+                            <span style={{ fontSize: '0.75rem', opacity: 0.8, color: '#1e293b' }}>
                               {lr.licensee.substring(0, 6)}...{lr.licensee.substring(38)}
                             </span>
                           </span>
-                          <span style={{ fontWeight: 500 }}>
+                          <span style={{ fontWeight: 500, color: '#1e293b' }}>
                             {lr.amount.toFixed(6)} MNT
                           </span>
                         </div>
@@ -3772,8 +3748,8 @@ export default function App({ thirdwebClient }: AppProps) {
                     fontWeight: 600,
                     borderTop: '2px solid rgba(0,0,0,0.1)'
                   }}>
-                    <span>👤 IP Owner Share:</span>
-                    <span>{royaltyBreakdown.ipOwnerShare.toFixed(6)} MNT</span>
+                    <span style={{ color: '#1e293b' }}>👤 IP Owner Share:</span>
+                    <span style={{ color: '#1e293b' }}>{royaltyBreakdown.ipOwnerShare.toFixed(6)} MNT</span>
                   </div>
 
                   {/* Summary */}
@@ -3783,7 +3759,8 @@ export default function App({ thirdwebClient }: AppProps) {
                     fontSize: '0.75rem',
                     opacity: 0.8,
                     fontStyle: 'italic',
-                    textAlign: 'center'
+                    textAlign: 'center',
+                    color: '#1e293b'
                   }}>
                     💡 Royalties are automatically calculated and distributed on-chain
                   </div>
@@ -3854,8 +3831,8 @@ export default function App({ thirdwebClient }: AppProps) {
                       fontSize: '1rem',
                       fontWeight: 600,
                       color: accumulatedRoyalties.get(claimTokenId)! > 0n
-                        ? 'var(--color-success-text, #155724)'
-                        : 'var(--color-info-text, #0c5460)',
+                        ? '#155724'
+                        : '#0c5460',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '0.5rem'
@@ -3866,8 +3843,8 @@ export default function App({ thirdwebClient }: AppProps) {
                       fontSize: '1.25rem',
                       fontWeight: 700,
                       color: accumulatedRoyalties.get(claimTokenId)! > 0n
-                        ? 'var(--color-success-text, #155724)'
-                        : 'var(--color-info-text, #0c5460)'
+                        ? '#155724'
+                        : '#0c5460'
                     }}>
                       {formatEther(accumulatedRoyalties.get(claimTokenId) || 0n)} MNT
                     </span>
@@ -3876,7 +3853,7 @@ export default function App({ thirdwebClient }: AppProps) {
                   {accumulatedRoyalties.get(claimTokenId)! > 0n ? (
                     <div style={{
                       fontSize: '0.875rem',
-                      color: 'var(--color-success-text, #155724)',
+                      color: '#155724',
                       opacity: 0.9
                     }}>
                       ✅ You have claimable royalties for this IP asset. Click "Claim Royalties" to withdraw.
@@ -3884,7 +3861,7 @@ export default function App({ thirdwebClient }: AppProps) {
                   ) : (
                     <div style={{
                       fontSize: '0.875rem',
-                      color: 'var(--color-info-text, #0c5460)',
+                      color: '#0c5460',
                       opacity: 0.9
                     }}>
                       ℹ️ No accumulated royalties available for this IP asset. Royalties accumulate when revenue is paid to this IP.
@@ -3906,7 +3883,7 @@ export default function App({ thirdwebClient }: AppProps) {
                           paddingTop: '0.75rem',
                           borderTop: '1px solid rgba(0,0,0,0.1)'
                         }}>
-                          <strong style={{ fontSize: '0.8rem' }}>Your Licenses:</strong>
+                          <strong style={{ fontSize: '0.8rem', color: accumulatedRoyalties.get(claimTokenId)! > 0n ? '#155724' : '#0c5460' }}>Your Licenses:</strong>
                           {userLicenses.map(([licenseId, license]) => (
                             <div key={licenseId} style={{
                               marginTop: '0.5rem',
@@ -3915,8 +3892,8 @@ export default function App({ thirdwebClient }: AppProps) {
                               borderRadius: '4px',
                               fontSize: '0.8rem'
                             }}>
-                              <div>🎫 License #{licenseId}</div>
-                              <div style={{ opacity: 0.8, marginTop: '0.25rem' }}>
+                              <div style={{ color: '#1e293b' }}>🎫 License #{licenseId}</div>
+                              <div style={{ opacity: 0.8, marginTop: '0.25rem', color: '#1e293b' }}>
                                 Royalty Rate: {Number(license.royaltyPercentage) / 100}% | 
                                 {license.isActive ? ' ✅ Active' : ' ❌ Inactive'}
                               </div>
@@ -3938,373 +3915,6 @@ export default function App({ thirdwebClient }: AppProps) {
             >
               {loading ? '⏳ Claiming...' : '🏆 Claim Royalties'}
             </button>
-                </div>
-                </section>
-              </>
-            )}
-
-            {/* Infringement Detection Tab */}
-            {activeTab === 'infringement' && (
-              <>
-                <section className="section">
-                  <div className="section-header">
-                    <span className="section-icon">🔍</span>
-                    <h2 className="section-title">Infringement Detection & Monitoring</h2>
-                  </div>
-
-                  <div className="form-grid">
-                    <div className="form-group">
-                      <label className="form-label">🎯 Select IP Asset to Monitor</label>
-                      <select
-                        className="form-select"
-                        value={selectedInfringementTokenId}
-                        onChange={(e) => {
-                          const tokenId = Number(e.target.value);
-                          setSelectedInfringementTokenId(tokenId);
-                          loadInfringementStatus(tokenId);
-                        }}
-                      >
-                        {Array.from(ipAssets.keys()).map((id) => {
-                          const asset = ipAssets.get(id);
-                          const metadata = parsedMetadata.get(id) || { name: "Unknown" };
-                          return (
-                            <option key={id} value={id}>
-                              #{id} - {metadata.name || asset?.ipHash.substring(0, 10) || 'Unknown'}
-                            </option>
-                          );
-                        })}
-                      </select>
-                    </div>
-
-                    {/* Auto-Monitoring Controls */}
-                    <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                      <div style={{
-                        padding: '1rem',
-                        backgroundColor: 'var(--color-info-bg, #d1ecf1)',
-                        border: '1px solid var(--color-info-border, #0c5460)',
-                        borderRadius: '8px'
-                      }}>
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '1rem',
-                          marginBottom: '0.75rem'
-                        }}>
-                          <div style={{ flex: 1 }}>
-                            <label style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '0.5rem',
-                              cursor: 'pointer',
-                              fontWeight: 500
-                            }}>
-                              <input
-                                type="checkbox"
-                                checked={autoMonitoringEnabled}
-                                onChange={(e) => setAutoMonitoringEnabled(e.target.checked)}
-                                style={{ cursor: 'pointer' }}
-                              />
-                              <span>🔄 Enable Auto-Monitoring</span>
-                            </label>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => loadInfringementStatus(selectedInfringementTokenId)}
-                            disabled={infringementLoading}
-                            style={{
-                              padding: '0.5rem 1rem',
-                              backgroundColor: 'var(--color-primary, #007bff)',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '6px',
-                              cursor: infringementLoading ? 'not-allowed' : 'pointer',
-                              fontWeight: 500
-                            }}
-                          >
-                            {infringementLoading ? '⏳ Checking...' : '🔍 Check Now'}
-                          </button>
-                        </div>
-                        {autoMonitoringEnabled && (
-                          <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            fontSize: '0.875rem',
-                            opacity: 0.8
-                          }}>
-                            <label>Check Interval:</label>
-                            <select
-                              value={monitoringInterval}
-                              onChange={(e) => setMonitoringInterval(Number(e.target.value))}
-                              style={{
-                                padding: '0.25rem 0.5rem',
-                                borderRadius: '4px',
-                                border: '1px solid rgba(0,0,0,0.2)',
-                                cursor: 'pointer'
-                              }}
-                            >
-                              <option value={60000}>Every 1 minute</option>
-                              <option value={300000}>Every 5 minutes</option>
-                              <option value={600000}>Every 10 minutes</option>
-                              <option value={1800000}>Every 30 minutes</option>
-                              <option value={3600000}>Every 1 hour</option>
-                            </select>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Infringement Status Display */}
-                    {infringementData.has(selectedInfringementTokenId) && (() => {
-                      const infringement = infringementData.get(selectedInfringementTokenId)!;
-                      const severity = calculateSeverity(infringement);
-                      const recommendations = getRecommendedActions(infringement);
-                      
-                      const severityColors = {
-                        low: { bg: '#d4edda', border: '#28a745', text: '#155724' },
-                        medium: { bg: '#fff3cd', border: '#ffc107', text: '#856404' },
-                        high: { bg: '#f8d7da', border: '#dc3545', text: '#721c24' },
-                        critical: { bg: '#f5c6cb', border: '#dc3545', text: '#721c24' }
-                      };
-
-                      const severityConfig = severityColors[severity];
-
-                      return (
-                        <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                          {/* Status Summary */}
-                          <div style={{
-                            padding: '1.5rem',
-                            backgroundColor: severityConfig.bg,
-                            border: `2px solid ${severityConfig.border}`,
-                            borderRadius: '8px',
-                            marginBottom: '1rem'
-                          }}>
-                            <div style={{
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                              marginBottom: '1rem'
-                            }}>
-                              <div>
-                                <h3 style={{
-                                  margin: 0,
-                                  fontSize: '1.25rem',
-                                  fontWeight: 700,
-                                  color: severityConfig.text,
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '0.5rem'
-                                }}>
-                                  {severity === 'critical' ? '🚨' : severity === 'high' ? '⚠️' : severity === 'medium' ? '⚡' : '✅'}
-                                  Infringement Status: {severity.toUpperCase()}
-                                </h3>
-                                <p style={{ margin: '0.5rem 0 0 0', color: severityConfig.text, opacity: 0.9 }}>
-                                  {infringement.totalInfringements === 0 
-                                    ? 'No infringements detected'
-                                    : `${infringement.totalInfringements} potential infringement(s) found`
-                                  }
-                                </p>
-                              </div>
-                              <div style={{
-                                fontSize: '2rem',
-                                fontWeight: 700,
-                                color: severityConfig.text
-                              }}>
-                                {infringement.totalInfringements}
-                              </div>
-                            </div>
-
-                            <div style={{
-                              display: 'grid',
-                              gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-                              gap: '1rem',
-                              marginTop: '1rem'
-                            }}>
-                              <div style={{
-                                padding: '0.75rem',
-                                backgroundColor: 'rgba(255, 255, 255, 0.5)',
-                                borderRadius: '6px'
-                              }}>
-                                <div style={{ fontSize: '0.75rem', opacity: 0.8 }}>In-Network</div>
-                                <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>
-                                  {infringement.inNetworkInfringements.length}
-                                </div>
-                              </div>
-                              <div style={{
-                                padding: '0.75rem',
-                                backgroundColor: 'rgba(255, 255, 255, 0.5)',
-                                borderRadius: '6px'
-                              }}>
-                                <div style={{ fontSize: '0.75rem', opacity: 0.8 }}>External</div>
-                                <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>
-                                  {infringement.externalInfringements.length}
-                                </div>
-                              </div>
-                              <div style={{
-                                padding: '0.75rem',
-                                backgroundColor: 'rgba(255, 255, 255, 0.5)',
-                                borderRadius: '6px'
-                              }}>
-                                <div style={{ fontSize: '0.75rem', opacity: 0.8 }}>Last Checked</div>
-                                <div style={{ fontSize: '0.875rem', fontWeight: 500 }}>
-                                  {infringement.lastChecked 
-                                    ? new Date(infringement.lastChecked).toLocaleString()
-                                    : 'Never'
-                                  }
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* In-Network Infringements */}
-                          {infringement.inNetworkInfringements.length > 0 && (
-                            <div style={{
-                              marginBottom: '1rem',
-                              padding: '1rem',
-                              backgroundColor: 'var(--color-warning-bg, #fff3cd)',
-                              border: '1px solid var(--color-warning-border, #ffc107)',
-                              borderRadius: '8px'
-                            }}>
-                              <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '1rem', fontWeight: 600 }}>
-                                🔗 In-Network Infringements ({infringement.inNetworkInfringements.length})
-                              </h4>
-                              {infringement.inNetworkInfringements.map((inf, idx) => (
-                                <div key={idx} style={{
-                                  padding: '0.75rem',
-                                  marginBottom: '0.5rem',
-                                  backgroundColor: 'rgba(255, 255, 255, 0.5)',
-                                  borderRadius: '6px',
-                                  fontSize: '0.875rem'
-                                }}>
-                                  <div style={{ fontWeight: 500, marginBottom: '0.25rem' }}>
-                                    {inf.url ? (
-                                      <a href={inf.url} target="_blank" rel="noopener noreferrer" style={{ color: '#007bff' }}>
-                                        {inf.url}
-                                      </a>
-                                    ) : (
-                                      `Infringement #${idx + 1}`
-                                    )}
-                                  </div>
-                                  {inf.similarity && (
-                                    <div style={{ opacity: 0.8 }}>
-                                      Similarity: {(inf.similarity * 100).toFixed(1)}%
-                                    </div>
-                                  )}
-                                  {inf.detected_at && (
-                                    <div style={{ opacity: 0.8, fontSize: '0.75rem' }}>
-                                      Detected: {new Date(inf.detected_at).toLocaleString()}
-                                    </div>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
-                          {/* External Infringements */}
-                          {infringement.externalInfringements.length > 0 && (
-                            <div style={{
-                              marginBottom: '1rem',
-                              padding: '1rem',
-                              backgroundColor: 'var(--color-danger-bg, #f8d7da)',
-                              border: '1px solid var(--color-danger-border, #dc3545)',
-                              borderRadius: '8px'
-                            }}>
-                              <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '1rem', fontWeight: 600 }}>
-                                🌐 External Platform Infringements ({infringement.externalInfringements.length})
-                              </h4>
-                              {infringement.externalInfringements.map((inf, idx) => (
-                                <div key={idx} style={{
-                                  padding: '0.75rem',
-                                  marginBottom: '0.5rem',
-                                  backgroundColor: 'rgba(255, 255, 255, 0.5)',
-                                  borderRadius: '6px',
-                                  fontSize: '0.875rem'
-                                }}>
-                                  <div style={{ fontWeight: 500, marginBottom: '0.25rem' }}>
-                                    {inf.url ? (
-                                      <a href={inf.url} target="_blank" rel="noopener noreferrer" style={{ color: '#007bff' }}>
-                                        {inf.url}
-                                      </a>
-                                    ) : (
-                                      `External Infringement #${idx + 1}`
-                                    )}
-                                  </div>
-                                  {inf.platform && (
-                                    <div style={{ opacity: 0.8 }}>
-                                      Platform: {inf.platform}
-                                    </div>
-                                  )}
-                                  {inf.similarity && (
-                                    <div style={{ opacity: 0.8 }}>
-                                      Similarity: {(inf.similarity * 100).toFixed(1)}%
-                                    </div>
-                                  )}
-                                  {inf.detected_at && (
-                                    <div style={{ opacity: 0.8, fontSize: '0.75rem' }}>
-                                      Detected: {new Date(inf.detected_at).toLocaleString()}
-                                    </div>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
-                          {/* Recommended Actions */}
-                          <div style={{
-                            padding: '1rem',
-                            backgroundColor: 'var(--color-info-bg, #d1ecf1)',
-                            border: '1px solid var(--color-info-border, #0c5460)',
-                            borderRadius: '8px'
-                          }}>
-                            <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '1rem', fontWeight: 600 }}>
-                              💡 Recommended Actions
-                            </h4>
-                            <ul style={{ margin: 0, paddingLeft: '1.5rem' }}>
-                              {recommendations.map((action, idx) => (
-                                <li key={idx} style={{ marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-                                  {action}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-
-                          {/* Credits Info */}
-                          {infringement.credits && (
-                            <div style={{
-                              marginTop: '1rem',
-                              padding: '0.75rem',
-                              backgroundColor: 'rgba(255, 255, 255, 0.3)',
-                              borderRadius: '6px',
-                              fontSize: '0.875rem',
-                              opacity: 0.8
-                            }}>
-                              <strong>Yakoa Credits:</strong> {infringement.credits.remaining || 'N/A'} remaining
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })()}
-
-                    {/* No Data Message */}
-                    {!infringementData.has(selectedInfringementTokenId) && !infringementLoading && (
-                      <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                        <div style={{
-                          padding: '2rem',
-                          textAlign: 'center',
-                          backgroundColor: 'var(--color-info-bg, #d1ecf1)',
-                          border: '1px solid var(--color-info-border, #0c5460)',
-                          borderRadius: '8px',
-                          color: 'var(--color-info-text, #0c5460)'
-                        }}>
-                          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔍</div>
-                          <h3 style={{ margin: '0 0 0.5rem 0' }}>No Infringement Data</h3>
-                          <p style={{ margin: 0, opacity: 0.8 }}>
-                            Click "Check Now" to scan for potential infringements of this IP asset.
-                            {autoMonitoringEnabled && ' Auto-monitoring is enabled and will check periodically.'}
-                          </p>
-                        </div>
-                      </div>
-                    )}
                 </div>
                 </section>
               </>
@@ -4989,12 +4599,8 @@ export default function App({ thirdwebClient }: AppProps) {
                           return (
                             <span 
                               className={`badge ${config.className}`}
-                              onClick={() => {
-                                setSelectedInfringementTokenId(id);
-                                setActiveTab('infringement');
-                              }}
-                              style={{ cursor: 'pointer' }}
-                              title={`${infringement.totalInfringements} infringement(s) detected - Click to view details`}
+                              style={{ cursor: 'default' }}
+                              title={`${infringement.totalInfringements} infringement(s) detected`}
                             >
                               {config.icon} {infringement.totalInfringements} Infringement{infringement.totalInfringements !== 1 ? 's' : ''}
                             </span>
@@ -5005,19 +4611,17 @@ export default function App({ thirdwebClient }: AppProps) {
                     </div>
                   </div>
                   
-                  {/* Enhanced Media Preview */}
-                  {asset.ipHash && (
-                    <div className="media-preview">
-                      <div className="media-container">
-                        <EnhancedAssetPreview 
-                          assetId={id}
-                          asset={asset}
-                          metadata={metadata}
-                          mediaUrl={mediaUrl}
-                        />
-                      </div>
+                  {/* Enhanced Media Preview - Always Show */}
+                  <div className="media-preview">
+                    <div className="media-container">
+                      <EnhancedAssetPreview 
+                        assetId={id}
+                        asset={asset}
+                        metadata={metadata}
+                        mediaUrl={mediaUrl || getIPFSGatewayURL(asset.ipHash || '')}
+                      />
                     </div>
-                  )}
+                  </div>
                   
                   <div className="card-body">
                     <div className="card-field">
@@ -5092,7 +4696,6 @@ export default function App({ thirdwebClient }: AppProps) {
                               <button
                                 onClick={() => {
                                   setSelectedInfringementTokenId(id);
-                                  setActiveTab('infringement');
                                   loadInfringementStatus(id);
                                 }}
                                 style={{
@@ -5105,8 +4708,9 @@ export default function App({ thirdwebClient }: AppProps) {
                                   cursor: 'pointer',
                                   fontWeight: 500
                                 }}
+                                title="Check infringement status"
                               >
-                                🔍 View Details
+                                🔍 Check Status
                               </button>
                             </>
                           );
@@ -5118,7 +4722,6 @@ export default function App({ thirdwebClient }: AppProps) {
                             <button
                               onClick={() => {
                                 setSelectedInfringementTokenId(id);
-                                setActiveTab('infringement');
                                 loadInfringementStatus(id);
                               }}
                               style={{

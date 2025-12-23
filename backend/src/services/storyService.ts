@@ -160,56 +160,103 @@ export const registerIpWithMantle = async (
     isEncrypted: boolean,
     modredIpContractAddress: Address
 ) => {
-    try {
-        console.log('ipHash:', ipHash);
-        console.log('metadata:', metadata);
-        console.log('isEncrypted:', isEncrypted);
+    const maxRetries = 3;
+    let lastError: any = null;
 
-        // Register IP on ModredIP contract
-        const { request } = await publicClient.simulateContract({
-            address: modredIpContractAddress,
-            abi: MODRED_IP_ABI,
-            functionName: 'registerIP',
-            args: [
-                ipHash,
-                metadata,
-                isEncrypted
-            ],
-            account: account.address,
-        });
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+        try {
+            console.log('ipHash:', ipHash);
+            console.log('metadata:', metadata);
+            console.log('isEncrypted:', isEncrypted);
 
-        const hash = await walletClient.writeContract({
-            ...request,
-            account: account,
-  });
+            // Register IP on ModredIP contract
+            const { request } = await publicClient.simulateContract({
+                address: modredIpContractAddress,
+                abi: MODRED_IP_ABI,
+                functionName: 'registerIP',
+                args: [
+                    ipHash,
+                    metadata,
+                    isEncrypted
+                ],
+                account: account.address,
+            });
 
-        const receipt = await publicClient.waitForTransactionReceipt({ hash });
+            // Fetch nonce right before sending to avoid race conditions
+            const nonce = await publicClient.getTransactionCount({
+                address: account.address,
+                blockTag: 'pending', // Include pending transactions
+            });
+            console.log(`📊 Using nonce: ${nonce} (attempt ${attempt + 1}/${maxRetries})`);
 
-        // Extract IP Asset ID from transaction logs
-        let ipAssetId: number | undefined;
-        if (receipt.logs && receipt.logs.length > 0) {
-            // Look for the Transfer event which contains the token ID
-            for (const log of receipt.logs) {
-                if (log.topics[0] === '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef') {
-                    // Transfer event signature
-                    if (log.topics[3]) {
-                        ipAssetId = parseInt(log.topics[3], 16);
-                        break;
+            const hash = await walletClient.writeContract({
+                ...request,
+                account: account,
+                nonce: nonce, // Explicitly set nonce to avoid conflicts
+            });
+
+            const receipt = await publicClient.waitForTransactionReceipt({ hash });
+
+            // Extract IP Asset ID from transaction logs
+            let ipAssetId: number | undefined;
+            if (receipt.logs && receipt.logs.length > 0) {
+                // Look for the Transfer event which contains the token ID
+                for (const log of receipt.logs) {
+                    if (log.topics[0] === '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef') {
+                        // Transfer event signature
+                        if (log.topics[3]) {
+                            ipAssetId = parseInt(log.topics[3], 16);
+                            break;
+                        }
                     }
                 }
             }
-        }
 
-  return {
-            txHash: hash,
-            ipAssetId: ipAssetId,
-            blockNumber: receipt.blockNumber,
-            explorerUrl: `${BLOCK_EXPLORER_URL}/tx/${hash}`,
-        };
-    } catch (error) {
-        console.error('Error registering IP with Mantle:', error);
-        throw error;
+            return {
+                txHash: hash,
+                ipAssetId: ipAssetId,
+                blockNumber: receipt.blockNumber,
+                explorerUrl: `${BLOCK_EXPLORER_URL}/tx/${hash}`,
+            };
+        } catch (error: any) {
+            lastError = error;
+            console.error(`❌ Error registering IP with Mantle (attempt ${attempt + 1}/${maxRetries}):`, error?.message || error);
+            
+            // Check if it's a nonce-related error (check nested cause chain)
+            const checkNonceError = (err: any, depth: number = 0): boolean => {
+                if (!err || depth > 5) return false; // Prevent infinite recursion
+                
+                const message = (err?.message || err?.shortMessage || err?.details || '').toLowerCase();
+                const name = (err?.name || '').toLowerCase();
+                
+                const isNonce = message.includes('nonce') || 
+                               message.includes('already known') ||
+                               name.includes('nonce') ||
+                               name.includes('noncetoolow');
+                
+                if (isNonce) return true;
+                
+                // Recursively check cause chain
+                return checkNonceError(err?.cause, depth + 1);
+            };
+            
+            const isNonceError = checkNonceError(error);
+            
+            if (isNonceError && attempt < maxRetries - 1) {
+                // Wait a bit before retrying to allow nonce to update
+                const delay = (attempt + 1) * 1000; // 1s, 2s, 3s
+                console.log(`⏳ Nonce error detected. Waiting ${delay}ms before retry...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                continue; // Retry with fresh nonce
+            }
+            
+            // If not a nonce error or last attempt, throw
+            throw error;
+        }
     }
+    
+    // If we exhausted all retries, throw the last error
+    throw lastError;
 };
 
 export const mintLicenseOnMantle = async (
@@ -220,36 +267,83 @@ export const mintLicenseOnMantle = async (
     terms: string,
     modredIpContractAddress: Address
 ) => {
-    try {
-        const { request } = await publicClient.simulateContract({
-            address: modredIpContractAddress,
-            abi: MODRED_IP_ABI,
-            functionName: 'mintLicense',
-            args: [
-                BigInt(tokenId),
-                BigInt(royaltyPercentage),
-                BigInt(duration),
-                commercialUse,
-                terms
-            ],
-            account: account.address,
-        });
+    const maxRetries = 3;
+    let lastError: any = null;
 
-        const hash = await walletClient.writeContract({
-            ...request,
-            account: account,
-        });
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+        try {
+            const { request } = await publicClient.simulateContract({
+                address: modredIpContractAddress,
+                abi: MODRED_IP_ABI,
+                functionName: 'mintLicense',
+                args: [
+                    BigInt(tokenId),
+                    BigInt(royaltyPercentage),
+                    BigInt(duration),
+                    commercialUse,
+                    terms
+                ],
+                account: account.address,
+            });
 
-        const receipt = await publicClient.waitForTransactionReceipt({ hash });
+            // Fetch nonce right before sending to avoid race conditions
+            const nonce = await publicClient.getTransactionCount({
+                address: account.address,
+                blockTag: 'pending', // Include pending transactions
+            });
+            console.log(`📊 Using nonce: ${nonce} (attempt ${attempt + 1}/${maxRetries})`);
 
-        return {
-            txHash: hash,
-    blockNumber: receipt.blockNumber,
-            explorerUrl: `${BLOCK_EXPLORER_URL}/tx/${hash}`,
-  };
-    } catch (error) {
-        console.error('Error minting license on Mantle:', error);
-        throw error;
+            const hash = await walletClient.writeContract({
+                ...request,
+                account: account,
+                nonce: nonce, // Explicitly set nonce to avoid conflicts
+            });
+
+            const receipt = await publicClient.waitForTransactionReceipt({ hash });
+
+            return {
+                txHash: hash,
+                blockNumber: receipt.blockNumber,
+                explorerUrl: `${BLOCK_EXPLORER_URL}/tx/${hash}`,
+            };
+        } catch (error: any) {
+            lastError = error;
+            console.error(`❌ Error minting license on Mantle (attempt ${attempt + 1}/${maxRetries}):`, error?.message || error);
+            
+            // Check if it's a nonce-related error (check nested cause chain)
+            const checkNonceError = (err: any, depth: number = 0): boolean => {
+                if (!err || depth > 5) return false; // Prevent infinite recursion
+                
+                const message = (err?.message || err?.shortMessage || err?.details || '').toLowerCase();
+                const name = (err?.name || '').toLowerCase();
+                
+                const isNonce = message.includes('nonce') || 
+                               message.includes('already known') ||
+                               name.includes('nonce') ||
+                               name.includes('noncetoolow');
+                
+                if (isNonce) return true;
+                
+                // Recursively check cause chain
+                return checkNonceError(err?.cause, depth + 1);
+            };
+            
+            const isNonceError = checkNonceError(error);
+            
+            if (isNonceError && attempt < maxRetries - 1) {
+                // Wait a bit before retrying to allow nonce to update
+                const delay = (attempt + 1) * 1000; // 1s, 2s, 3s
+                console.log(`⏳ Nonce error detected. Waiting ${delay}ms before retry...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                continue; // Retry with fresh nonce
+            }
+            
+            // If not a nonce error or last attempt, throw
+            throw error;
+        }
     }
+    
+    // If we exhausted all retries, throw the last error
+    throw lastError;
 };
 

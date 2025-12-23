@@ -47,7 +47,7 @@ const mantleTestnet = {
 };
 
 // Backend API configuration
-const BACKEND_URL = "http://localhost:5000";
+const BACKEND_URL = "https://testnow.eduworld.world";
 
 // File validation and preview utilities
 const MAX_FILE_SIZE_MB = 50; // Maximum file size in megabytes

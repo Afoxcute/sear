@@ -6,6 +6,15 @@ const config_1 = require("../utils/config");
 const bigIntSerializer_1 = require("../utils/bigIntSerializer");
 const mintLicense = async (licenseRequest) => {
     try {
+        // Check if a license already exists for this IP (tokenId)
+        const hasExistingLicense = await (0, storyService_1.checkExistingLicenses)(licenseRequest.tokenId, licenseRequest.searContractAddress);
+        if (hasExistingLicense) {
+            return {
+                success: false,
+                error: 'A license already exists for this IP asset. Only one license can be minted per IP.',
+                message: 'License minting failed: IP already has a license'
+            };
+        }
         const { txHash, blockNumber, explorerUrl } = await (0, storyService_1.mintLicenseOnMantle)(licenseRequest.tokenId, licenseRequest.royaltyPercentage, licenseRequest.duration, licenseRequest.commercialUse, licenseRequest.terms, licenseRequest.searContractAddress);
         const result = {
             success: true,

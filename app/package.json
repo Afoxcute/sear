@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "postinstall": "node -e \"const fs = require('fs'); const path = require('path'); const src = path.join(__dirname, '..', 'ignition', 'deployments', 'chain-128123', 'deployed_addresses.json'); const dest = path.join(__dirname, 'src', 'deployed_addresses.json'); fs.copyFileSync(src, dest);\"",
+    "postinstall": "node -e \"const fs = require('fs'); const path = require('path'); const src = path.join(__dirname, '..', 'ignition', 'deployments', 'chain-5003', 'deployed_addresses.json'); const dest = path.join(__dirname, 'src', 'deployed_addresses.json'); if (fs.existsSync(src)) { fs.copyFileSync(src, dest); console.log('✅ Copied deployed_addresses.json'); } else { console.warn('⚠️  deployed_addresses.json not found, skipping copy'); }\"",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",

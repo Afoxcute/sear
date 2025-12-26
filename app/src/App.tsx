@@ -47,7 +47,7 @@ const mantleTestnet = {
 };
 
 // Backend API configuration
-const BACKEND_URL = "https://testnow.eduworld.world";
+const BACKEND_URL = "http://localhost:5000";
 
 // File validation and preview utilities
 const MAX_FILE_SIZE_MB = 50; // Maximum file size in megabytes
@@ -914,8 +914,8 @@ const EnhancedAssetPreview: React.FC<{
         <p style={{ color: 'var(--color-text-secondary)', margin: 0 }}>Media Preview</p>
         {finalMediaUrl && (
           <a href={finalMediaUrl} target="_blank" rel="noopener noreferrer" className="media-link">
-            🔗 View Media
-          </a>
+          🔗 View Media
+        </a>
         )}
       </div>
     </>
@@ -4612,16 +4612,16 @@ export default function App({ thirdwebClient }: AppProps) {
                   </div>
                   
                   {/* Enhanced Media Preview - Always Show */}
-                  <div className="media-preview">
-                    <div className="media-container">
-                      <EnhancedAssetPreview 
-                        assetId={id}
-                        asset={asset}
-                        metadata={metadata}
+                    <div className="media-preview">
+                      <div className="media-container">
+                        <EnhancedAssetPreview 
+                          assetId={id}
+                          asset={asset}
+                          metadata={metadata}
                         mediaUrl={mediaUrl || getIPFSGatewayURL(asset.ipHash || '')}
-                      />
+                        />
+                      </div>
                     </div>
-                  </div>
                   
                   <div className="card-body">
                     <div className="card-field">

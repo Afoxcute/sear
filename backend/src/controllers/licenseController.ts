@@ -27,7 +27,7 @@ const handleLicenseMinting = async (req: Request, res: Response) => {
         const result = await mintLicense(licenseRequest);
 
         if (result.success) {
-            const responseData = {
+            const responseData: any = {
                 message: result.message,
                 data: {
                     txHash: result.txHash,
@@ -35,6 +35,10 @@ const handleLicenseMinting = async (req: Request, res: Response) => {
                     explorerUrl: result.explorerUrl
                 }
             };
+            // Include warning if present
+            if ((result as any).warning) {
+                responseData.warning = (result as any).warning;
+            }
             return res.status(200).json(convertBigIntsToStrings(responseData));
         } else {
             return res.status(500).json({

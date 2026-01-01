@@ -310,13 +310,23 @@ export const registerIpWithMantle = async (
                 
                 const message = (err?.message || err?.shortMessage || err?.details || '').toLowerCase();
                 const name = (err?.name || '').toLowerCase();
+                const status = err?.status;
+                const body = err?.body || '';
+                const bodyStr = typeof body === 'string' ? body : JSON.stringify(body);
                 
+                // Check for nonce-related errors
                 const isNonce = message.includes('nonce') || 
                                message.includes('already known') ||
                                name.includes('nonce') ||
                                name.includes('noncetoolow');
                 
-                if (isNonce) return true;
+                // Check for HTTP 410 errors related to pending blockTag (Mantle RPC limitation)
+                const isPendingBlockTagError = status === 410 && 
+                                              (bodyStr.includes('pending') || 
+                                               bodyStr.includes('eth_getTransactionCount') ||
+                                               message.includes('pending'));
+                
+                if (isNonce || isPendingBlockTagError) return true;
                 
                 // Recursively check cause chain
                 return checkNonceError(err?.cause, depth + 1);
@@ -326,8 +336,10 @@ export const registerIpWithMantle = async (
             
             if (isNonceError && attempt < maxRetries - 1) {
                 // Wait a bit before retrying to allow nonce to update
-                const delay = (attempt + 1) * 1000; // 1s, 2s, 3s
-                console.log(`⏳ Nonce error detected. Waiting ${delay}ms before retry...`);
+                // For HTTP 410 errors, wait a bit longer as it's an RPC issue
+                const isRpcError = error?.status === 410;
+                const delay = isRpcError ? (attempt + 1) * 2000 : (attempt + 1) * 1000; // 2s, 4s, 6s for RPC errors, 1s, 2s, 3s for others
+                console.log(`⏳ Nonce/RPC error detected. Waiting ${delay}ms before retry...`);
                 await new Promise(resolve => setTimeout(resolve, delay));
                 continue; // Retry with fresh nonce
             }
@@ -371,20 +383,104 @@ export const mintLicenseOnMantle = async (
             // Let viem handle nonce automatically - explicitly setting nonce can cause conflicts
             // when transactions are submitted rapidly, leading to "already known" errors
             // even though the transaction succeeds
-        const hash = await walletClient.writeContract({
-            ...request,
-            account: account,
-                // Don't set nonce - let viem/wallet handle it automatically
-        });
-            console.log(`📊 Transaction submitted with hash: ${hash} (attempt ${attempt + 1}/${maxRetries})`);
+            let hash: Hash | undefined;
+            try {
+                hash = await walletClient.writeContract({
+                    ...request,
+                    account: account,
+                    // Don't set nonce - let viem/wallet handle it automatically
+                });
+                console.log(`📊 Transaction submitted with hash: ${hash} (attempt ${attempt + 1}/${maxRetries})`);
+            } catch (writeError: any) {
+                // Sometimes writeContract throws an error even if transaction was submitted
+                // Check if we got a hash despite the error
+                const errorHash = writeError?.hash || writeError?.transactionHash || writeError?.data?.hash;
+                if (errorHash) {
+                    console.log(`⚠️ Got transaction hash despite error: ${errorHash}`);
+                    hash = errorHash as Hash;
+                } else {
+                    // Check if error contains "already known" - transaction was likely submitted
+                    const errorMsg = (writeError?.message || writeError?.shortMessage || writeError?.details || '').toLowerCase();
+                    if (errorMsg.includes('already known')) {
+                        console.log(`⚠️ Transaction "already known" - transaction was likely submitted successfully`);
+                        console.log(`⏳ Waiting 5 seconds to allow transaction to be mined, then checking for receipt...`);
+                        
+                        // Wait a bit for transaction to be mined
+                        await new Promise(resolve => setTimeout(resolve, 5000));
+                        
+                        // Try to find the transaction by checking the account's transaction count
+                        // and looking for the most recent transaction to our contract
+                        try {
+                            // Get the account's transaction count to find the nonce that was used
+                            const txCount = await publicClient.getTransactionCount({
+                                address: account.address,
+                                blockTag: 'latest'
+                            });
+                            
+                            // The transaction that was submitted would have used nonce (txCount - 1) or (txCount - 2)
+                            // Check recent blocks for transactions from our account to our contract
+                            const currentBlock = await publicClient.getBlockNumber();
+                            const blocksToCheck = 20; // Check last 20 blocks
+                            
+                            for (let i = 0; i < blocksToCheck; i++) {
+                                const blockNumber = currentBlock - BigInt(i);
+                                try {
+                                    const block = await publicClient.getBlock({ blockNumber, includeTransactions: true });
+                                    if (block && block.transactions) {
+                                        for (const tx of block.transactions) {
+                                            if (typeof tx === 'object' && 
+                                                tx.from?.toLowerCase() === account.address.toLowerCase() &&
+                                                tx.to?.toLowerCase() === modredIpContractAddress.toLowerCase() &&
+                                                tx.input && tx.input.startsWith('0xa8597e13')) { // mintLicense function selector
+                                                // Found a matching transaction
+                                                const txHash = tx.hash;
+                                                console.log(`✅ Found matching transaction: ${txHash}`);
+                                                hash = txHash as Hash;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    if (hash) break;
+                                } catch (blockError) {
+                                    // Continue to next block
+                                    continue;
+                                }
+                            }
+                        } catch (searchError) {
+                            console.log(`⚠️ Could not find transaction hash:`, searchError);
+                        }
+                        
+                        // If we still don't have a hash, throw the error to trigger retry logic
+                        // But log that the transaction was likely successful
+                        if (!hash) {
+                            console.log(`⚠️ Could not find transaction hash, but "already known" suggests it was submitted`);
+                            throw writeError;
+                        }
+                    } else {
+                        throw writeError;
+                    }
+                }
+            }
 
-        const receipt = await publicClient.waitForTransactionReceipt({ hash });
+            // If we have a hash, wait for receipt (even if there was an error)
+            if (hash) {
+                try {
+                    const receipt = await publicClient.waitForTransactionReceipt({ hash });
+                    console.log(`✅ Transaction succeeded! Hash: ${hash}`);
+                    return {
+                        txHash: hash,
+                        blockNumber: receipt.blockNumber,
+                        explorerUrl: `${BLOCK_EXPLORER_URL}/tx/${hash}`,
+                    };
+                } catch (receiptError: any) {
+                    // If waiting for receipt fails, continue to error handling
+                    console.error(`❌ Error waiting for receipt:`, receiptError?.message || receiptError);
+                    throw receiptError;
+                }
+            }
 
-        return {
-            txHash: hash,
-    blockNumber: receipt.blockNumber,
-            explorerUrl: `${BLOCK_EXPLORER_URL}/tx/${hash}`,
-  };
+            // If we don't have a hash, throw the original error
+            throw new Error('Transaction failed: No transaction hash received');
         } catch (error: any) {
             lastError = error;
             console.error(`❌ Error minting license on Mantle (attempt ${attempt + 1}/${maxRetries}):`, error?.message || error);
@@ -395,13 +491,23 @@ export const mintLicenseOnMantle = async (
                 
                 const message = (err?.message || err?.shortMessage || err?.details || '').toLowerCase();
                 const name = (err?.name || '').toLowerCase();
+                const status = err?.status;
+                const body = err?.body || '';
+                const bodyStr = typeof body === 'string' ? body : JSON.stringify(body);
                 
+                // Check for nonce-related errors
                 const isNonce = message.includes('nonce') || 
                                message.includes('already known') ||
                                name.includes('nonce') ||
                                name.includes('noncetoolow');
                 
-                if (isNonce) return true;
+                // Check for HTTP 410 errors related to pending blockTag (Mantle RPC limitation)
+                const isPendingBlockTagError = status === 410 && 
+                                              (bodyStr.includes('pending') || 
+                                               bodyStr.includes('eth_getTransactionCount') ||
+                                               message.includes('pending'));
+                
+                if (isNonce || isPendingBlockTagError) return true;
                 
                 // Recursively check cause chain
                 return checkNonceError(err?.cause, depth + 1);
@@ -411,8 +517,10 @@ export const mintLicenseOnMantle = async (
             
             if (isNonceError && attempt < maxRetries - 1) {
                 // Wait a bit before retrying to allow nonce to update
-                const delay = (attempt + 1) * 1000; // 1s, 2s, 3s
-                console.log(`⏳ Nonce error detected. Waiting ${delay}ms before retry...`);
+                // For HTTP 410 errors, wait a bit longer as it's an RPC issue
+                const isRpcError = error?.status === 410;
+                const delay = isRpcError ? (attempt + 1) * 2000 : (attempt + 1) * 1000; // 2s, 4s, 6s for RPC errors, 1s, 2s, 3s for others
+                console.log(`⏳ Nonce/RPC error detected. Waiting ${delay}ms before retry...`);
                 await new Promise(resolve => setTimeout(resolve, delay));
                 continue; // Retry with fresh nonce
             }

@@ -1782,15 +1782,26 @@ export default function App({ thirdwebClient }: AppProps) {
       console.log('License minting successful:', result);
 
       // Show success notification
-      notifySuccess('License Minted', 
-        `Successfully minted license!\nTransaction: ${result.data.txHash}`,
-        {
-          action: {
-            label: 'View Transaction',
-            onClick: () => window.open(`https://explorer.testnet.mantle.xyz/tx/${result.data.txHash}`, '_blank')
+      if (result.warning) {
+        // Handle case where transaction was submitted but hash couldn't be retrieved
+        notifySuccess('License Minting Submitted', 
+          `Your license minting was submitted successfully!\n\n${result.warning}\n\nPlease check your IP asset details to confirm the license was minted.`
+        );
+      } else if (result.data?.txHash) {
+        notifySuccess('License Minted', 
+          `Successfully minted license!\nTransaction: ${result.data.txHash}`,
+          {
+            action: {
+              label: 'View Transaction',
+              onClick: () => window.open(`https://explorer.testnet.mantle.xyz/tx/${result.data.txHash}`, '_blank')
+            }
           }
-        }
-      );
+        );
+      } else {
+        notifySuccess('License Minted', 
+          `Successfully minted license!${result.message ? '\n' + result.message : ''}`
+        );
+      }
 
       // Reset form
       setSelectedTokenId(1);

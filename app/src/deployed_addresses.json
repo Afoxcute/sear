@@ -1,5 +1,5 @@
 {
-  "ModredIPModule#ModredIP": "0x2D0456CE5e446ef9C8f513832a0bd361201990Ab",
   "ModredIPModule#ERC6551Account": "0xB0F86e408Ea86fdab40c67aDDf5ac9faed09780D",
-  "ModredIPModule#ERC6551Registry": "0x04F75eB0897F2a0F5b0D322767e8e870ac02a6d2"
+  "ModredIPModule#ERC6551Registry": "0x04F75eB0897F2a0F5b0D322767e8e870ac02a6d2",
+  "ModredIPModule#ModredIP": "0x2D0456CE5e446ef9C8f513832a0bd361201990Ab"
 }

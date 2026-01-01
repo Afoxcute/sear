@@ -3,7 +3,7 @@ import { createCommercialRemixTerms, NFTContractAddress, WIP_TOKEN_ADDRESS } fro
 import { publicClient, walletClient, account, networkInfo, BLOCK_EXPLORER_URL } from '../utils/config';
 import { uploadJSONToIPFS } from '../utils/functions/uploadToIpfs';
 import { createHash } from 'crypto';
-import { Address } from 'viem';
+import { Address, Hash } from 'viem';
 
 // IP Metadata interface for Mantle
 export interface IpMetadata {
@@ -164,60 +164,142 @@ export const registerIpWithMantle = async (
     let lastError: any = null;
 
     for (let attempt = 0; attempt < maxRetries; attempt++) {
-        try {
-            console.log('ipHash:', ipHash);
-            console.log('metadata:', metadata);
-            console.log('isEncrypted:', isEncrypted);
+    try {
+        console.log('ipHash:', ipHash);
+        console.log('metadata:', metadata);
+        console.log('isEncrypted:', isEncrypted);
 
-            // Register IP on ModredIP contract
-            const { request } = await publicClient.simulateContract({
-                address: modredIpContractAddress,
-                abi: MODRED_IP_ABI,
-                functionName: 'registerIP',
-                args: [
-                    ipHash,
-                    metadata,
-                    isEncrypted
-                ],
-                account: account.address,
-            });
+        // Register IP on ModredIP contract
+        const { request } = await publicClient.simulateContract({
+            address: modredIpContractAddress,
+            abi: MODRED_IP_ABI,
+            functionName: 'registerIP',
+            args: [
+                ipHash,
+                metadata,
+                isEncrypted
+            ],
+            account: account.address,
+        });
 
-            // Fetch nonce right before sending to avoid race conditions
-            const nonce = await publicClient.getTransactionCount({
-                address: account.address,
-                blockTag: 'pending', // Include pending transactions
-            });
-            console.log(`📊 Using nonce: ${nonce} (attempt ${attempt + 1}/${maxRetries})`);
-
-            const hash = await walletClient.writeContract({
-                ...request,
-                account: account,
-                nonce: nonce, // Explicitly set nonce to avoid conflicts
-            });
-
-            const receipt = await publicClient.waitForTransactionReceipt({ hash });
-
-            // Extract IP Asset ID from transaction logs
-            let ipAssetId: number | undefined;
-            if (receipt.logs && receipt.logs.length > 0) {
-                // Look for the Transfer event which contains the token ID
-                for (const log of receipt.logs) {
-                    if (log.topics[0] === '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef') {
-                        // Transfer event signature
-                        if (log.topics[3]) {
-                            ipAssetId = parseInt(log.topics[3], 16);
-                            break;
+            // Let viem handle nonce automatically - explicitly setting nonce can cause conflicts
+            // when transactions are submitted rapidly, leading to "already known" errors
+            // even though the transaction succeeds
+            let hash: Hash | undefined;
+            try {
+                hash = await walletClient.writeContract({
+                    ...request,
+                    account: account,
+                    // Don't set nonce - let viem/wallet handle it automatically
+                });
+                console.log(`📊 Transaction submitted with hash: ${hash} (attempt ${attempt + 1}/${maxRetries})`);
+            } catch (writeError: any) {
+                // Sometimes writeContract throws an error even if transaction was submitted
+                // Check if we got a hash despite the error
+                const errorHash = writeError?.hash || writeError?.transactionHash || writeError?.data?.hash;
+                if (errorHash) {
+                    console.log(`⚠️ Got transaction hash despite error: ${errorHash}`);
+                    hash = errorHash as Hash;
+                } else {
+                    // Check if error contains "already known" - transaction was likely submitted
+                    const errorMsg = (writeError?.message || writeError?.shortMessage || writeError?.details || '').toLowerCase();
+                    if (errorMsg.includes('already known')) {
+                        console.log(`⚠️ Transaction "already known" - transaction was likely submitted successfully`);
+                        console.log(`⏳ Waiting 5 seconds to allow transaction to be mined, then checking for receipt...`);
+                        
+                        // Wait a bit for transaction to be mined
+                        await new Promise(resolve => setTimeout(resolve, 5000));
+                        
+                        // Try to find the transaction by checking the account's transaction count
+                        // and looking for the most recent transaction to our contract
+                        try {
+                            // Get the account's transaction count to find the nonce that was used
+                            const txCount = await publicClient.getTransactionCount({
+                                address: account.address,
+                                blockTag: 'latest'
+                            });
+                            
+                            // The transaction that was submitted would have used nonce (txCount - 1) or (txCount - 2)
+                            // Check recent blocks for transactions from our account to our contract
+                            const currentBlock = await publicClient.getBlockNumber();
+                            const blocksToCheck = 20; // Check last 20 blocks
+                            
+                            for (let i = 0; i < blocksToCheck; i++) {
+                                const blockNumber = currentBlock - BigInt(i);
+                                try {
+                                    const block = await publicClient.getBlock({ blockNumber, includeTransactions: true });
+                                    if (block && block.transactions) {
+                                        for (const tx of block.transactions) {
+                                            if (typeof tx === 'object' && 
+                                                tx.from?.toLowerCase() === account.address.toLowerCase() &&
+                                                tx.to?.toLowerCase() === modredIpContractAddress.toLowerCase() &&
+                                                tx.input && tx.input.startsWith('0xb9172466')) { // registerIP function selector
+                                                // Found a matching transaction
+                                                const txHash = tx.hash;
+                                                console.log(`✅ Found matching transaction: ${txHash}`);
+                                                hash = txHash as Hash;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    if (hash) break;
+                                } catch (blockError) {
+                                    // Continue to next block
+                                    continue;
+                                }
+                            }
+                        } catch (searchError) {
+                            console.log(`⚠️ Could not find transaction hash:`, searchError);
                         }
+                        
+                        // If we still don't have a hash, throw the error to trigger retry logic
+                        // But log that the transaction was likely successful
+                        if (!hash) {
+                            console.log(`⚠️ Could not find transaction hash, but "already known" suggests it was submitted`);
+                            throw writeError;
+                        }
+                    } else {
+                        throw writeError;
                     }
                 }
             }
 
-            return {
-                txHash: hash,
-                ipAssetId: ipAssetId,
-                blockNumber: receipt.blockNumber,
-                explorerUrl: `${BLOCK_EXPLORER_URL}/tx/${hash}`,
-            };
+            // If we have a hash, wait for receipt (even if there was an error)
+            if (hash) {
+                try {
+                    const receipt = await publicClient.waitForTransactionReceipt({ hash });
+
+                    // Extract IP Asset ID from transaction logs
+                    let ipAssetId: number | undefined;
+                    if (receipt.logs && receipt.logs.length > 0) {
+                        // Look for the Transfer event which contains the token ID
+                        for (const log of receipt.logs) {
+                            if (log.topics[0] === '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef') {
+                                // Transfer event signature
+                                if (log.topics[3]) {
+                                    ipAssetId = parseInt(log.topics[3], 16);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    console.log(`✅ Transaction succeeded! Hash: ${hash}, IP Asset ID: ${ipAssetId}`);
+                    return {
+                        txHash: hash,
+                        ipAssetId: ipAssetId,
+                        blockNumber: receipt.blockNumber,
+                        explorerUrl: `${BLOCK_EXPLORER_URL}/tx/${hash}`,
+                    };
+                } catch (receiptError: any) {
+                    // If waiting for receipt fails, continue to error handling
+                    console.error(`❌ Error waiting for receipt:`, receiptError?.message || receiptError);
+                    throw receiptError;
+                }
+            }
+
+            // If we don't have a hash, throw the original error
+            throw new Error('Transaction failed: No transaction hash received');
         } catch (error: any) {
             lastError = error;
             console.error(`❌ Error registering IP with Mantle (attempt ${attempt + 1}/${maxRetries}):`, error?.message || error);
@@ -271,41 +353,38 @@ export const mintLicenseOnMantle = async (
     let lastError: any = null;
 
     for (let attempt = 0; attempt < maxRetries; attempt++) {
-        try {
-            const { request } = await publicClient.simulateContract({
-                address: modredIpContractAddress,
-                abi: MODRED_IP_ABI,
-                functionName: 'mintLicense',
-                args: [
-                    BigInt(tokenId),
-                    BigInt(royaltyPercentage),
-                    BigInt(duration),
-                    commercialUse,
-                    terms
-                ],
-                account: account.address,
-            });
+    try {
+        const { request } = await publicClient.simulateContract({
+            address: modredIpContractAddress,
+            abi: MODRED_IP_ABI,
+            functionName: 'mintLicense',
+            args: [
+                BigInt(tokenId),
+                BigInt(royaltyPercentage),
+                BigInt(duration),
+                commercialUse,
+                terms
+            ],
+            account: account.address,
+        });
 
-            // Fetch nonce right before sending to avoid race conditions
-            const nonce = await publicClient.getTransactionCount({
-                address: account.address,
-                blockTag: 'pending', // Include pending transactions
-            });
-            console.log(`📊 Using nonce: ${nonce} (attempt ${attempt + 1}/${maxRetries})`);
+            // Let viem handle nonce automatically - explicitly setting nonce can cause conflicts
+            // when transactions are submitted rapidly, leading to "already known" errors
+            // even though the transaction succeeds
+        const hash = await walletClient.writeContract({
+            ...request,
+            account: account,
+                // Don't set nonce - let viem/wallet handle it automatically
+        });
+            console.log(`📊 Transaction submitted with hash: ${hash} (attempt ${attempt + 1}/${maxRetries})`);
 
-            const hash = await walletClient.writeContract({
-                ...request,
-                account: account,
-                nonce: nonce, // Explicitly set nonce to avoid conflicts
-            });
+        const receipt = await publicClient.waitForTransactionReceipt({ hash });
 
-            const receipt = await publicClient.waitForTransactionReceipt({ hash });
-
-            return {
-                txHash: hash,
-                blockNumber: receipt.blockNumber,
-                explorerUrl: `${BLOCK_EXPLORER_URL}/tx/${hash}`,
-            };
+        return {
+            txHash: hash,
+    blockNumber: receipt.blockNumber,
+            explorerUrl: `${BLOCK_EXPLORER_URL}/tx/${hash}`,
+  };
         } catch (error: any) {
             lastError = error;
             console.error(`❌ Error minting license on Mantle (attempt ${attempt + 1}/${maxRetries}):`, error?.message || error);
@@ -339,8 +418,8 @@ export const mintLicenseOnMantle = async (
             }
             
             // If not a nonce error or last attempt, throw
-            throw error;
-        }
+        throw error;
+    }
     }
     
     // If we exhausted all retries, throw the last error

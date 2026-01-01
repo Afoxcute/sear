@@ -20,6 +20,15 @@ import { createWallet, inAppWallet } from "thirdweb/wallets";
 import { parseEther, formatEther } from "viem";
 import CONTRACT_ADDRESS_JSON from "./deployed_addresses.json";
 
+// Type assertion to include the ModredIP contract address
+type ContractAddresses = {
+  "ModredIPModule#ERC6551Account": string;
+  "ModredIPModule#ERC6551Registry": string;
+  "ModredIPModule#ModredIP": string;
+};
+
+const CONTRACT_ADDRESSES = CONTRACT_ADDRESS_JSON as ContractAddresses;
+
 // Custom Mantle Sepolia Testnet chain definition with official RPC URL
 const mantleTestnet = {
   id: 5003,
@@ -113,7 +122,7 @@ const generateFilePreview = (file: File): Promise<string | null> => {
 };
 
 // Remove hardcoded Pinata credentials
-const PINATA_JWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiI5MjJjNmZkOC04ZTZhLTQxMzUtODA4ZS05ZTkwZTMyMjViNTIiLCJlbWFpbCI6Imp3YXZvbGFiaWxvdmUwMDE2QGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwaW5fcG9saWN5Ijp7InJlZ2lvbnMiOlt7ImRlc2lyZWRSZXBsaWNhdGlvbkNvdW50IjoxLCJpZCI6IkZSQTEifSx7ImRlc2lyZWRSZXBsaWNhdGlvbkNvdW50IjoxLCJpZCI6Ik5ZQzEifV0sInZlcnNpb24iOjF9LCJtZmFfZW5hYmxlZCI6ZmFsc2UsInN0YXR1cyI6IkFDVElWRSJ9LCJhdXRoZW50aWNhdGlvblR5cGUiOiJzY29wZWRLZXkiLCJzY29wZWRLZXlLZXkiOiJkZDI1MzM4YmRmYTdjNzlmYjY4NyIsInNjb3BlZEtleVNlY3JldCI6ImFiYTJjMzcwNWExMzNlZmVjNzM3NzQwZGNjMGJjOTE4MGY2M2IzZjkxY2E5MzVlYWE3NzUxMDhjOGNkYjMyZDciLCJleHAiOjE3ODU3NDg3ODh9.I6RIrBphVycV-75XK_pippeZngj6QntUZZjFMnGtqFA";
+const PINATA_JWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiJmZDYzMDVmZS1kMjNjLTQ4OGEtOGE1Zi1kMmQ4YjMzNjZiNGUiLCJlbWFpbCI6ImFmb2xhYmlpZmVvbHV3YTg5QGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwaW5fcG9saWN5Ijp7InJlZ2lvbnMiOlt7ImRlc2lyZWRSZXBsaWNhdGlvbkNvdW50IjoxLCJpZCI6IkZSQTEifSx7ImRlc2lyZWRSZXBsaWNhdGlvbkNvdW50IjoxLCJpZCI6Ik5ZQzEifV0sInZlcnNpb24iOjF9LCJtZmFfZW5hYmxlZCI6ZmFsc2UsInN0YXR1cyI6IkFDVElWRSJ9LCJhdXRoZW50aWNhdGlvblR5cGUiOiJzY29wZWRLZXkiLCJzY29wZWRLZXlLZXkiOiJhZjRlYTllNzVkYjJmMDBlNDAwNyIsInNjb3BlZEtleVNlY3JldCI6ImQzMDZkNjZmOWI3ODlhYzIyNTY5YTY5NTY4YTNlNGNiNDExMDgzZjkyY2ZmNzg5NmY2MjU1Y2VjNmY1MzEzNjYiLCJleHAiOjE3OTgzMDkwNjd9.jCTgzS_Ygop0pniQNNhcN_ARaqu16JgXv-PJRyQCxxk";
 
 /**
  * Uploads a file to IPFS via Pinata
@@ -1052,7 +1061,7 @@ export default function App({ thirdwebClient }: AppProps) {
         abi: SEAR_ABI,
         client: thirdwebClient,
         chain: defineChain(mantleTestnet.id),
-        address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
+        address: CONTRACT_ADDRESSES["ModredIPModule#ModredIP"],
       });
 
       // Get royalty info for the connected account
@@ -1141,7 +1150,7 @@ export default function App({ thirdwebClient }: AppProps) {
     }
 
     try {
-      const contractAddress = CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"].toLowerCase();
+      const contractAddress = CONTRACT_ADDRESSES["ModredIPModule#ModredIP"].toLowerCase();
       const response = await fetch(`${BACKEND_URL}/api/infringement/status/${contractAddress}/${tokenId}`);
       
       if (!response.ok) {
@@ -1353,7 +1362,7 @@ export default function App({ thirdwebClient }: AppProps) {
 
     try {
       setLoading(true);
-      const contractAddress = CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"];
+      const contractAddress = CONTRACT_ADDRESSES["ModredIPModule#ModredIP"];
       console.log("📋 Using Sear Contract:", contractAddress);
       
       const contract = getContract({
@@ -1569,7 +1578,7 @@ export default function App({ thirdwebClient }: AppProps) {
         // Blockchain metadata
         network: 'mantle',
         chain_id: '5003',
-        contract_address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
+        contract_address: CONTRACT_ADDRESSES["ModredIPModule#ModredIP"],
         // Infringement detection metadata
         monitoring_enabled: true,
         infringement_alerts: true,
@@ -1609,7 +1618,7 @@ export default function App({ thirdwebClient }: AppProps) {
           ipHash: ipHash,
           metadata: JSON.stringify(ipMetadata),
           isEncrypted: isEncrypted,
-          searContractAddress: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
+          searContractAddress: CONTRACT_ADDRESSES["ModredIPModule#ModredIP"],
           skipContractCall: false // V2 contract has registerIP function, so this should be false
         })
       });
@@ -1643,16 +1652,21 @@ export default function App({ thirdwebClient }: AppProps) {
         notifySuccess('IP Asset Metadata Created (Testing Mode)', 
           `IPFS upload successful!\nIP Hash: ${result.mantle.ipHash}\n\nNote: Contract registration was skipped (testing mode).`
         );
+      } else if (result.warning) {
+        // Handle case where transaction was submitted but hash couldn't be retrieved
+        notifySuccess('IP Asset Registration Submitted', 
+          `Your IP asset registration was submitted successfully!\n\n${result.warning}\n\nPlease check your IP assets list to confirm the registration.`
+        );
       } else {
-      notifySuccess('IP Asset Registered', 
-        `Successfully registered IP asset!\nTransaction: ${result.mantle.txHash}\nIP Asset ID: ${result.mantle.ipAssetId}`,
-        {
-          action: {
-            label: 'View Transaction',
-            onClick: () => window.open(`https://explorer.testnet.mantle.xyz/tx/${result.mantle.txHash}`, '_blank')
+        notifySuccess('IP Asset Registered', 
+          `Successfully registered IP asset!\nTransaction: ${result.mantle.txHash}\nIP Asset ID: ${result.mantle.ipAssetId}`,
+          {
+            action: {
+              label: 'View Transaction',
+              onClick: () => window.open(`https://explorer.testnet.mantle.xyz/tx/${result.mantle.txHash}`, '_blank')
+            }
           }
-        }
-      );
+        );
       }
 
       // Reset form
@@ -1755,7 +1769,7 @@ export default function App({ thirdwebClient }: AppProps) {
           duration: licenseDuration,
           commercialUse: commercialUse,
           terms: licenseTerms.terms,
-          searContractAddress: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"]
+          searContractAddress: CONTRACT_ADDRESSES["ModredIPModule#ModredIP"]
         })
       });
 
@@ -1853,7 +1867,7 @@ export default function App({ thirdwebClient }: AppProps) {
         abi: SEAR_ABI,
           client: thirdwebClient,
           chain: defineChain(mantleTestnet.id),
-        address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
+        address: CONTRACT_ADDRESSES["ModredIPModule#ModredIP"],
         });
 
       const preparedCall = await prepareContractCall({
@@ -1934,7 +1948,7 @@ export default function App({ thirdwebClient }: AppProps) {
         abi: SEAR_ABI,
           client: thirdwebClient,
           chain: defineChain(mantleTestnet.id),
-        address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
+        address: CONTRACT_ADDRESSES["ModredIPModule#ModredIP"],
         });
 
       const preparedCall = await prepareContractCall({
@@ -2016,7 +2030,7 @@ export default function App({ thirdwebClient }: AppProps) {
         abi: SEAR_ABI,
         client: thirdwebClient,
         chain: defineChain(mantleTestnet.id),
-        address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
+        address: CONTRACT_ADDRESSES["ModredIPModule#ModredIP"],
       });
 
       const preparedCall = await prepareContractCall({
@@ -2072,7 +2086,7 @@ export default function App({ thirdwebClient }: AppProps) {
         abi: SEAR_ABI,
         client: thirdwebClient,
         chain: defineChain(mantleTestnet.id),
-        address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
+        address: CONTRACT_ADDRESSES["ModredIPModule#ModredIP"],
       });
 
       const preparedCall = await prepareContractCall({
@@ -2117,7 +2131,7 @@ export default function App({ thirdwebClient }: AppProps) {
         abi: SEAR_ABI,
         client: thirdwebClient,
         chain: defineChain(mantleTestnet.id),
-        address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
+        address: CONTRACT_ADDRESSES["ModredIPModule#ModredIP"],
       });
 
       // Get arbitrator details
@@ -2218,7 +2232,7 @@ export default function App({ thirdwebClient }: AppProps) {
         abi: SEAR_ABI,
         client: thirdwebClient,
         chain: defineChain(mantleTestnet.id),
-        address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
+        address: CONTRACT_ADDRESSES["ModredIPModule#ModredIP"],
       });
 
       const preparedCall = await prepareContractCall({
@@ -2275,7 +2289,7 @@ export default function App({ thirdwebClient }: AppProps) {
         abi: SEAR_ABI,
         client: thirdwebClient,
         chain: defineChain(mantleTestnet.id),
-        address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
+        address: CONTRACT_ADDRESSES["ModredIPModule#ModredIP"],
       });
 
       const preparedCall = await prepareContractCall({
@@ -2353,7 +2367,7 @@ export default function App({ thirdwebClient }: AppProps) {
         abi: SEAR_ABI,
         client: thirdwebClient,
         chain: defineChain(mantleTestnet.id),
-        address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
+        address: CONTRACT_ADDRESSES["ModredIPModule#ModredIP"],
       });
 
       // Check for active disputes first
@@ -2460,7 +2474,7 @@ export default function App({ thirdwebClient }: AppProps) {
         abi: SEAR_ABI,
         client: thirdwebClient,
         chain: defineChain(mantleTestnet.id),
-        address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
+        address: CONTRACT_ADDRESSES["ModredIPModule#ModredIP"],
       });
 
       const preparedCall = await prepareContractCall({
@@ -2515,7 +2529,7 @@ export default function App({ thirdwebClient }: AppProps) {
         abi: SEAR_ABI,
         client: thirdwebClient,
         chain: defineChain(mantleTestnet.id),
-        address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
+        address: CONTRACT_ADDRESSES["ModredIPModule#ModredIP"],
       });
 
       const preparedCall = await prepareContractCall({
@@ -2555,7 +2569,7 @@ export default function App({ thirdwebClient }: AppProps) {
         abi: SEAR_ABI,
         client: thirdwebClient,
         chain: defineChain(mantleTestnet.id),
-        address: CONTRACT_ADDRESS_JSON["ModredIPModule#ModredIP"],
+        address: CONTRACT_ADDRESSES["ModredIPModule#ModredIP"],
       });
 
       // Load minimum stake with error handling

@@ -83,6 +83,17 @@ If you get an `already known` error during deployment, it means there's a pendin
    - Wait 2-3 minutes
    - Run the deployment command again
 
+**Note**: The backend now includes automatic retry logic that handles "already known" errors. If you see this error in the backend logs, the system will automatically retry the transaction.
+
+### HTTP 410 Error (RPC Limitation)
+
+If you encounter HTTP 410 errors related to `pending` blockTag:
+
+- **Cause**: Mantle RPC doesn't support `blockTag: 'pending'` for `eth_getTransactionCount`
+- **Solution**: The backend automatically detects and handles these errors
+- **Retry**: The system will automatically retry with longer delays (2s, 4s, 6s)
+- **Recovery**: Transaction hash recovery from recent blocks if available
+
 ### Other Issues
 
 - **"Missing env var DEPLOYER_PRIVATE_KEY"**: Make sure you set the environment variable before running the deploy command

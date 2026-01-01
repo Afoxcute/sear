@@ -118,3 +118,23 @@ function unstake() public nonReentrant
 - ✅ Dispute Resolution with Arbitration System
 - ✅ Arbitrator Registration and Unstaking
 - ✅ Reputation System for Arbitrators
+
+## Transaction Reliability
+
+The backend includes advanced transaction reliability features:
+
+### Nonce Management
+- **Automatic Handling**: Viem automatically manages nonce (no explicit nonce setting)
+- **Retry Logic**: Automatically retries up to 3 times on nonce conflicts
+- **Exponential Backoff**: Waits 1s, 2s, 3s between retries (2s, 4s, 6s for RPC errors)
+
+### Error Recovery
+- **"Already Known" Detection**: Detects when transactions were submitted but errors occurred
+- **Transaction Hash Recovery**: Searches last 20 blocks to find transaction hash
+- **HTTP 410 Handling**: Handles Mantle RPC limitation with `pending` blockTag
+- **Success Guarantee**: Returns success even when transaction hash can't be retrieved
+
+### Mantle RPC Limitations
+- **Pending BlockTag**: Mantle RPC doesn't support `blockTag: 'pending'` for `eth_getTransactionCount`
+- **Error Detection**: Automatically detects HTTP 410 errors related to pending blockTag
+- **Automatic Recovery**: Retries with longer delays to allow RPC endpoint to recover

@@ -88,6 +88,8 @@ Sear addresses critical pain points in the current IP management landscape:
 - **Storage**: IPFS for censorship-resistant content
 - **Monitoring**: Yakoa API for infringement detection
 - **Deployment**: Hardhat Ignition for contract deployment
+- **RPC**: Mantle Sepolia RPC with automatic retry and error recovery
+- **Transaction Reliability**: Advanced nonce management with retry logic
 
 ---
 
@@ -240,6 +242,11 @@ The founders experienced firsthand the challenges of IP management:
 - [x] User authentication and wallet integration
 - [x] Improved nonce handling with retry logic
 - [x] Enhanced error handling and user feedback
+- [x] HTTP 410 error handling for Mantle RPC pending blockTag limitation
+- [x] "Already known" transaction error recovery
+- [x] Transaction hash recovery from recent blocks
+- [x] Homepage/landing page with wallet connection requirement
+- [x] Media preview always visible in IP asset cards
 
 ### Phase 3: Advanced Features (Q4 2025) 🚧 IN PROGRESS
 - [x] Advanced licensing templates (8 predefined templates with customization)

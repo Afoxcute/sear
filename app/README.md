@@ -165,6 +165,19 @@ Current deployed contract addresses are stored in `src/deployed_addresses.json`:
 - License validation (one license per IP)
 - Nonce management with retry logic
 - Transaction error handling and recovery
+- HTTP 410 RPC error recovery (Mantle pending blockTag limitation)
+- "Already known" transaction error recovery
+- Transaction hash recovery from recent blocks
+
+## Recent Updates
+
+- ✅ Homepage/landing page with wallet connection requirement
+- ✅ Media preview always visible in IP asset cards
+- ✅ Enhanced transaction error handling with success notifications
+- ✅ Improved nonce management (automatic handling by viem)
+- ✅ HTTP 410 error detection and retry logic
+- ✅ "Already known" transaction detection and recovery
+- ✅ Transaction hash recovery from recent blocks when errors occur
 
 ## Support
 

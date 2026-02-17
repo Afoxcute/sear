@@ -36,6 +36,12 @@ This is the URL to the live working environment of the solution the team has dev
 
 ---
 
+## Pitch Deck
+
+**[View pitch deck (PDF)](https://drive.google.com/file/d/1WWvr84-tPiO0VlBjizR7vpGmWYa7zKAM/view?usp=sharing)**
+
+---
+
 ## Project Demo Video
 
 **[Watch the project demo video](https://youtu.be/0qzSrBZPHTU)**
@@ -48,6 +54,7 @@ A submission without a demo video link will not be scored.
 
 - [Project Details](#project-details)
 - [Project Demo Link](#project-demo-link)
+- [Pitch Deck](#pitch-deck)
 - [Project Demo Video](#project-demo-video)
 - [🎯 Vision & Mission](#-vision--mission)
 - [💼 Business Model](#-business-model)

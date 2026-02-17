@@ -9,8 +9,35 @@
 
 ---
 
+## Project Details
+
+**Project Description**  
+Sear is a decentralized intellectual property (IP) management platform built on Mantle. Creators can register IP assets as token-bound accounts (ERC-6551), mint licenses with programmable terms and royalties, receive and distribute revenue on-chain, and resolve disputes through an arbitration system. The platform uses IPFS for storage, integrates AI-powered infringement detection, and offers transfer and gifting of IP assets with full on-chain provenance. Built for the creator economy, Sear unifies registration, licensing, monetization, and protection in one dashboard with verifiable, transparent records.
+
+**Hackathon track:** Legacy Builders
+
+**Tech stack**
+- **Frontend:** React 18, TypeScript, Vite, Thirdweb SDK, custom CSS (glassmorphism), React Context API
+- **Backend:** Node.js, TypeScript, Express.js
+- **Blockchain & contracts:** Solidity, Viem, Mantle (Sepolia Testnet), Hardhat, Hardhat Ignition; ERC-6551 token-bound accounts (ERC6551Registry, ERC6551Account)
+- **Storage:** IPFS, Pinata
+- **Services:** Yakoa (AI-powered infringement detection)
+- **Infrastructure:** Mantle RPC, Pinata IPFS pinning
+
+---
+
+## Project Demo Video
+
+**[Watch the project demo video](https://youtu.be/0qzSrBZPHTU)**
+
+A submission without a demo video link will not be scored.
+
+---
+
 ## 📋 Table of Contents
 
+- [Project Details](#project-details)
+- [Project Demo Video](#project-demo-video)
 - [🎯 Vision & Mission](#-vision--mission)
 - [💼 Business Model](#-business-model)
 - [🏗️ Technology Stack](#️-technology-stack)

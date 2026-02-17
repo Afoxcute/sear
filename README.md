@@ -16,6 +16,8 @@ Sear is a decentralized intellectual property (IP) management platform built on 
 
 **Hackathon track:** Legacy Builders
 
+**Improvement:** Improving the frontend.
+
 **Tech stack**
 - **Frontend:** React 18, TypeScript, Vite, Thirdweb SDK, custom CSS (glassmorphism), React Context API
 - **Backend:** Node.js, TypeScript, Express.js

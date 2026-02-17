@@ -1658,15 +1658,15 @@ export default function App({ thirdwebClient }: AppProps) {
           `Your IP asset registration was submitted successfully!\n\n${result.warning}\n\nPlease check your IP assets list to confirm the registration.`
         );
       } else {
-        notifySuccess('IP Asset Registered', 
-          `Successfully registered IP asset!\nTransaction: ${result.mantle.txHash}\nIP Asset ID: ${result.mantle.ipAssetId}`,
-          {
-            action: {
-              label: 'View Transaction',
-              onClick: () => window.open(`https://explorer.testnet.mantle.xyz/tx/${result.mantle.txHash}`, '_blank')
-            }
+      notifySuccess('IP Asset Registered', 
+        `Successfully registered IP asset!\nTransaction: ${result.mantle.txHash}\nIP Asset ID: ${result.mantle.ipAssetId}`,
+        {
+          action: {
+            label: 'View Transaction',
+            onClick: () => window.open(`https://explorer.testnet.mantle.xyz/tx/${result.mantle.txHash}`, '_blank')
           }
-        );
+        }
+      );
       }
 
       // Reset form
@@ -1788,15 +1788,15 @@ export default function App({ thirdwebClient }: AppProps) {
           `Your license minting was submitted successfully!\n\n${result.warning}\n\nPlease check your IP asset details to confirm the license was minted.`
         );
       } else if (result.data?.txHash) {
-        notifySuccess('License Minted', 
-          `Successfully minted license!\nTransaction: ${result.data.txHash}`,
-          {
-            action: {
-              label: 'View Transaction',
-              onClick: () => window.open(`https://explorer.testnet.mantle.xyz/tx/${result.data.txHash}`, '_blank')
-            }
+      notifySuccess('License Minted', 
+        `Successfully minted license!\nTransaction: ${result.data.txHash}`,
+        {
+          action: {
+            label: 'View Transaction',
+            onClick: () => window.open(`https://explorer.testnet.mantle.xyz/tx/${result.data.txHash}`, '_blank')
           }
-        );
+        }
+      );
       } else {
         notifySuccess('License Minted', 
           `Successfully minted license!${result.message ? '\n' + result.message : ''}`
@@ -2923,163 +2923,173 @@ export default function App({ thirdwebClient }: AppProps) {
 
         <main className="landing">
           <div className="landing-hero">
-            <div className="landing-badge">IP Management • On-Chain</div>
+            <div className="landing-hero-bg" aria-hidden="true" />
+            <div className="landing-badge">IP on-chain • Mantle • ERC-6551</div>
             <div className="landing-hero-grid">
               <div className="landing-hero-copy">
-                <h2 className="landing-title">Secure, license, and monitor your IP with Sear</h2>
+                <h2 className="landing-title">
+                  Own, license, and protect your intellectual property on-chain
+                </h2>
                 <p className="landing-subtitle">
-                  Connect your wallet to register assets, mint licenses, track revenues, resolve disputes, and transfer ownership—all on one modern dashboard.
+                  Sear puts your IP on the blockchain: register assets, mint licenses, collect royalties, resolve disputes, and transfer ownership—all from one dashboard with verifiable provenance.
                 </p>
                 <div className="landing-actions">
-                  <ConnectButton
-                    client={thirdwebClient}
-                    wallets={wallets}
-                    chain={defineChain(mantleTestnet.id)}
-                  />
-                  <button className="btn btn-secondary" onClick={checkBackendStatus}>
-                    {backendStatus ? 'Backend Connected' : 'Retry Backend Check'}
+                  <div className="landing-cta-primary">
+                    <ConnectButton
+                      client={thirdwebClient}
+                      wallets={wallets}
+                      chain={defineChain(mantleTestnet.id)}
+                    />
+                  </div>
+                  <button className="btn btn-secondary landing-cta-secondary" onClick={checkBackendStatus}>
+                    {backendStatus ? '✓ Backend connected' : 'Retry backend'}
                   </button>
                 </div>
                 <div className="landing-highlights">
-                  <div className="landing-pill">📊 Dashboard & Analytics</div>
-                  <div className="landing-pill">🎫 Licensing & Royalties</div>
-                  <div className="landing-pill">⚖️ Disputes & Arbitration</div>
-                  <div className="landing-pill">🔄 Transfers & Gifting</div>
+                  <span className="landing-pill">Dashboard & analytics</span>
+                  <span className="landing-pill">Licensing & royalties</span>
+                  <span className="landing-pill">Disputes & arbitration</span>
+                  <span className="landing-pill">Transfers & gifting</span>
                 </div>
                 <div className="landing-stats">
                   <div className="stat">
-                    <div className="stat-label">Licenses Minted</div>
-                    <div className="stat-value">1.2k+</div>
+                    <div className="stat-value">On-chain</div>
+                    <div className="stat-label">Provenance</div>
                   </div>
                   <div className="stat">
-                    <div className="stat-label">Disputes Resolved</div>
-                    <div className="stat-value">350+</div>
+                    <div className="stat-value">Token-bound</div>
+                    <div className="stat-label">IP accounts</div>
                   </div>
                   <div className="stat">
-                    <div className="stat-label">Revenue Tracked</div>
-                    <div className="stat-value">Ξ 4,800+</div>
+                    <div className="stat-value">Mantle</div>
+                    <div className="stat-label">Network</div>
                   </div>
                 </div>
               </div>
 
               <div className="landing-illustration">
-                <svg viewBox="0 0 420 320" role="img" aria-label="Sear overview illustration">
-                  <defs>
-                    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.9" />
-                      <stop offset="100%" stopColor="#10b981" stopOpacity="0.9" />
-                    </linearGradient>
-                    <linearGradient id="grad2" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" stopColor="#0ea5e9" stopOpacity="0.9" />
-                      <stop offset="100%" stopColor="#1e293b" stopOpacity="0.2" />
-                    </linearGradient>
-                  </defs>
-
-                  <rect x="24" y="32" rx="18" ry="18" width="372" height="256" fill="url(#grad2)" stroke="#0ea5e9" strokeOpacity="0.25" />
-                  <rect x="48" y="56" rx="12" ry="12" width="200" height="44" fill="#0f172a" stroke="#3b82f6" strokeOpacity="0.3" />
-                  <rect x="260" y="56" rx="10" ry="10" width="104" height="44" fill="#0f172a" stroke="#10b981" strokeOpacity="0.35" />
-                  <rect x="48" y="116" rx="12" ry="12" width="316" height="56" fill="#0b1220" stroke="#3b82f6" strokeOpacity="0.2" />
-                  <rect x="48" y="184" rx="12" ry="12" width="150" height="80" fill="#0b1220" stroke="#10b981" strokeOpacity="0.25" />
-                  <rect x="214" y="184" rx="12" ry="12" width="150" height="80" fill="#0b1220" stroke="#3b82f6" strokeOpacity="0.25" />
-
-                  <circle cx="92" cy="78" r="10" fill="#22c55e" />
-                  <circle cx="120" cy="78" r="10" fill="#f59e0b" />
-                  <circle cx="148" cy="78" r="10" fill="#ef4444" />
-
-                  <path d="M88 140 h60" stroke="#3b82f6" strokeWidth="6" strokeLinecap="round" />
-                  <path d="M88 156 h110" stroke="#10b981" strokeWidth="6" strokeLinecap="round" opacity="0.8" />
-                  <path d="M88 172 h80" stroke="#22c55e" strokeWidth="6" strokeLinecap="round" opacity="0.6" />
-
-                  <circle cx="124" cy="224" r="26" fill="#0ea5e9" opacity="0.2" />
-                  <path d="M106 224 l16 16 l28 -32" stroke="#22c55e" strokeWidth="6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-
-                  <rect x="234" y="202" rx="8" ry="8" width="104" height="20" fill="#1e293b" stroke="#3b82f6" strokeOpacity="0.3" />
-                  <rect x="234" y="232" rx="8" ry="8" width="88" height="20" fill="#1e293b" stroke="#10b981" strokeOpacity="0.3" />
-                  <circle cx="340" cy="212" r="12" fill="url(#grad1)" opacity="0.9" />
-                  <circle cx="340" cy="242" r="10" fill="#22c55e" opacity="0.85" />
-
-                  <path d="M270 132 q28 -36 72 -8" stroke="url(#grad1)" strokeWidth="6" fill="none" strokeLinecap="round" />
-                  <path d="M270 152 q40 32 76 -4" stroke="#3b82f6" strokeWidth="6" fill="none" strokeLinecap="round" opacity="0.7" />
-                  <path d="M270 172 q52 44 90 -6" stroke="#10b981" strokeWidth="6" fill="none" strokeLinecap="round" opacity="0.6" />
-
-                  <rect x="182" y="90" rx="10" ry="10" width="152" height="30" fill="#0f172a" stroke="#3b82f6" strokeOpacity="0.25" />
-                  <text x="258" y="110" textAnchor="middle" fill="#cbd5f5" fontSize="13" fontWeight="600">On-chain provenance</text>
-                </svg>
+                <div className="landing-illustration-inner">
+                  <svg viewBox="0 0 420 320" role="img" aria-label="Sear dashboard overview">
+                    <defs>
+                      <linearGradient id="landing-grad1" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.9" />
+                        <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.9" />
+                      </linearGradient>
+                      <linearGradient id="landing-grad2" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stopColor="#0ea5e9" stopOpacity="0.15" />
+                        <stop offset="100%" stopColor="#1e293b" stopOpacity="0.4" />
+                      </linearGradient>
+                      <filter id="landing-glow">
+                        <feGaussianBlur stdDeviation="8" result="blur" />
+                        <feMerge>
+                          <feMergeNode in="blur" />
+                          <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                      </filter>
+                    </defs>
+                    <rect x="24" y="32" rx="18" ry="18" width="372" height="256" fill="url(#landing-grad2)" stroke="rgba(6, 182, 212, 0.35)" strokeWidth="1" />
+                    <rect x="48" y="56" rx="12" ry="12" width="200" height="44" fill="#0f172a" stroke="rgba(59, 130, 246, 0.35)" strokeWidth="1" />
+                    <rect x="260" y="56" rx="10" ry="10" width="104" height="44" fill="#0f172a" stroke="rgba(6, 182, 212, 0.4)" strokeWidth="1" />
+                    <rect x="48" y="116" rx="12" ry="12" width="316" height="56" fill="#0b1220" stroke="rgba(59, 130, 246, 0.25)" strokeWidth="1" />
+                    <rect x="48" y="184" rx="12" ry="12" width="150" height="80" fill="#0b1220" stroke="rgba(16, 185, 129, 0.3)" strokeWidth="1" />
+                    <rect x="214" y="184" rx="12" ry="12" width="150" height="80" fill="#0b1220" stroke="rgba(59, 130, 246, 0.3)" strokeWidth="1" />
+                    <circle cx="92" cy="78" r="10" fill="#22c55e" />
+                    <circle cx="120" cy="78" r="10" fill="#f59e0b" />
+                    <circle cx="148" cy="78" r="10" fill="#ef4444" />
+                    <path d="M88 140 h60" stroke="#3b82f6" strokeWidth="6" strokeLinecap="round" />
+                    <path d="M88 156 h110" stroke="#06b6d4" strokeWidth="6" strokeLinecap="round" opacity="0.85" />
+                    <path d="M88 172 h80" stroke="#22c55e" strokeWidth="6" strokeLinecap="round" opacity="0.7" />
+                    <circle cx="124" cy="224" r="26" fill="#0ea5e9" opacity="0.2" />
+                    <path d="M106 224 l16 16 l28 -32" stroke="#22c55e" strokeWidth="6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                    <rect x="234" y="202" rx="8" ry="8" width="104" height="20" fill="#1e293b" stroke="rgba(59, 130, 246, 0.35)" strokeWidth="1" />
+                    <rect x="234" y="232" rx="8" ry="8" width="88" height="20" fill="#1e293b" stroke="rgba(16, 185, 129, 0.35)" strokeWidth="1" />
+                    <circle cx="340" cy="212" r="12" fill="url(#landing-grad1)" opacity="0.9" />
+                    <circle cx="340" cy="242" r="10" fill="#22c55e" opacity="0.9" />
+                    <path d="M270 132 q28 -36 72 -8" stroke="url(#landing-grad1)" strokeWidth="6" fill="none" strokeLinecap="round" />
+                    <path d="M270 152 q40 32 76 -4" stroke="#3b82f6" strokeWidth="6" fill="none" strokeLinecap="round" opacity="0.7" />
+                    <path d="M270 172 q52 44 90 -6" stroke="#06b6d4" strokeWidth="6" fill="none" strokeLinecap="round" opacity="0.65" />
+                    <rect x="182" y="90" rx="10" ry="10" width="152" height="30" fill="#0f172a" stroke="rgba(59, 130, 246, 0.3)" strokeWidth="1" />
+                    <text x="258" y="110" textAnchor="middle" fill="#e2e8f0" fontSize="12" fontWeight="600">On-chain provenance</text>
+                  </svg>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="landing-sections">
+          <section className="landing-sections" aria-label="Features and how it works">
             <div className="landing-card landing-feature-card">
               <div className="card-header-inline">
-                <span className="section-icon">🚀</span>
+                <span className="section-icon" aria-hidden="true">✨</span>
                 <h3>What you can do</h3>
               </div>
               <div className="feature-grid">
                 <div className="feature">
-                  <div className="feature-icon">📝</div>
-                  <div className="feature-title">Register & Store</div>
-                  <div className="feature-text">Attach media, metadata, tags, and categories to every IP asset.</div>
+                  <div className="feature-icon" aria-hidden="true">📝</div>
+                  <div className="feature-title">Register & store</div>
+                  <div className="feature-text">Attach media, metadata, tags, and categories to every IP asset with IPFS-backed storage.</div>
                 </div>
                 <div className="feature">
-                  <div className="feature-icon">🎫</div>
-                  <div className="feature-title">License & Earn</div>
-                  <div className="feature-text">Mint licenses, set royalty rates, track revenue, and payouts.</div>
+                  <div className="feature-icon" aria-hidden="true">🎫</div>
+                  <div className="feature-title">License & earn</div>
+                  <div className="feature-text">Mint licenses, set royalty rates, track revenue, and receive payouts on-chain.</div>
                 </div>
                 <div className="feature">
-                  <div className="feature-icon">⚖️</div>
-                  <div className="feature-title">Protect & Resolve</div>
-                  <div className="feature-text">Raise disputes, assign arbitrators, and track infringement statuses.</div>
+                  <div className="feature-icon" aria-hidden="true">⚖️</div>
+                  <div className="feature-title">Protect & resolve</div>
+                  <div className="feature-text">Raise disputes, assign arbitrators, and track infringement statuses in one place.</div>
                 </div>
                 <div className="feature">
-                  <div className="feature-icon">🔄</div>
-                  <div className="feature-title">Transfer & Gift</div>
-                  <div className="feature-text">Move ownership or gift IP assets with on-chain proof and history.</div>
+                  <div className="feature-icon" aria-hidden="true">🔄</div>
+                  <div className="feature-title">Transfer & gift</div>
+                  <div className="feature-text">Move ownership or gift IP assets with full on-chain proof and transfer history.</div>
                 </div>
               </div>
             </div>
 
             <div className="landing-card landing-steps-card">
               <div className="card-header-inline">
-                <span className="section-icon">🧭</span>
+                <span className="section-icon" aria-hidden="true">🧭</span>
                 <h3>How it works</h3>
               </div>
               <ol className="landing-steps">
                 <li>
-                  <div className="step-icon">1</div>
+                  <div className="step-icon" aria-hidden="true">1</div>
                   <div>
-                    <div className="step-title">Connect</div>
-                    <div className="step-text">Link your wallet to unlock the dashboard and on-chain actions.</div>
+                    <div className="step-title">Connect your wallet</div>
+                    <div className="step-text">Link your wallet to unlock the dashboard and all on-chain actions.</div>
                   </div>
                 </li>
                 <li>
-                  <div className="step-icon">2</div>
+                  <div className="step-icon" aria-hidden="true">2</div>
                   <div>
-                    <div className="step-title">Register & License</div>
+                    <div className="step-title">Register & license</div>
                     <div className="step-text">Upload your IP, set terms, mint licenses, and start earning royalties.</div>
                   </div>
                 </li>
                 <li>
-                  <div className="step-icon">3</div>
+                  <div className="step-icon" aria-hidden="true">3</div>
                   <div>
-                    <div className="step-title">Protect & Track</div>
-                    <div className="step-text">Monitor infringements, resolve disputes, and export activity history.</div>
+                    <div className="step-title">Protect & track</div>
+                    <div className="step-text">Monitor activity, resolve disputes, and export history when you need it.</div>
                   </div>
                 </li>
                 <li>
-                  <div className="step-icon">4</div>
+                  <div className="step-icon" aria-hidden="true">4</div>
                   <div>
-                    <div className="step-title">Transfer or Gift</div>
+                    <div className="step-title">Transfer or gift</div>
                     <div className="step-text">Transfer ownership or gift assets with transparent on-chain records.</div>
                   </div>
                 </li>
               </ol>
-
               <div className="landing-note">
-                Connect your wallet to unlock the full dashboard.
+                Connect your wallet above to unlock the full dashboard.
               </div>
             </div>
-          </div>
+          </section>
+
+          <footer className="landing-footer">
+            <p>Built on Mantle • Powered by ERC-6551 token-bound accounts</p>
+          </footer>
         </main>
       </div>
     );

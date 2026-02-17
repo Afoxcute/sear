@@ -188,8 +188,8 @@ export const registerIpWithMantle = async (
             let hash: Hash | undefined;
             try {
                 hash = await walletClient.writeContract({
-                    ...request,
-                    account: account,
+            ...request,
+            account: account,
                     // Don't set nonce - let viem/wallet handle it automatically
                 });
                 console.log(`📊 Transaction submitted with hash: ${hash} (attempt ${attempt + 1}/${maxRetries})`);
@@ -267,30 +267,30 @@ export const registerIpWithMantle = async (
             // If we have a hash, wait for receipt (even if there was an error)
             if (hash) {
                 try {
-                    const receipt = await publicClient.waitForTransactionReceipt({ hash });
+        const receipt = await publicClient.waitForTransactionReceipt({ hash });
 
-                    // Extract IP Asset ID from transaction logs
-                    let ipAssetId: number | undefined;
-                    if (receipt.logs && receipt.logs.length > 0) {
-                        // Look for the Transfer event which contains the token ID
-                        for (const log of receipt.logs) {
-                            if (log.topics[0] === '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef') {
-                                // Transfer event signature
-                                if (log.topics[3]) {
-                                    ipAssetId = parseInt(log.topics[3], 16);
-                                    break;
-                                }
-                            }
-                        }
+        // Extract IP Asset ID from transaction logs
+        let ipAssetId: number | undefined;
+        if (receipt.logs && receipt.logs.length > 0) {
+            // Look for the Transfer event which contains the token ID
+            for (const log of receipt.logs) {
+                if (log.topics[0] === '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef') {
+                    // Transfer event signature
+                    if (log.topics[3]) {
+                        ipAssetId = parseInt(log.topics[3], 16);
+                        break;
                     }
+                }
+            }
+        }
 
                     console.log(`✅ Transaction succeeded! Hash: ${hash}, IP Asset ID: ${ipAssetId}`);
-                    return {
-                        txHash: hash,
-                        ipAssetId: ipAssetId,
-                        blockNumber: receipt.blockNumber,
-                        explorerUrl: `${BLOCK_EXPLORER_URL}/tx/${hash}`,
-                    };
+  return {
+            txHash: hash,
+            ipAssetId: ipAssetId,
+            blockNumber: receipt.blockNumber,
+            explorerUrl: `${BLOCK_EXPLORER_URL}/tx/${hash}`,
+        };
                 } catch (receiptError: any) {
                     // If waiting for receipt fails, continue to error handling
                     console.error(`❌ Error waiting for receipt:`, receiptError?.message || receiptError);
@@ -345,8 +345,8 @@ export const registerIpWithMantle = async (
             }
             
             // If not a nonce error or last attempt, throw
-            throw error;
-        }
+        throw error;
+    }
     }
     
     // If we exhausted all retries, throw the last error
@@ -386,8 +386,8 @@ export const mintLicenseOnMantle = async (
             let hash: Hash | undefined;
             try {
                 hash = await walletClient.writeContract({
-                    ...request,
-                    account: account,
+            ...request,
+            account: account,
                     // Don't set nonce - let viem/wallet handle it automatically
                 });
                 console.log(`📊 Transaction submitted with hash: ${hash} (attempt ${attempt + 1}/${maxRetries})`);
@@ -465,13 +465,13 @@ export const mintLicenseOnMantle = async (
             // If we have a hash, wait for receipt (even if there was an error)
             if (hash) {
                 try {
-                    const receipt = await publicClient.waitForTransactionReceipt({ hash });
+        const receipt = await publicClient.waitForTransactionReceipt({ hash });
                     console.log(`✅ Transaction succeeded! Hash: ${hash}`);
-                    return {
-                        txHash: hash,
-                        blockNumber: receipt.blockNumber,
-                        explorerUrl: `${BLOCK_EXPLORER_URL}/tx/${hash}`,
-                    };
+        return {
+            txHash: hash,
+    blockNumber: receipt.blockNumber,
+            explorerUrl: `${BLOCK_EXPLORER_URL}/tx/${hash}`,
+  };
                 } catch (receiptError: any) {
                     // If waiting for receipt fails, continue to error handling
                     console.error(`❌ Error waiting for receipt:`, receiptError?.message || receiptError);

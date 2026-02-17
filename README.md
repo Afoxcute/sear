@@ -26,6 +26,14 @@ Sear is a decentralized intellectual property (IP) management platform built on 
 
 ---
 
+## Project Demo Link
+
+This is the URL to the live working environment of the solution the team has developed.
+
+**[Open live demo](https://superlative-youtiao-adfd5c.netlify.app/)**
+
+---
+
 ## Project Demo Video
 
 **[Watch the project demo video](https://youtu.be/0qzSrBZPHTU)**
@@ -37,6 +45,7 @@ A submission without a demo video link will not be scored.
 ## 📋 Table of Contents
 
 - [Project Details](#project-details)
+- [Project Demo Link](#project-demo-link)
 - [Project Demo Video](#project-demo-video)
 - [🎯 Vision & Mission](#-vision--mission)
 - [💼 Business Model](#-business-model)
